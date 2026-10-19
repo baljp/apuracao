@@ -8,3 +8,9 @@ programa/*.log
 .DS_Store
 node_modules/
 package-lock.json
+
+# Capturas de tela: saída das ferramentas de conferência
+# (programa/capturar.mjs e previa_mapa.py as regeneram quando preciso).
+# São pesadas, mudam a cada rodada e não são fonte de nada.
+capturas/
+previa-mapa-*.svg
