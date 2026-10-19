@@ -134,7 +134,15 @@ export async function buscarSegundoTurno() {
   return saida;
 }
 
-/* Pesquisas finais do 1º turno, para medir o erro de cada instituto. */
+/* Pesquisas finais do 1º turno, para medir o erro de cada instituto.
+ *
+ * A tabela do 1º turno tem uma coluna por candidato (eram doze), então aqui
+ * é preciso achar QUAIS colunas são as dos dois que foram ao 2º turno. Isso
+ * importa muito: o que interessa não é se o instituto acertou a magnitude da
+ * diferença, mas se ele pôs o candidato certo na frente. No 1º turno de 2026
+ * a maioria apontava Lula liderando, e quem venceu foi Flávio — um erro que
+ * desaparece se compararmos apenas o tamanho da vantagem, sem o sinal.
+ */
 export async function buscarPrimeiroTurno() {
   let html;
   try {
@@ -146,18 +154,38 @@ export async function buscarPrimeiroTurno() {
   if (!tab) return [];
 
   const linhas = linhasDe(tab);
-  const cab = (linhas[0] || []).concat(linhas[1] || []).join(" ");
-  // Descobre em que coluna estão os dois finalistas, já que a tabela do 1º
-  // turno tem uma coluna por candidato.
+
+  // O cabeçalho vem em duas faixas: a segunda lista os candidatos, na ordem
+  // das colunas de resultado. Localizamos os dois finalistas por nome.
+  const nomes = linhas.find((l) => l.length >= 4 &&
+    l.some((c) => /Lula/i.test(c)) && l.some((c) => /Fl.vio/i.test(c)));
+  if (!nomes) return [];
+  const iPt = nomes.findIndex((c) => /Lula/i.test(c));
+  const iPl = nomes.findIndex((c) => /Fl.vio/i.test(c));
+  if (iPt < 0 || iPl < 0) return [];
+
+  // As colunas de resultado começam depois de contratante, datas, amostra e
+  // margem — quatro colunas fixas.
+  const DESLOCAMENTO = 4;
+
   const saida = [];
   for (const l of linhas) {
-    if (l.length < 6) continue;
+    if (l.length < DESLOCAMENTO + Math.max(iPt, iPl) + 1) continue;
     const fim = dataFinal(l[1]);
     if (!fim) continue;
-    const nums = l.slice(4).map(numero).filter((v) => v != null && v <= 100);
-    if (nums.length < 2) continue;
-    saida.push({ instituto: l[0].replace(/\[\d+\]/g, "").trim(), fim, nums,
-                 amostra: inteiro(l[2]) });
+    const pt = numero(l[DESLOCAMENTO + iPt]);
+    const pl = numero(l[DESLOCAMENTO + iPl]);
+    if (pt == null || pl == null) continue;
+    if (pt > 100 || pl > 100 || pt + pl < 20) continue;
+    saida.push({
+      instituto: l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60),
+      fim,
+      pt, pl,
+      // Vantagem COM sinal: positiva quando o instituto punha o candidato do
+      // PL na frente, negativa quando punha o do PT.
+      vantagem: pl - pt,
+      amostra: inteiro(l[2]),
+    });
   }
   return saida;
 }
