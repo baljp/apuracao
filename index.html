@@ -339,9 +339,9 @@
 </div>
 
 <script type="module">
-import { Modelo } from "./modelo.js?v=5";
-import * as tse from "./tse.js?v=5";
-import * as pq from "./pesquisas.js?v=5";
+import { Modelo } from "./modelo.js?v=f9cbc40f4d";
+import * as tse from "./tse.js?v=51e02a2fc1";
+import * as pq from "./pesquisas.js?v=2e88ac00d0";
 
 /* Ritmo de atualização.
  *
@@ -693,7 +693,22 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=5").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=03dd926d4c").then((reg) => {
+      // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
+      // aberta a noite toda recebe as correções sozinha.
+      reg.update().catch(() => {});
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+    }).catch(() => {});
+
+    // Quando o service worker avisa que trocou de versão, a aba se recarrega
+    // uma vez só — a trava evita ficar recarregando em laço se algo falhar.
+    let jaRecarregou = false;
+    navigator.serviceWorker.addEventListener("message", (e) => {
+      if (e.data && e.data.tipo === "versao-nova" && !jaRecarregou) {
+        jaRecarregou = true;
+        location.reload();
+      }
+    });
   });
 }
 

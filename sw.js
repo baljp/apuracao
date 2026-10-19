@@ -12,7 +12,7 @@
  *   não existir.
  */
 
-const VERSAO = "apuracao-v2";
+const VERSAO = "apuracao-03dd926d4c";
 
 // Só estes dois destinos externos são buscados pela página. Qualquer outro é
 // recusado aqui, de modo que nem um script injetado conseguiria usar o
@@ -43,10 +43,20 @@ self.addEventListener("install", (evento) => {
 self.addEventListener("activate", (evento) => {
   evento.waitUntil(
     caches.keys()
+      // VERSAO é o hash do conteúdo do site, carimbado por
+      // programa/versionar.py. Quando qualquer arquivo muda, o nome do cache
+      // muda junto, e todos os caches anteriores são apagados aqui. É assim
+      // que o aparelho se limpa sozinho a cada publicação.
       .then((chaves) => Promise.all(
         chaves.filter((c) => c !== VERSAO).map((c) => caches.delete(c))
       ))
       .then(() => self.clients.claim())
+      .then(async () => {
+        // Avisa as abas abertas que há versão nova, para que se recarreguem
+        // sem a pessoa precisar fazer nada.
+        const abas = await self.clients.matchAll({ type: "window" });
+        for (const aba of abas) aba.postMessage({ tipo: "versao-nova", VERSAO });
+      })
   );
 });
 
@@ -73,7 +83,11 @@ self.addEventListener("fetch", (evento) => {
 
   if (ehPagina) {
     evento.respondWith(
-      fetch(req).then((resp) => {
+      // cache: "reload" ignora o cache HTTP do navegador e vai mesmo à rede.
+      // Sem isso, o cache de 10 minutos do GitHub Pages seguraria a página
+      // antiga aqui dentro, e uma correção publicada no meio da apuração
+      // demoraria a chegar.
+      fetch(req, { cache: "reload" }).then((resp) => {
         if (resp && resp.ok) {
           const copia = resp.clone();
           caches.open(VERSAO).then((cache) => cache.put(req, copia));

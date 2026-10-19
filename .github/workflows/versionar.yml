@@ -1,0 +1,52 @@
+name: Carimbar versão dos arquivos
+
+# Roda a cada publicação no main. Recalcula o hash de cada arquivo do site e
+# escreve esse hash nas URLs dentro do index.html e no nome do cache do
+# service worker.
+#
+# O efeito prático: quem já tem o site aberto ou instalado no celular recebe
+# a nova versão sozinho, sem precisar limpar nada. Quando um arquivo muda, a
+# URL dele muda, o navegador busca de novo, e o service worker apaga os
+# caches antigos ao ativar.
+#
+# Se nada mudou de fato, o hash é o mesmo e o workflow não faz commit nenhum.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "modelo.js"
+      - "tse.js"
+      - "pesquisas.js"
+      - "base.json"
+      - "sw.js"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: versionar
+  cancel-in-progress: false
+
+jobs:
+  carimbar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Carimbar versões
+        run: python3 programa/versionar.py
+
+      - name: Publicar se algo mudou
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nada a fazer: os hashes já estavam corretos."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html sw.js
+          git commit -m "Carimba versao dos arquivos [skip ci]"
+          git push
