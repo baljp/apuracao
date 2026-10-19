@@ -147,6 +147,14 @@
   <h1>Projeção da apuração — Presidente</h1>
   <div class="sub" id="status"><span class="pisca"></span>carregando a base…</div>
 
+  <div class="cartao" id="avisoTeste" style="display:none;
+       border-color:var(--alerta);background:rgba(224,145,58,.1)">
+    <strong style="color:var(--alerta)">Modo de teste — 1º turno</strong><br>
+    <span class="faixa">Estes são os votos reais do 1º turno, de 4 de outubro,
+    já 100% apurados. <strong>Não é o 2º turno.</strong>
+    <a href="./" style="color:var(--pl)">Ver o 2º turno</a></span>
+  </div>
+
   <nav class="abas" id="abas">
     <button class="aba ativa" data-aba="apuracao">Apuração</button>
     <button class="aba" data-aba="pesquisas">Pesquisas</button>
@@ -476,6 +484,13 @@ async function iniciar() {
     }
     $("nomePL").textContent = nomes.pl;
     $("nomePT").textContent = nomes.pt;
+    // O modo de teste lê o 1º turno, que já está 100% apurado. Sem um aviso
+    // bem visível, é fácil alguém abrir esse endereço no domingo e achar que
+    // está vendo o 2º turno.
+    if (TURNO === tse.ELEICAO_1T) {
+      $("avisoTeste").style.display = "block";
+      document.title = "[TESTE 1º turno] " + document.title;
+    }
     tick();
     setInterval(tick, INTERVALO);
 
@@ -533,6 +548,9 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   $("vazio").style.display = comecou ? "none" : "block";
   $("placar").style.display = comecou ? "block" : "none";
   $("apurado").textContent = n1(r.pctApurado) + "%";
+  $("apurado").nextElementSibling.textContent = r.pctApurado >= 99.95
+    ? "do eleitorado apurado"
+    : "apurado · faltam " + n1(100 - r.pctApurado) + "%";
   if (!comecou) return;
 
   $("pctPL").textContent = n1(r.projecaoPl) + "%";
@@ -921,7 +939,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=11bb847cf6").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=791bd0251c").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
