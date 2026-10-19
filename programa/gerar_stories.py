@@ -2,29 +2,29 @@
 Gera a imagem de divulgação para os stories do Instagram (1080 × 1920).
 
 IDENTIDADE VISUAL — tirada do próprio perfil @oxe_eraassim
-A marca é papel velho: fundo creme, texto em serifa escura e pesada, com
-vermelho de tinta e dourado de sol nordestino nos acentos. As capas dos
-reels são todas assim — faixa de texto creme em cima, foto embaixo.
+A marca é papel velho: fundo creme, serifa escura e pesada, vermelho de
+tinta e o sol dourado do logo. Todas as capas dos reels são assim.
 
-A primeira versão desta arte foi feita escura, e estava simplesmente
-invertida em relação à marca. Num feed onde tudo é creme, um story preto não
-parece da mesma casa.
+HONESTIDADE DA PEÇA
+Esta arte divulga uma previsão de eleição, e por isso a parte mais
+importante dela não é a chamada: é o aviso e a tabela de erro.
 
-TOM
-As capas do perfil falam como quem conta um caso, não como quem dá aula:
-"Dizem que debaixo desta igreja começa um túnel de quase 20 km. Ninguém
-nunca achou a saída." Frase curta, fato espantoso, português simples. A
-chamada aqui segue isso — mas sem prometer o que a página não entrega.
+Divulgar "dá para saber quem ganhou com 5% apurado" seria vender uma certeza
+que o modelo não tem. Nos backtests, com 5% apurado o erro médio foi de 0,96
+ponto percentual e chegou a 1,83 em 2014 — numa disputa decidida por menos
+que isso, a projeção pode apontar o candidato errado. Quem lê o story
+precisa saber disso ANTES de abrir a página, não depois.
 
-O aviso de que é modelo preditivo e pode errar tem peso de leitura próprio,
-não é letra miúda. É o que separa a página de um perfil que chuta resultado.
+Daí a tabela: ela mostra o erro encolhendo conforme a apuração avança, que é
+a informação que permite à pessoa decidir quando confiar. Os números saem
+dos backtests das cinco últimas eleições presidenciais (programa/backtest.py
+--ano 2006 2010 2014 2018 2022) e devem ser recalculados se o modelo mudar.
 
 Uso:  python3 gerar_stories.py
 """
 
 from __future__ import annotations
 
-import json
 import os
 
 import cairosvg
@@ -34,22 +34,25 @@ RAIZ = os.path.dirname(AQUI)
 
 L, A = 1080, 1920
 
-# Paleta do perfil.
-PAPEL = "#f0e8d8"        # o creme do fundo das capas
-PAPEL_2 = "#e4dac4"      # creme mais fechado, para separar blocos
-TINTA = "#1c1b19"        # o preto quente do texto
+PAPEL = "#f0e8d8"
+PAPEL_2 = "#e4dac4"
+TINTA = "#1c1b19"
 TINTA_FRACA = "#6b6456"
-VERMELHO = "#c8433a"     # o "DO OXE" da Biblioteca
-DOURADO = "#e09a62"      # o sol listrado do logo
-VERDE = "#3d7a4f"        # apuração andando — nunca candidato
-VERDE_CLARO = "#7cc492"
+VERMELHO = "#c8433a"
+DOURADO = "#e09a62"
+VERDE = "#3d7a4f"
 
 SERIF = "Lora, Georgia, serif"
 
 ENDERECO = "oxeeraassim.github.io/apuracao"
 PERFIL = "@oxe_eraassim"
 
-NIVEL = 0.58
+# Erro da projeção nos backtests de 2006, 2010, 2014, 2018 e 2022.
+# (apurado, erro médio, pior caso)
+ERROS = [("5%", "0,96", "1,83"),
+         ("20%", "0,73", "1,57"),
+         ("50%", "0,30", "0,79"),
+         ("75%", "0,14", "0,43")]
 
 
 def txt(x, y, t, tam, peso="400", cor=TINTA, anc="middle", esp="0", op="1"):
@@ -59,7 +62,6 @@ def txt(x, y, t, tam, peso="400", cor=TINTA, anc="middle", esp="0", op="1"):
 
 
 def sol(cx, cy, r):
-    """O sol listrado do logo da página, em miniatura."""
     p = [f'<circle cx="{cx}" cy="{cy}" r="{r * 0.46:.1f}" fill="{DOURADO}"/>']
     for i, rr in enumerate([r * 0.66, r * 0.84, r]):
         p.append(f'<path d="M {cx - rr:.1f} {cy} A {rr:.1f} {rr:.1f} 0 0 1 '
@@ -69,93 +71,82 @@ def sol(cx, cy, r):
 
 
 def montar() -> str:
-    with open(os.path.join(RAIZ, "mapa.json"), encoding="utf-8") as fh:
-        mapa = json.load(fh)
-    _, _, lm, am = (float(v) for v in mapa["viewBox"].split())
-
-    alvo = 470.0
-    esc = alvo / max(lm, am)
-    dx = (L - lm * esc) / 2
-    dy = 660
-    formas = "".join(f'<path d="{d}"/>' for d in mapa["ufs"].values())
-    corte = dy + am * esc * (1 - NIVEL)
-
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{L}" height="{A}" '
          f'viewBox="0 0 {L} {A}">',
-         '<defs>',
-         f'<linearGradient id="nivel" x1="0" y1="{dy}" x2="0" y2="{dy + am * esc}"'
-         f' gradientUnits="userSpaceOnUse">'
-         f'<stop offset="0" stop-color="{PAPEL_2}"/>'
-         f'<stop offset="{1 - NIVEL}" stop-color="{PAPEL_2}"/>'
-         f'<stop offset="{1 - NIVEL}" stop-color="{VERDE_CLARO}"/>'
-         f'<stop offset="1" stop-color="{VERDE}"/></linearGradient>',
-         '<clipPath id="br" clipPathUnits="userSpaceOnUse">'
-         f'<g transform="translate({dx:.1f},{dy:.1f}) scale({esc:.5f})">{formas}</g>'
-         '</clipPath>',
-         '</defs>',
          f'<rect width="{L}" height="{A}" fill="{PAPEL}"/>']
 
-    # ---- assinatura da página, como nas capas dos reels ----
-    p.append(txt(88, 130, "OXE,", 34, "700", TINTA, "start"))
-    p.append(txt(178, 130, "era assim?", 27, "400", TINTA_FRACA, "start"))
-    p.append(sol(L - 120, 118, 44))
-    p.append(f'<rect x="88" y="162" width="{L - 176}" height="3" fill="{TINTA}" '
+    # ---- assinatura da página ----
+    p.append(txt(88, 122, "OXE,", 32, "700", TINTA, "start"))
+    p.append(txt(172, 122, "era assim?", 26, "400", TINTA_FRACA, "start"))
+    p.append(sol(L - 120, 112, 42))
+    p.append(f'<rect x="88" y="152" width="{L - 176}" height="3" fill="{TINTA}" '
              f'opacity="0.18"/>')
 
     # ---- chamada ----
-    p.append(txt(L / 2, 300, "Dá para saber quem", 70, "700"))
-    p.append(txt(L / 2, 382, "ganhou com 5% das", 70, "700"))
-    p.append(txt(L / 2, 464, "urnas contadas.", 70, "700"))
-    p.append(f'<rect x="{L / 2 - 90}" y="512" width="180" height="4" '
+    p.append(txt(L / 2, 272, "Vamos tentar antecipar", 60, "700"))
+    p.append(txt(L / 2, 344, "o resultado da eleição", 60, "700"))
+    p.append(f'<rect x="{L / 2 - 80}" y="388" width="160" height="4" '
              f'fill="{VERMELHO}"/>')
-    p.append(txt(L / 2, 580, "A gente fez a conta — e conferiu nas", 32, "400",
-                 TINTA_FRACA))
-    p.append(txt(L / 2, 622, "cinco últimas eleições presidenciais.", 32, "400",
-                 TINTA_FRACA))
+    p.append(txt(L / 2, 452, "Um algoritmo preditivo acompanha a apuração e", 30,
+                 "400", TINTA_FRACA))
+    p.append(txt(L / 2, 492, "estima onde ela vai terminar. É uma tentativa,", 30,
+                 "400", TINTA_FRACA))
+    p.append(txt(L / 2, 532, "baseada nas cinco últimas eleições —", 30,
+                 "400", TINTA_FRACA))
+    p.append(txt(L / 2, 572, "e não é garantia de acerto.", 30, "700", TINTA))
 
-    # ---- mapa ----
-    p.append('<g clip-path="url(#br)">')
-    p.append(f'<rect x="0" y="{dy}" width="{L}" height="{am * esc}" fill="url(#nivel)"/>')
-    p.append(f'<rect x="0" y="{corte - 3}" width="{L}" height="6" fill="{PAPEL}" '
-             f'opacity="0.85"/>')
-    p.append('</g>')
-    # Contorno do país, para o mapa não boiar no creme.
-    p.append(f'<g clip-path="url(#br)"><rect x="0" y="{dy}" width="{L}" '
-             f'height="{am * esc}" fill="none" stroke="{TINTA}" stroke-width="6" '
-             f'opacity="0.25"/></g>')
+    # ---- o aviso, em tamanho que ninguém deixa de ler ----
+    p.append(f'<rect x="60" y="632" width="{L - 120}" height="214" rx="12" '
+             f'fill="{VERMELHO}"/>')
+    p.append(txt(L / 2, 716, "ISTO NÃO É", 56, "700", PAPEL, esp="2"))
+    p.append(txt(L / 2, 782, "RESULTADO OFICIAL", 56, "700", PAPEL, esp="2"))
+    p.append(txt(L / 2, 822, "O resultado que vale é sempre o do TSE.", 27, "400",
+                 PAPEL, op="0.92"))
 
-    # ---- o que a página faz ----
-    y = 1240
-    p.append(f'<rect x="88" y="{y}" width="4" height="160" fill="{VERDE}"/>')
-    p.append(txt(126, y + 34, "A APURAÇÃO", 26, "700", VERDE, "start", esp="3"))
-    p.append(txt(126, y + 86, "As urnas não terminam todas na mesma", 30, "400",
-                 TINTA, "start"))
-    p.append(txt(126, y + 126, "hora. Um modelo preditivo calcula o que", 30, "400",
-                 TINTA, "start"))
-    p.append(txt(126, y + 166, "falta e monta o cenário do país inteiro.", 30, "400",
-                 TINTA, "start"))
+    # ---- a tabela de erro ----
+    p.append(txt(L / 2, 930, "Quanto o modelo errou nas últimas 5 eleições",
+                 31, "700", TINTA))
+    p.append(txt(L / 2, 972, "(em pontos percentuais)", 25, "400", TINTA_FRACA))
 
-    y = 1455
-    p.append(f'<rect x="88" y="{y}" width="4" height="120" fill="{VERMELHO}"/>')
-    p.append(txt(126, y + 34, "AS PESQUISAS", 26, "700", VERMELHO, "start", esp="3"))
-    p.append(txt(126, y + 86, "Vários institutos num lugar só, com média", 30, "400",
-                 TINTA, "start"))
-    p.append(txt(126, y + 126, "que pesa mais as recentes e as maiores.", 30, "400",
-                 TINTA, "start"))
+    topo = 1018
+    alt = 74
+    p.append(f'<rect x="72" y="{topo}" width="{L - 144}" height="{alt * 5 + 10}" '
+             f'rx="12" fill="{PAPEL_2}"/>')
+    p.append(txt(190, topo + 48, "APURADO", 24, "700", TINTA_FRACA, "middle", esp="2"))
+    p.append(txt(610, topo + 48, "EM MÉDIA", 24, "700", TINTA_FRACA, "middle", esp="2"))
+    p.append(txt(890, topo + 48, "PIOR CASO", 24, "700", TINTA_FRACA, "middle", esp="2"))
+    for i, (marco, medio, pior) in enumerate(ERROS):
+        y = topo + alt * (i + 1) + 50
+        p.append(f'<rect x="100" y="{y - 52}" width="{L - 200}" height="2" '
+                 f'fill="{TINTA}" opacity="0.12"/>')
+        p.append(txt(190, y, marco, 36, "700", TINTA))
+        p.append(txt(610, y, "± " + medio, 36, "700", VERDE))
+        p.append(txt(890, y, "± " + pior, 36, "400", TINTA_FRACA))
 
-    # ---- o aviso, com peso de leitura próprio ----
-    y = 1632
-    p.append(f'<rect x="88" y="{y}" width="{L - 176}" height="112" rx="10" '
-             f'fill="{PAPEL_2}"/>')
-    p.append(txt(L / 2, y + 46, "Modelo preditivo: é estimativa e pode errar.",
-                 27, "700", TINTA))
-    p.append(txt(L / 2, y + 84, "O resultado que vale é sempre o do TSE.",
-                 27, "400", TINTA_FRACA))
+    p.append(txt(L / 2, 1424, "Numa disputa decidida por menos que isso, a projeção",
+                 27, "400", TINTA))
+    p.append(txt(L / 2, 1462, "pode apontar o candidato errado no começo da noite.",
+                 27, "400", TINTA))
 
-    # ---- faixa do link, como o rodapé da Biblioteca ----
-    p.append(f'<rect x="0" y="1786" width="{L}" height="134" fill="{VERMELHO}"/>')
+    # ---- o que a página tem ----
+    y = 1522
+    p.append(f'<rect x="88" y="{y}" width="4" height="78" fill="{VERDE}"/>')
+    p.append(txt(126, y + 32, "A APURAÇÃO", 24, "700", VERDE, "start", esp="3"))
+    p.append(txt(126, y + 70, "Projeção ao vivo, ajustada a cada urna contada.",
+                 28, "400", TINTA, "start"))
+
+    y = 1628
+    p.append(f'<rect x="88" y="{y}" width="4" height="118" fill="{VERMELHO}"/>')
+    p.append(txt(126, y + 32, "AS PESQUISAS", 24, "700", VERMELHO, "start", esp="3"))
+    p.append(txt(126, y + 70, "Sempre as mais recentes, com média ponderada por",
+                 27, "400", TINTA, "start"))
+    p.append(txt(126, y + 106, "pesquisa — atualizada assim que sai uma nova.",
+                 27, "400", TINTA, "start"))
+
+    # ---- faixa do link ----
+    p.append(f'<rect x="0" y="1786" width="{L}" height="134" fill="{TINTA}"/>')
     p.append(txt(L / 2, 1843, ENDERECO, 35, "700", PAPEL))
-    p.append(txt(L / 2, 1890, PERFIL, 25, "400", PAPEL, esp="2", op="0.85"))
+    p.append(txt(L / 2, 1890, PERFIL, 25, "400", PAPEL, esp="2", op="0.8"))
 
     p.append("</svg>")
     return "".join(p)
