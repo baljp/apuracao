@@ -63,40 +63,6 @@ cujo modelo acertou o 1º turno de 2026.
 
 ---
 
-## O backtest
-
-Regra do jogo: base = 1º turno de 2022, alvo = 2º turno de 2022 (que o modelo
-nunca vê), ordem de chegada = a ordem real observada no 1º turno de 2026.
-
-| Apurado | Percentual bruto | Projeção do modelo |
-|---|---|---|
-| 1% | 58,15% (erro +9,05) | 49,07% (**erro −0,02**) |
-| 3% | 58,68% (erro +9,58) | 48,86% (erro −0,24) |
-| **5%** | 58,52% (erro +9,42) | **48,86% (erro −0,24)** |
-| 10% | 58,33% (erro +9,23) | 48,95% (erro −0,15) |
-| 20% | 58,15% (erro +9,06) | 49,03% (erro −0,06) |
-| 50% | 54,52% (erro +5,43) | 49,19% (erro +0,09) |
-
-Resultado real: Bolsonaro 49,10%. **Erro médio a partir de 5%: 0,07 pp. Erro
-máximo: 0,24 pp.**
-
-Duas ressalvas honestas:
-
-- O teste é **mais difícil que a realidade**. Nele os municípios entram
-  inteiros, enquanto na vida real as seções pingam de todo o país ao mesmo
-  tempo. O viés que o modelo teve que vencer (+9,4 pp aos 5%) é maior que o real
-  de 2022 (+4,2 pp, pelo histórico oficial do TSE).
-- Os parâmetros foram calibrados nesse mesmo backtest, o que sempre favorece o
-  resultado. A defesa é que o erro é praticamente idêntico em toda a grade de
-  parâmetros testada (0,073 a 0,074 pp) — o modelo não depende de ajuste fino,
-  que é o sintoma clássico de sobreajuste.
-
-E a ressalva de fundo: 2026 pode não se comportar como 2022. O modelo supõe que
-o swing entre turnos é geograficamente suave. Se houver uma reviravolta
-concentrada numa região, ele vai demorar mais a perceber.
-
----
-
 ## 50 eleições cegas
 
 Duas eleições reais são pouca coisa para saber onde um modelo quebra. Então o
@@ -157,30 +123,6 @@ representa. Testado em 15 combinações, piora em todas. Veja
 
 ---
 
-## Quão difícil deve ser 2026
-
-Os dois backtests dão erros muito diferentes — 0,24 pp em 2022 e 1,79 pp em
-2018 — e a diferença não é acaso. Ela tem uma causa mensurável antes da
-apuração começar: **quanto voto sobrou dos candidatos eliminados**.
-
-| Eleição | Finalistas somavam no 1º turno | Voto a redistribuir | Erro aos 5% |
-|---|---|---|---|
-| 2018 | 75,31% (46,03 + 29,28) | **24,7%** | 1,79 pp |
-| 2022 | 91,63% (43,20 + 48,43) | 8,4% | 0,24 pp |
-| **2026** | **92,19%** (47,03 + 45,16) | **7,8%** | ? |
-
-Quanto mais voto ficou solto, mais o eleitorado precisa se reorganizar entre os
-turnos — e essa reorganização é geograficamente desigual, que é exatamente o
-que o modelo não consegue antecipar. Em 2018, um quarto do eleitorado teve de
-escolher de novo; em 2026, menos de um décimo.
-
-Pelo indicador, **2026 é o cenário mais favorável dos três**, um pouco melhor
-até que 2022. Não é garantia: é um indicador estrutural, e uma reviravolta
-concentrada numa região continuaria sendo invisível para o modelo até aquela
-região apurar.
-
----
-
 ## O quanto a base recente importa
 
 `programa/backtest_pares.py` testa o modelo com bases de anos anteriores, para
@@ -206,6 +148,56 @@ turno de **2018** (0,60 pp) saiu melhor que prevê-lo a partir do 1º turno do
 próprio 2022 em 2018 (1,10 pp). Dois segundos turnos se parecem entre si mais
 do que um primeiro e um segundo turno do mesmo ano, porque no segundo turno a
 disputa já está reorganizada em dois blocos.
+
+---
+
+## O backtest: cinco eleições presidenciais
+
+Regra do jogo em todas: a base é o 1º turno daquele ano, o alvo é o 2º turno
+(que o modelo nunca vê) e a ordem de chegada é a real observada no 1º turno de
+2026. Reproduzir cada 2º turno a partir dos boletins por seção bateu com o
+resultado oficial do TSE até a terceira casa decimal.
+
+| Eleição | Disputa | Erro médio (≥5%) | Pior |
+|---|---|---|---|
+| 2006 | Alckmin × Lula | **0,20 pp** | 0,36 pp |
+| 2010 | Serra × Dilma | **0,28 pp** | 0,87 pp |
+| 2014 | Aécio × Dilma | **0,42 pp** | 1,73 pp |
+| 2018 | Bolsonaro × Haddad | **1,10 pp** | 1,98 pp |
+| 2022 | Bolsonaro × Lula | **0,07 pp** | 0,24 pp |
+
+Em quatro das cinco, o erro médio fica em meio ponto ou menos. O percentual
+bruto, nos mesmos instantes, erra entre 5 e 11 pontos.
+
+### O que torna uma eleição difícil
+
+| Ano | Swing nacional | Voto solto no 1º turno | Desigualdade entre regiões | Erro |
+|---|---|---|---|---|
+| 2006 | −6,97 pp | 9,8% | 4,71 pp | 0,20 pp |
+| 2010 | +2,93 pp | 20,5% | 1,42 pp | 0,28 pp |
+| 2014 | +3,71 pp | 24,9% | 6,55 pp | 0,42 pp |
+| 2018 | −5,98 pp | 24,7% | 5,91 pp | **1,10 pp** |
+| 2022 | +1,95 pp | 8,4% | 0,60 pp | 0,07 pp |
+| **2026** | ? | **7,8%** | ? | ? |
+
+"Voto solto" é quanto do 1º turno foi para candidatos eliminados — esse
+eleitorado precisa escolher de novo. "Desigualdade entre regiões" é a distância
+entre a região que mais se moveu e a que menos se moveu.
+
+Duas lições aparecem aqui:
+
+**Swing grande não é problema.** Em 2006 o país inteiro se moveu quase 7 pontos
+e o modelo errou 0,20 pp. O modelo mede o swing; ele não precisa que o swing
+seja pequeno, precisa que seja parecido entre os lugares.
+
+**2018 é o único ano em que os três fatores foram ruins ao mesmo tempo**: swing
+grande, um quarto do eleitorado se realocando e regiões se movendo em direções
+bem diferentes. 2014 teve a maior desigualdade regional da série (6,55 pp) e
+ainda assim errou 0,42 pp, porque o swing foi moderado.
+
+Para 2026, o único dos três que já é conhecido é o voto solto: **7,8%, o menor
+da série inteira**. Flávio e Lula já concentravam 92,19% no 1º turno. Os outros
+dois só se revelam na noite da apuração.
 
 ---
 

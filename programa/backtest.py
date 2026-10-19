@@ -35,6 +35,9 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 ORDEM = os.path.join(AQUI, "ordem_1t_2026.json")
 
 NOMES = {
+    2006: ("Alckmin", "Lula"),
+    2010: ("Serra", "Dilma"),
+    2014: ("Aécio", "Dilma"),
     2018: ("Bolsonaro", "Haddad"),
     2022: ("Bolsonaro", "Lula"),
 }

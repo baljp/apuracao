@@ -28,7 +28,17 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # Os dois que foram ao 2º turno em cada eleição, e o resultado oficial, para
 # conferir que a reconstrução a partir das seções bate com o que o TSE publicou.
+# Em todas, "a" é o candidato que não é do PT e "b" é o do PT — que foram os
+# dois blocos de todos os segundos turnos presidenciais desde 2006. O número
+# do partido muda (45 do PSDB até 2014, 17 e 22 depois), mas o papel no modelo
+# é o mesmo, então os dois são gravados sempre como 22 e 13.
 ELEICOES = {
+    2006: {"a": "45", "b": "13", "nome_a": "Alckmin", "nome_b": "Lula",
+           "oficial_a": 39.17, "oficial_b": 60.83},
+    2010: {"a": "45", "b": "13", "nome_a": "Serra", "nome_b": "Dilma",
+           "oficial_a": 43.95, "oficial_b": 56.05},
+    2014: {"a": "45", "b": "13", "nome_a": "Aécio", "nome_b": "Dilma",
+           "oficial_a": 48.36, "oficial_b": 51.64},
     2018: {"a": "17", "b": "13", "nome_a": "Bolsonaro", "nome_b": "Haddad",
            "oficial_a": 55.13, "oficial_b": 44.87},
     2022: {"a": "22", "b": "13", "nome_a": "Bolsonaro", "nome_b": "Lula",
