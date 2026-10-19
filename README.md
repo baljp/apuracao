@@ -201,6 +201,47 @@ dois só se revelam na noite da apuração.
 
 ---
 
+## Acerta o vencedor?
+
+200 eleições cegas, medindo quantas vezes o modelo aponta o lado certo
+(`programa/simular_vencedor.py`).
+
+| Apurado | Modelo | Percentual bruto |
+|---|---|---|
+| 1% | 183/200 (91,5%) | 115/200 (57,5%) |
+| **5%** | **193/200 (96,5%)** | 115/200 (57,5%) |
+| 10% | 194/200 (97,0%) | 115/200 (57,5%) |
+| 20% | 195/200 (97,5%) | 116/200 (58,0%) |
+
+Não acerta todas — e não deveria. O interessante é **onde** estão os sete
+erros aos 5%:
+
+| Diferença real entre os candidatos | Acerto |
+|---|---|
+| 0–1 pp | 17/22 (77,3%) |
+| 1–2 pp | 16/18 (88,9%) |
+| 2–4 pp | **41/41 (100%)** |
+| 4–10 pp | **84/84 (100%)** |
+| acima de 10 pp | **35/35 (100%)** |
+
+Todos os erros caem em eleições decididas por menos de dois pontos. Acima
+disso, 160 de 160. Uma eleição decidida por 0,3 ponto não é incerteza do
+modelo: é incerteza da eleição, e nenhum método a resolve com 5% das urnas.
+O que se pode exigir do modelo nesse caso é que ele avise — e é isso que a
+margem faz.
+
+**Erros graves (cravar acima de 95% de confiança no lado errado): 0 em 60.**
+Quando o modelo errou o vencedor, ele não estava afirmando com confiança; a
+margem cobria os dois lados.
+
+A calibração da probabilidade em si ficou **inconclusiva**: dos 60 cenários
+com bootstrap, 51 caíram na faixa de "mais de 99% de certeza" (e acertou
+todos), sobrando n=2 e n=5 nas faixas intermediárias — amostra pequena demais
+para afirmar que "quando diz 80%, acerta 80%". Para fechar isso seria preciso
+rodar centenas de cenários restritos a eleições apertadas.
+
+---
+
 ## Três formas de usar
 
 **1. Site.** https://baljp.github.io/apuracao-2026/ — abre em qualquer
