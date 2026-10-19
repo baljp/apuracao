@@ -62,6 +62,14 @@ export async function lerResultados(eleicao) {
   const observado = {};
   const nomes = {};
   const falhas = [];
+  // Além dos votos dos dois finalistas, o arquivo traz brancos, nulos,
+  // abstenção, comparecimento e seções — tudo o que o eleitor procura numa
+  // noite de apuração, e que estava sendo ignorado.
+  const totais = {
+    brancos: 0, nulos: 0, abstencao: 0, comparecimento: 0,
+    eleitorado: 0, secoes: 0, secoesApuradas: 0, validos: 0,
+  };
+  let horaTSE = "";
 
   await emLotes(UFS, async (uf) => {
     try {
@@ -75,12 +83,25 @@ export async function lerResultados(eleicao) {
               else if (c.n === NUM_PT) { pt += num(c.vap); nomes.pt = (c.nmu || "").toLowerCase(); }
             }
       observado[uf] = { pl, pt };
-    } catch (e) {
+
+      const v = doc.v || {}, e = doc.e || {}, s = doc.s || {};
+      totais.brancos += num(v.vb);
+      totais.nulos += num(v.tvn);
+      totais.validos += num(v.vv);
+      totais.abstencao += num(e.a);
+      totais.comparecimento += num(e.c);
+      totais.eleitorado += num(e.te);
+      totais.secoes += num(s.ts);
+      totais.secoesApuradas += num(s.st);
+      // Horário em que o TSE gerou o arquivo — mais fiel que a hora local
+      // de quem está olhando.
+      if (doc.ht && doc.ht > horaTSE) horaTSE = doc.ht;
+    } catch (err) {
       falhas.push(uf);
     }
   });
 
-  return { observado, nomes, falhas };
+  return { observado, nomes, falhas, totais, horaTSE };
 }
 
 export async function lerAndamento(eleicao) {
@@ -111,6 +132,8 @@ export async function lerTudo(eleicao) {
     observado: res.observado,
     fracoes: and.fracoes,
     nomes: res.nomes,
+    totais: res.totais,
+    horaTSE: res.horaTSE,
     falhas: [...new Set([...res.falhas, ...and.falhas])],
   };
 }

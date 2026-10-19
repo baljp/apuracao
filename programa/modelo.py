@@ -224,6 +224,8 @@ class Modelo:
         swing_uf = {}
         peso_uf = {}
         detalhe_uf = {}
+        escala_uf = {}
+        peso_escala = {}
 
         for uf, muns in self.por_uf.items():
             obs = observado.get(uf) or {}
@@ -240,7 +242,21 @@ class Modelo:
                 esp_pl += v * s
                 esp_pt += v * (1.0 - s)
 
+            # Quanto voto válido o 2º turno está rendendo, comparado ao que o
+            # 1º turno rendeu nos mesmos lugares.
+            #
+            # Isto importa porque o modelo estima o que falta como "o mesmo
+            # volume de votos do 1º turno". Se brancos, nulos e abstenções
+            # mudarem — e eles mudam, geralmente crescendo mais onde o
+            # candidato eliminado era forte —, o peso de cada município na
+            # soma nacional sai errado. A razão abaixo corrige essa escala
+            # com o que de fato saiu das urnas.
+            esperado_votos = esp_pl + esp_pt
             votos_obs = obs_pl + obs_pt
+            if esperado_votos > 0 and votos_obs >= MIN_VOTOS_SWING:
+                escala_uf[uf] = votos_obs / esperado_votos
+                peso_escala[uf] = votos_obs
+
             if votos_obs >= MIN_VOTOS_SWING and esp_pl > 0 and esp_pt > 0:
                 sw = _logit(obs_pl, obs_pt) - _logit(esp_pl, esp_pt)
                 swing_uf[uf] = sw
@@ -284,6 +300,22 @@ class Modelo:
         b_nivel = (self._coef_nivel(swing_uf, peso_uf, swing_nacional)
                    if USAR_REGRESSAO_NIVEL else 0.0)
 
+        # A escala de votos válidos segue o mesmo encolhimento do swing: com
+        # pouca apuração num estado, vale a escala nacional.
+        peso_esc_total = sum(peso_escala.values())
+        escala_nacional = (sum(escala_uf[u] * peso_escala[u] for u in escala_uf)
+                           / peso_esc_total) if peso_esc_total > 0 else 1.0
+        escala_final = {}
+        for uf in self.por_uf:
+            if uf in escala_uf:
+                e = _encolher(escala_uf[uf], peso_escala[uf],
+                              escala_nacional, K_UF)
+            else:
+                e = escala_nacional
+            # Uma escala fora desta faixa é sinal de dado estranho, não de
+            # mudança real de comparecimento.
+            escala_final[uf] = min(max(e, 0.75), 1.25)
+
         swing_final = {}
         for uf in self.por_uf:
             r = tse.REGIAO.get(uf, "outros")
@@ -307,11 +339,12 @@ class Modelo:
         b_perfil = self._coef_perfil(swing_uf, peso_uf) if USAR_REGRESSAO_PERFIL else 0.0
 
         # --- passo 4: projeção -------------------------------------------
-        projecao = self._somar(swing_final, observado, b_perfil=b_perfil)
+        projecao = self._somar(swing_final, observado, b_perfil=b_perfil,
+                               escala=escala_final)
 
         # margem por bootstrap
         faixa = self._bootstrap(swing_final, observado, projecao,
-                                n_bootstrap, semente, b_perfil)
+                                n_bootstrap, semente, b_perfil, escala_final)
 
         apurado_votos = sum(d["observado_pl"] + d["observado_pt"]
                             for d in detalhe_uf.values())
@@ -421,7 +454,8 @@ class Modelo:
 
     # ------------------------------------------------------------------
     def _somar(self, swing_final: dict, observado: dict,
-               ruido: dict | None = None, b_perfil: float = 0.0) -> dict:
+               ruido: dict | None = None, b_perfil: float = 0.0,
+               escala: dict | None = None) -> dict:
         """Observado (real) + restante (modelado), município a município."""
         total_pl = 0.0
         total_pt = 0.0
@@ -445,6 +479,7 @@ class Modelo:
             else:
                 perfil_apurado = None
 
+            fator = (escala or {}).get(uf, 1.0)
             for m in muns:
                 falta = 1.0 - m.fracao
                 if falta <= 1e-9:
@@ -453,7 +488,9 @@ class Modelo:
                 if perfil_apurado is not None:
                     sw_m += b_perfil * (m.perfil - perfil_apurado)
                 s = _share(m.base_logit + sw_m)
-                v = falta * m.validos_base
+                # O volume do que falta é corrigido pelo que o 2º turno está
+                # de fato rendendo naquele estado.
+                v = falta * m.validos_base * fator
                 pl += v * s
                 pt += v * (1.0 - s)
 
@@ -470,7 +507,8 @@ class Modelo:
 
     # ------------------------------------------------------------------
     def _bootstrap(self, swing_final: dict, observado: dict, central: dict,
-                   n: int, semente: int, b_perfil: float = 0.0) -> dict:
+                   n: int, semente: int, b_perfil: float = 0.0,
+                   escala: dict | None = None) -> dict:
         """
         Incerteza: o swing de cada UF é perturbado por um termo comum
         (erro nacional, que não some com mais apuração) e um termo próprio,
@@ -494,7 +532,7 @@ class Modelo:
             comum = rng.gauss(0.0, escala * 0.75)
             ruido = {u: comum + rng.gauss(0.0, escala * 0.6) for u in ufs}
             amostras.append(
-                self._somar(swing_final, observado, ruido, b_perfil)["pct_pl"])
+                self._somar(swing_final, observado, ruido, b_perfil, escala)["pct_pl"])
 
         amostras.sort()
         lo = amostras[int(0.05 * (n - 1))]

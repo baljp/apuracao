@@ -191,10 +191,30 @@
   <div class="cartao grade">
     <div class="item"><div class="r" id="apurado">—</div>
       <div class="l">do eleitorado apurado</div></div>
+    <div class="item"><div class="r" id="secoes">—</div>
+      <div class="l">seções totalizadas</div></div>
     <div class="item"><div class="r" id="bruto">—</div>
       <div class="l">percentual bruto do TSE</div></div>
     <div class="item"><div class="r" id="correcao">—</div>
       <div class="l">correção do viés de apuração</div></div>
+  </div>
+
+  <div class="cartao grade" id="cartaoVotos" style="display:none">
+    <div class="item"><div class="r" id="votosPL">—</div>
+      <div class="l" id="lblVotosPL">votos apurados</div></div>
+    <div class="item"><div class="r" id="votosPT">—</div>
+      <div class="l" id="lblVotosPT">votos apurados</div></div>
+    <div class="item"><div class="r" id="diferenca">—</div>
+      <div class="l">de diferença até agora</div></div>
+  </div>
+
+  <div class="cartao grade" id="cartaoEleitorado" style="display:none">
+    <div class="item"><div class="r" id="comparecimento">—</div>
+      <div class="l">de comparecimento</div></div>
+    <div class="item"><div class="r" id="abstencao">—</div>
+      <div class="l">de abstenção</div></div>
+    <div class="item"><div class="r" id="brancosNulos">—</div>
+      <div class="l">de brancos e nulos</div></div>
   </div>
 
   <div class="cartao" id="cartaoGrafico" style="display:none">
@@ -340,7 +360,7 @@
 
 <script type="module">
 import { Modelo } from "./modelo.js?v=f9cbc40f4d";
-import * as tse from "./tse.js?v=51e02a2fc1";
+import * as tse from "./tse.js?v=836fd3c161";
 import * as pq from "./pesquisas.js?v=2e88ac00d0";
 
 /* Ritmo de atualização.
@@ -435,24 +455,26 @@ async function iniciar() {
 
 async function tick() {
   try {
-    const { observado, fracoes, nomes: nms, falhas } = await tse.lerTudo(TURNO);
+    const { observado, fracoes, nomes: nms, falhas, totais, horaTSE } =
+      await tse.lerTudo(TURNO);
     if (nms && nms.pl) {
       nomes = { pl: titulo(nms.pl), pt: titulo(nms.pt) };
       $("nomePL").textContent = nomes.pl;
       $("nomePT").textContent = nomes.pt;
     }
     const r = modelo.projetar(fracoes, observado, 240);
-    pinta(r, falhas);
+    pinta(r, falhas, totais, horaTSE, observado);
   } catch (e) {
     $("status").innerHTML = '<span class="erro">⚠ falha ao ler o TSE — tentando de novo'
       + " em 1 minuto</span>";
   }
 }
 
-function pinta(r, falhas) {
-  const hora = new Date().toLocaleTimeString("pt-BR");
-  let st = '<span class="pisca"></span>atualizado às ' + hora
-         + " · dados oficiais do TSE";
+function pinta(r, falhas, totais, horaTSE, observado) {
+  // A hora que o TSE carimbou no arquivo, não a hora do aparelho de quem
+  // está olhando: é ela que diz de quando são os números.
+  const hora = horaTSE || new Date().toLocaleTimeString("pt-BR");
+  let st = '<span class="pisca"></span>dados do TSE de ' + esc(hora);
   if (falhas && falhas.length) {
     st += ' · <span class="erro">' + falhas.length
         + " estado(s) sem resposta</span>";
@@ -489,6 +511,45 @@ function pinta(r, falhas) {
   $("probabilidade").textContent = txt;
 
   $("bruto").textContent = r.brutoPl == null ? "—" : n1(r.brutoPl) + "%";
+
+  const mil = (v) => Math.round(v).toLocaleString("pt-BR");
+  const pct = (parte, todo) => todo > 0 ? n1(100 * parte / todo) + "%" : "—";
+
+  if (totais && totais.secoes > 0) {
+    $("secoes").textContent = mil(totais.secoesApuradas);
+    $("secoes").title = "de " + mil(totais.secoes);
+  }
+
+  // Votos absolutos já apurados: o percentual diz quem está à frente, o
+  // número de votos diz por quanto.
+  if (observado) {
+    let vpl = 0, vpt = 0;
+    for (const uf of Object.values(observado)) { vpl += uf.pl; vpt += uf.pt; }
+    if (vpl + vpt > 0) {
+      $("cartaoVotos").style.display = "grid";
+      $("votosPL").textContent = mil(vpl);
+      $("votosPT").textContent = mil(vpt);
+      $("lblVotosPL").textContent = "votos de " + esc(nomes.pl.split(" ")[0]);
+      $("lblVotosPT").textContent = "votos de " + esc(nomes.pt.split(" ")[0]);
+      const d = Math.abs(vpl - vpt);
+      $("diferenca").textContent = mil(d);
+      $("diferenca").nextElementSibling.textContent =
+        "votos à frente para " + (vpl > vpt ? nomes.pl.split(" ")[0]
+                                            : nomes.pt.split(" ")[0]);
+    }
+  }
+
+  // Comparecimento, abstenção, brancos e nulos — que o TSE publica e muita
+  // gente procura numa noite de apuração.
+  if (totais && totais.eleitorado > 0) {
+    $("cartaoEleitorado").style.display = "grid";
+    $("comparecimento").textContent = pct(totais.comparecimento, totais.eleitorado);
+    $("abstencao").textContent = pct(totais.abstencao, totais.eleitorado);
+    const bn = totais.brancos + totais.nulos;
+    $("brancosNulos").textContent = pct(bn, totais.comparecimento);
+    $("brancosNulos").title = mil(totais.brancos) + " brancos e "
+      + mil(totais.nulos) + " nulos";
+  }
   const dif = r.brutoPl == null ? null : r.projecaoPl - r.brutoPl;
   $("correcao").textContent = dif == null ? "—"
     : (dif >= 0 ? "+" : "−") + n1(Math.abs(dif)) + " pp";
@@ -693,7 +754,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=03dd926d4c").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=eef02064ec").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
