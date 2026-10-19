@@ -197,6 +197,8 @@
       <div class="l">percentual bruto do TSE</div></div>
     <div class="item"><div class="r" id="correcao">—</div>
       <div class="l">correção do viés de apuração</div></div>
+    <div class="item"><div class="r" id="conclusao">—</div>
+      <div class="l">previsão de 99% apurado</div></div>
   </div>
 
   <div class="cartao grade" id="cartaoVotos" style="display:none">
@@ -215,6 +217,13 @@
       <div class="l">de abstenção</div></div>
     <div class="item"><div class="r" id="brancosNulos">—</div>
       <div class="l">de brancos e nulos</div></div>
+  </div>
+
+  <div class="cartao" id="cartaoMapa" style="display:none">
+    <h2>Mapa da apuração</h2>
+    <svg id="mapa" viewBox="0 0 310 400" style="width:100%;max-width:420px;
+      margin:0 auto;display:block;height:auto"></svg>
+    <div class="faixa" id="legendaMapa" style="margin-top:10px"></div>
   </div>
 
   <div class="cartao" id="cartaoGrafico" style="display:none">
@@ -418,7 +427,40 @@ const esc = (s) => String(s == null ? "" : s)
 
 let modelo = null;
 let nomes = { pl: "Flávio Bolsonaro", pt: "Lula" };
-const historico = [];
+
+/* A trajetória fica guardada no aparelho. Sem isso, recarregar a página no
+ * meio da noite — ou o navegador descartar a aba, o que acontece em celular
+ * com pouca memória — apagaria o gráfico e ele recomeçaria do zero.
+ *
+ * É a única coisa que o site guarda, fica só no aparelho de quem olha e não
+ * vai para lugar nenhum. A chave inclui o turno e o dia, de modo que a
+ * trajetória de um dia nunca aparece no outro. */
+const CHAVE_HIST = "trajetoria-" + TURNO + "-"
+  + new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
+
+function lerHistorico() {
+  try {
+    const bruto = localStorage.getItem(CHAVE_HIST);
+    const lista = bruto ? JSON.parse(bruto) : [];
+    return Array.isArray(lista) ? lista.filter(
+      (p) => p && typeof p.pct === "number" && typeof p.proj === "number") : [];
+  } catch { return []; }
+}
+
+function salvarHistorico() {
+  try {
+    localStorage.setItem(CHAVE_HIST, JSON.stringify(historico.slice(-400)));
+    // Limpa trajetórias de dias anteriores, para não acumular.
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("trajetoria-") && k !== CHAVE_HIST) {
+        localStorage.removeItem(k);
+      }
+    }
+  } catch { /* modo privado, armazenamento cheio: o site funciona sem isso */ }
+}
+
+const historico = lerHistorico();
 
 function titulo(s) {
   return s.replace(/\S+/g, (p) =>
@@ -572,9 +614,112 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   }).join("");
 
   if (!historico.length || r.pctApurado > historico[historico.length - 1].pct + 0.05) {
-    historico.push({ pct: r.pctApurado, proj: r.projecaoPl, bruto: r.brutoPl });
+    historico.push({ pct: r.pctApurado, proj: r.projecaoPl, bruto: r.brutoPl,
+                     t: Date.now() });
+    salvarHistorico();
   }
   desenha();
+  preverConclusao(r);
+  desenhaMapa(r);
+}
+
+/* Previsão de quando a apuração termina.
+ *
+ * O ritmo é medido pelos últimos pontos da trajetória, que já trazem o
+ * horário de cada leitura. Usa-se a mediana dos ritmos recentes, e não a
+ * média, porque a apuração anda aos trancos: uma pausa de dois minutos
+ * arrastaria a média e faria a previsão pular. */
+function preverConclusao(r) {
+  const pts = historico.filter((p) => p.t).slice(-12);
+  if (pts.length < 4 || r.pctApurado >= 99) {
+    $("conclusao").textContent = r.pctApurado >= 99 ? "concluída" : "—";
+    return;
+  }
+  const ritmos = [];
+  for (let i = 1; i < pts.length; i++) {
+    const dt = (pts[i].t - pts[i - 1].t) / 60000;   // minutos
+    const dp = pts[i].pct - pts[i - 1].pct;
+    if (dt > 0.05 && dp > 0) ritmos.push(dp / dt);
+  }
+  if (ritmos.length < 3) { $("conclusao").textContent = "—"; return; }
+  ritmos.sort((a, b) => a - b);
+  const ritmo = ritmos[Math.floor(ritmos.length / 2)];   // pontos por minuto
+  if (!(ritmo > 0)) { $("conclusao").textContent = "—"; return; }
+
+  const faltam = (99 - r.pctApurado) / ritmo;           // minutos
+  if (faltam > 600) { $("conclusao").textContent = "—"; return; }
+  const quando = new Date(Date.now() + faltam * 60000);
+  $("conclusao").textContent = quando.toLocaleTimeString("pt-BR",
+    { hour: "2-digit", minute: "2-digit" });
+  $("conclusao").title = "no ritmo atual, faltam cerca de "
+    + Math.round(faltam) + " minutos";
+}
+
+/* Mapa do Brasil em blocos.
+ *
+ * Não é um mapa geográfico: cada estado é um quadrado do mesmo tamanho,
+ * posicionado mais ou menos onde fica no país. É de propósito. Num mapa de
+ * verdade o Amazonas ocupa um quarto da tela e o Distrito Federal some,
+ * o que faria a leitura ser sobre área, e não sobre eleição. Aqui cada
+ * estado pesa igual e todos são legíveis no celular.
+ *
+ * A cor mostra quem lidera na projeção; a opacidade, o quanto já apurou.
+ */
+const GRADE_UF = {
+  RR: [2, 0], AP: [3, 0],
+  AM: [1, 1], PA: [2, 1], MA: [3, 1], CE: [4, 1], RN: [5, 1],
+  AC: [0, 2], RO: [1, 2], TO: [2, 2], PI: [3, 2], PB: [4, 2], PE: [5, 2],
+  MT: [1, 3], GO: [2, 3], BA: [3, 3], AL: [4, 3], SE: [5, 3],
+  MS: [1, 4], DF: [2, 4], MG: [3, 4], ES: [4, 4],
+  SP: [2, 5], RJ: [3, 5],
+  PR: [1, 6],
+  SC: [1, 7],
+  RS: [1, 8],
+};
+
+function desenhaMapa(r) {
+  if (!r.estados || !r.estados.length) return;
+  $("cartaoMapa").style.display = "block";
+
+  const L = 44, G = 4;   // lado do bloco e espaçamento
+  let svg = "";
+  let semDado = 0;
+
+  for (const e of r.estados) {
+    const pos = GRADE_UF[e.uf];
+    if (!pos) continue;                       // exterior (ZZ) não entra
+    const x = pos[0] * (L + G) + 2;
+    const y = pos[1] * (L + G) + 2;
+    const lideraPL = e.projPl > 50;
+    const cor = lideraPL ? "var(--pl)" : "var(--pt)";
+    // Quanto mais apurado, mais sólido. Nunca totalmente transparente,
+    // para o estado continuar visível.
+    const apu = Math.max(0, Math.min(e.pctApurado, 100));
+    const opac = 0.18 + 0.82 * (apu / 100);
+    if (apu < 1) semDado++;
+    const margem = Math.abs(e.projPl - 50);
+    svg += `<g>`
+      + `<rect x="${x}" y="${y}" width="${L}" height="${L}" rx="7"`
+      + ` fill="${cor}" opacity="${opac.toFixed(2)}"/>`
+      + `<text x="${x + L / 2}" y="${y + L / 2 - 2}" text-anchor="middle"`
+      + ` font-size="14" font-weight="700" fill="#fff"`
+      + ` style="paint-order:stroke">${esc(e.uf)}</text>`
+      + `<text x="${x + L / 2}" y="${y + L / 2 + 13}" text-anchor="middle"`
+      + ` font-size="10" fill="#fff" opacity="0.9">`
+      + (apu < 1 ? "—" : n1(e.projPl) + "%") + `</text>`
+      + `<title>${esc(e.uf)}: ${n1(e.pctApurado)}% apurado, projeção `
+      + `${n1(e.projPl)}% para ${esc(nomes.pl.split(" ")[0])}`
+      + (margem < 2 ? " (disputa apertada)" : "") + `</title>`
+      + `</g>`;
+  }
+  $("mapa").innerHTML = svg;
+  $("legendaMapa").innerHTML =
+    "Cor: quem lidera na <strong>projeção</strong> do estado — "
+    + '<span style="color:var(--pl)">' + esc(nomes.pl.split(" ")[0]) + "</span> ou "
+    + '<span style="color:var(--pt)">' + esc(nomes.pt.split(" ")[0]) + "</span>. "
+    + "Quanto mais forte a cor, mais apurado. Blocos pálidos ainda têm pouca "
+    + "ou nenhuma urna contada, e a projeção neles vem do padrão da região."
+    + (semDado ? " <strong>" + semDado + " estado(s) sem apuração.</strong>" : "");
 }
 
 function desenha() {
@@ -776,7 +921,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=0d70e8348a").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=11bb847cf6").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
