@@ -628,18 +628,33 @@ const DEMO = (() => {
   return isFinite(v) && v > 0 && v <= 100 ? v : null;
 })();
 
-const DIA_ELEICAO = "2026-10-25";          // 2º turno
-const AO_VIVO = 25000;                     // no dia: contínuo
-const ESPERA = 10 * 60 * 1000;             // antes: a cada 10 minutos
+/* Quando o site começa a falar com o TSE.
+ *
+ * As urnas fecham às 17h de Brasília e a totalização começa logo depois.
+ * Antes disso não existe NADA para buscar: cada visita geraria 54 requisições
+ * ao TSE para receber zeros — gastando os dados de quem olha, carga do
+ * servidor da Justiça Eleitoral, e ainda mostrando "falha ao ler o TSE" num
+ * dia em que falha nenhuma houve, porque o arquivo do 2º turno sequer existe
+ * ainda. Um alerta que aparece quando nada está errado ensina a pessoa a
+ * ignorar alertas, e aí ele não serve mais para o dia em que algo der errado
+ * de verdade.
+ *
+ * O site se conecta cinco minutos antes do fechamento das urnas, para já
+ * estar a postos quando o primeiro boletim sair.
+ *
+ * (Os modos de teste — ?turno=1 e ?demo=N — continuam livres, porque leem
+ * dados de uma eleição que já terminou.)
+ */
+const ABERTURA = Date.UTC(2026, 9, 25, 19, 55);        // 16h55 de Brasília
+const FECHAMENTO_URNAS = Date.UTC(2026, 9, 25, 20, 0); // 17h00 de Brasília
 
-function ehDiaDaEleicao() {
-  // Fuso de Brasília, que é o que define o dia da apuração.
-  const agora = new Date();
-  const brasilia = new Date(agora.getTime() - 3 * 3600000);
-  return brasilia.toISOString().slice(0, 10) === DIA_ELEICAO;
-}
+const AO_VIVO = 25000;                     // apuração: contínua
+const ESPERA = 10 * 60 * 1000;             // pesquisas: de 10 em 10 minutos
 
-const INTERVALO = ehDiaDaEleicao() ? AO_VIVO : ESPERA;
+// Um só ritmo. Antes da abertura o tick não vai à rede — só acerta a contagem
+// regressiva na tela, o que é de graça.
+const INTERVALO = AO_VIVO;
+
 const TURNO = new URLSearchParams(location.search).get("turno") === "1"
   ? tse.ELEICAO_1T : tse.ELEICAO_2T;
 
@@ -752,6 +767,8 @@ async function iniciar() {
 
 async function tick() {
   if (DEMO !== null) return tickDemo();
+  // Fora da janela da apuração, nem toca no TSE.
+  if (TURNO === tse.ELEICAO_2T && Date.now() < ABERTURA) return tickEspera();
   try {
     const { observado, fracoes, nomes: nms, falhas, totais, horaTSE } =
       await tse.lerTudo(TURNO);
@@ -762,11 +779,31 @@ async function tick() {
     }
     const r = modelo.projetar(fracoes, observado, 240);
     pinta(r, falhas, totais, horaTSE, observado);
+    jaLeuTSE = true;
   } catch (e) {
+    // Nos minutos entre a conexão e o primeiro boletim, o TSE ainda não
+    // publicou o arquivo do 2º turno. Isso é o esperado, não uma falha: a
+    // tela diz que está conectada e aguardando. Só depois de já ter lido o
+    // TSE uma vez é que não conseguir ler vira alerta de verdade.
+    if (!jaLeuTSE) {
+      $("status").textContent = "conectado ao TSE — aguardando o primeiro boletim";
+      $("faixaStatus").className = "status vivo";
+      $("statusTitulo").textContent = "Conectado · aguardando o primeiro boletim";
+      $("statusTexto").innerHTML =
+        "As urnas estão fechando. O site já está ligado ao "
+        + "<strong>sistema oficial do TSE</strong> e atualiza sozinho no "
+        + "instante em que o primeiro voto for totalizado.";
+      mostrarPreviaPesquisas();
+      return;
+    }
     $("status").innerHTML = '<span class="erro">⚠ falha ao ler o TSE — tentando de novo'
-      + " em 1 minuto</span>";
+      + " em 25 segundos</span>";
   }
 }
+
+// Vira true na primeira leitura bem-sucedida do TSE. Antes disso, não
+// conseguir ler é o estado normal do mundo, não um defeito.
+let jaLeuTSE = false;
 
 function pinta(r, falhas, totais, horaTSE, observado) {
   // A hora que o TSE carimbou no arquivo, não a hora do aparelho de quem
@@ -1065,6 +1102,102 @@ function desenha() {
 
 iniciar();
 
+/* A faixa no alto da página responde à única pergunta que importa antes de
+ * olhar qualquer número: isto é pesquisa ou isto é voto contado?
+ *
+ * São três estados, e a cor muda junto com o texto, porque numa tela de
+ * celular a cor chega antes da leitura. */
+function atualizarFaixa(r, comecou) {
+  const faixa = $("faixaStatus");
+
+  if (!comecou) {
+    faixa.className = "status vivo";
+    $("statusTitulo").textContent = "Conectado · aguardando o primeiro boletim";
+    $("statusTexto").innerHTML =
+      "O site já está lendo o <strong>sistema oficial do TSE</strong>, que "
+      + "ainda não publicou voto nenhum. O número abaixo é a "
+      + "<strong>média das pesquisas</strong> — intenção de voto declarada, "
+      + "não resultado. Assim que a totalização começar, o painel troca "
+      + "sozinho para os dados oficiais.";
+    mostrarPreviaPesquisas();
+    return;
+  }
+
+  if (r.pctApurado >= 99.95) {
+    faixa.className = "status fim";
+    $("statusTitulo").textContent = "Apuração encerrada";
+    $("statusTexto").innerHTML =
+      "Com tudo apurado, vale o <strong>resultado oficial do TSE</strong> — "
+      + "a projeção já não serve para nada, e os dois números coincidem.";
+    return;
+  }
+
+  faixa.className = "status vivo";
+  $("statusTitulo").textContent = "Ao vivo · apuração oficial do TSE";
+  $("statusTexto").innerHTML =
+    "<strong>" + n1(r.pctApurado) + "% do eleitorado já totalizado.</strong> "
+    + "Os votos são oficiais, lidos direto do TSE. A projeção corrige o viés "
+    + "da ordem em que os estados apuram — as pesquisas não entram mais "
+    + "nesta conta.";
+}
+
+/* Enquanto não há voto contado, o painel principal mostra a média das
+ * pesquisas, para não ser uma tela vazia. Vem com rótulo próprio, para
+ * ninguém confundir com apuração. */
+async function mostrarPreviaPesquisas() {
+  if (pesquisas === null) {
+    try { await carregarPesquisas(); } catch { return; }
+  }
+  if (!pesquisas || !pesquisas.length) return;
+  const ag = pq.agregar(pesquisas);
+  if (!ag) return;
+  const alvo = $("previaPesquisas");
+  if (!alvo) return;
+  alvo.innerHTML =
+    '<div class="faixa" style="margin-bottom:10px">MÉDIA DAS PESQUISAS '
+    + "· ainda não há votos apurados</div>"
+    + '<div class="placar"><div class="lado pl">'
+    + '<div class="nome">' + esc(nomes.pl) + "</div>"
+    + '<div class="pct">' + n2(ag.pl) + "%</div>"
+    + '<div class="faixa">entre ' + n2(ag.faixa[0]) + "% e "
+    + n2(ag.faixa[1]) + "%</div></div>"
+    + '<div class="lado pt dir"><div class="nome">' + esc(nomes.pt) + "</div>"
+    + '<div class="pct">' + n2(ag.pt) + "%</div>"
+    + '<div class="faixa">entre ' + n2(100 - ag.faixa[1]) + "% e "
+    + n2(100 - ag.faixa[0]) + "%</div></div></div>"
+    + '<div class="faixa" style="margin-top:12px;text-align:left">'
+    + ag.nUsadas + " pesquisas dos últimos 21 dias. No 1º turno de 2026 as "
+    + "pesquisas erraram o líder da eleição — veja a aba Pesquisas.</div>";
+}
+
+/* Antes da abertura: nenhuma chamada ao TSE. A tela mostra a contagem até o
+ * fechamento das urnas e a média das pesquisas, que é a única informação que
+ * existe nesse momento. */
+function tickEspera() {
+  const falta = FECHAMENTO_URNAS - Date.now();
+  const h = Math.floor(falta / 3600000);
+  const m = Math.floor((falta % 3600000) / 60000);
+  const quando = h >= 24
+    ? Math.floor(h / 24) + (Math.floor(h / 24) === 1 ? " dia" : " dias")
+      + " e " + (h % 24) + "h"
+    : (h > 0 ? h + "h" + String(m).padStart(2, "0") : m + " minutos");
+
+  $("status").textContent = "as urnas fecham em " + quando;
+  $("faixaStatus").className = "status pesq";
+  $("statusTitulo").textContent = "A apuração começa em " + quando;
+  $("statusTexto").innerHTML =
+    "As urnas fecham às <strong>17h de Brasília</strong> de 25 de outubro. "
+    + "Até lá não há voto para contar, então esta página nem consulta o TSE — "
+    + "ela se conecta sozinha cinco minutos antes, para pegar os primeiros "
+    + "boletins assim que saírem. O número abaixo é a "
+    + "<strong>média das pesquisas</strong>, que é o que existe por enquanto.";
+
+  $("vazio").style.display = "block";
+  $("placar").style.display = "none";
+  $("apurado").textContent = "0%";
+  mostrarPreviaPesquisas();
+}
+
 /* Monta o estado da apuração num ponto qualquer, a partir dos votos reais do
  * 1º turno e da ordem real de chegada. */
 let baseDemo = null;
@@ -1304,7 +1437,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=9cf5c3768d").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=a7e1d13fcb").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
