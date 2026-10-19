@@ -1296,7 +1296,12 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   // A hora que o TSE carimbou no arquivo, não a hora do aparelho de quem
   // está olhando: é ela que diz de quando são os números.
   const hora = horaTSE || new Date().toLocaleTimeString("pt-BR");
-  let st = '<span class="pisca"></span>dados do TSE de ' + esc(hora);
+  // Enquanto não há voto totalizado, dizer "dados do TSE de 16:56" sugere
+  // que existe número ali. Existe conexão, que é outra coisa.
+  let st = r.pctApurado > 0.05
+    ? '<span class="pisca"></span>dados do TSE de ' + esc(hora)
+    : '<span class="pisca"></span>conectado ao TSE · nenhum voto totalizado '
+      + "ainda · " + esc(hora);
   if (falhas && falhas.length) {
     st += ' · <span class="erro">' + falhas.length
         + " estado(s) sem resposta</span>";
