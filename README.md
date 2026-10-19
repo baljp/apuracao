@@ -97,6 +97,66 @@ concentrada numa região, ele vai demorar mais a perceber.
 
 ---
 
+## 50 eleições cegas
+
+Duas eleições reais são pouca coisa para saber onde um modelo quebra. Então o
+`programa/simular.py` inventa dezenas de resultados sobre os municípios reais —
+o eleitorado e o voto do 1º turno de 2026 são verdadeiros, o 2º turno é
+sorteado — e usa a ordem de chegada real.
+
+Os cenários são gerados de propósito com as estruturas que o modelo **não**
+pressupõe: swing desigual entre regiões, swing que depende do nível do lugar,
+choque em um estado sorteado e ruído município a município. Um gerador que
+produzisse o que o modelo espera daria notas altas sem significar nada.
+
+| Apurado | Projeção (médio / p90 / pior) | Percentual bruto (médio / pior) |
+|---|---|---|
+| 0,5% | 1,01 / 2,12 / 2,69 pp | 14,65 / 17,72 pp |
+| 1% | 0,55 / 1,09 / 1,51 pp | 12,88 / 15,26 pp |
+| **5%** | **0,34 / 0,71 / 1,15 pp** | 12,97 / 14,80 pp |
+| 10% | 0,26 / 0,47 / 0,85 pp | 11,77 / 13,38 pp |
+| 50% | 0,16 / 0,37 / 0,52 pp | 6,72 / 7,77 pp |
+
+**Com 5% apurado o modelo apontou o vencedor certo em 49 das 50.** O percentual
+bruto acertaria 32.
+
+O erro cresce conforme o país se move de forma mais desigual — 0,20 pp quando
+as regiões andam juntas, 0,44 pp quando se espalham. É o mesmo mecanismo que
+explica 2018.
+
+**Duas ressalvas.** Nos cenários parecidos com 2018 o modelo erra 0,29 pp, mas
+em 2018 de verdade errou 1,79 pp: o gerador ainda não é tão cruel quanto a
+realidade, porque nele o swing regional é sorteado de forma independente,
+enquanto em 2018 ele estava correlacionado com a ordem em que os estados
+apuraram. Trate a simulação como o melhor caso e 2018 como o pior.
+
+E a simulação **não** foi usada para calibrar. Os parâmetros que ela escolhe
+(`K_UF=60000, K_REGIAO=30000`) melhoram 38% nos cenários inventados e pioram em
+2018 — o ganho vem de decorar o gerador. O `calibrar_simulado.py` confere
+sempre contra as eleições reais justamente para pegar isso.
+
+---
+
+## Experimentos que não deram certo
+
+Ficam registrados porque economizam o tempo de quem tiver a mesma ideia.
+
+**Ancorar o swing nas pesquisas finais** (como faz o modelo do Mahlmeister).
+Testado com as pesquisas reais de cada ano: melhora 0,39 pp em 2018 com 1%
+apurado, piora 0,24 pp em 2022, some a partir de 3%. Balanço zero. Revelador:
+em 2018 a âncora estava quase perfeita (dava 55,0%, real foi 55,13%) e mesmo
+assim o erro de +1,8 pp persistiu — prova de que o problema de 2018 não é o
+nível nacional, e sim a distribuição regional.
+
+**Regressão do swing sobre o nível do lugar.** Em 2018 a relação é forte (onde
+o candidato era forte caiu mais), e a inclinação medida com tudo apurado é
+−0,140. Mas no início da noite ela não é mensurável: os estados que apuram
+primeiro são os de nível alto, e a parcela apurada deles ainda não os
+representa. Testado em 15 combinações, piora em todas. Veja
+`programa/testar_nivel.py`.
+
+---
+
 ## Três formas de usar
 
 **1. Site.** https://baljp.github.io/apuracao-2026/ — abre em qualquer
