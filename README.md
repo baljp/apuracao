@@ -157,6 +157,58 @@ representa. Testado em 15 combinações, piora em todas. Veja
 
 ---
 
+## Quão difícil deve ser 2026
+
+Os dois backtests dão erros muito diferentes — 0,24 pp em 2022 e 1,79 pp em
+2018 — e a diferença não é acaso. Ela tem uma causa mensurável antes da
+apuração começar: **quanto voto sobrou dos candidatos eliminados**.
+
+| Eleição | Finalistas somavam no 1º turno | Voto a redistribuir | Erro aos 5% |
+|---|---|---|---|
+| 2018 | 75,31% (46,03 + 29,28) | **24,7%** | 1,79 pp |
+| 2022 | 91,63% (43,20 + 48,43) | 8,4% | 0,24 pp |
+| **2026** | **92,19%** (47,03 + 45,16) | **7,8%** | ? |
+
+Quanto mais voto ficou solto, mais o eleitorado precisa se reorganizar entre os
+turnos — e essa reorganização é geograficamente desigual, que é exatamente o
+que o modelo não consegue antecipar. Em 2018, um quarto do eleitorado teve de
+escolher de novo; em 2026, menos de um décimo.
+
+Pelo indicador, **2026 é o cenário mais favorável dos três**, um pouco melhor
+até que 2022. Não é garantia: é um indicador estrutural, e uma reviravolta
+concentrada numa região continuaria sendo invisível para o modelo até aquela
+região apurar.
+
+---
+
+## O quanto a base recente importa
+
+`programa/backtest_pares.py` testa o modelo com bases de anos anteriores, para
+medir o quanto ele depende de a base ser fresca. Em todos, a ordem de chegada
+é a real de 2026.
+
+| Par | Distância | Erro médio aos 5% | Pior |
+|---|---|---|---|
+| 1º turno 2022 → 1º turno 2026 | 4 anos, com troca de candidato | 0,81 pp | 2,32 pp |
+| 2º turno 2018 → 2º turno 2022 | 4 anos | 0,60 pp | 1,18 pp |
+| 1º turno 2022 → **2º turno 2022** | 3 semanas | **0,07 pp** | 0,24 pp |
+
+Mesmo prevendo quatro anos à frente, e mesmo com o candidato trocando
+(Bolsonaro saiu, Flávio entrou), o erro fica abaixo de 1 ponto — enquanto o
+percentual bruto erraria 11,6 pontos no mesmo instante. Isso mostra que o
+modelo se apoia na geografia do voto, que é estável.
+
+Mas a base de três semanas é dez vezes melhor que a de quatro anos. É por isso
+que este projeto usa o 1º turno de 2026 como base, e não 2022.
+
+Um detalhe que contraria a intuição: prever o 2º turno de 2022 a partir do 2º
+turno de **2018** (0,60 pp) saiu melhor que prevê-lo a partir do 1º turno do
+próprio 2022 em 2018 (1,10 pp). Dois segundos turnos se parecem entre si mais
+do que um primeiro e um segundo turno do mesmo ano, porque no segundo turno a
+disputa já está reorganizada em dois blocos.
+
+---
+
 ## Três formas de usar
 
 **1. Site.** https://baljp.github.io/apuracao-2026/ — abre em qualquer
