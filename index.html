@@ -888,7 +888,38 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   }
   $("status").innerHTML = st;
 
-  const comecou = r.pctApurado > 0.05;
+  // Quantos votos realmente chegaram. Isto tem de ser contado ANTES de
+  // decidir se há placar, e não pode ser deduzido do percentual apurado.
+  //
+  // Os dois números vêm de arquivos diferentes do TSE: o quanto já apurou
+  // vem do andamento, os votos vêm do resultado. Se o resultado falhar e o
+  // andamento não, o modelo não tem voto nenhum para projetar e cai no
+  // padrão da base — e a tela anunciava "100,0% apurado · 50,0% × 50,0%",
+  // um empate perfeito inventado com cara de apuração encerrada. Era o pior
+  // desfecho possível desta página, e acontecia em silêncio.
+  // (Encontrado por programa/testar_resiliencia.mjs.)
+  let votosPl = 0, votosPt = 0;
+  for (const uf of Object.values(observado || {})) {
+    votosPl += uf.pl; votosPt += uf.pt;
+  }
+  const temVoto = votosPl + votosPt > 0;
+
+  if (!temVoto && falhas && falhas.length >= 20) {
+    $("status").innerHTML = '<span class="erro">⚠ não consegui ler o TSE ('
+      + falhas.length + " estados sem resposta) — tentando de novo</span>";
+    $("faixaStatus").className = "status pesq";
+    $("statusTitulo").textContent = "Sem contato com o TSE";
+    $("statusTexto").innerHTML =
+      "Os arquivos oficiais não estão chegando até aqui. Enquanto não "
+      + "chegarem, esta página <strong>não mostra número nenhum</strong> — "
+      + "um resultado inventado seria pior do que tela vazia. Ela continua "
+      + "tentando sozinha.";
+    $("vazio").style.display = "block";
+    $("placar").style.display = "none";
+    return;
+  }
+
+  const comecou = temVoto && r.pctApurado > 0.05;
   if (DEMO === null) atualizarFaixa(r, comecou);
   $("vazio").style.display = comecou ? "none" : "block";
   $("placar").style.display = comecou ? "block" : "none";
@@ -936,9 +967,8 @@ function pinta(r, falhas, totais, horaTSE, observado) {
 
   // Votos absolutos já apurados: o percentual diz quem está à frente, o
   // número de votos diz por quanto.
-  if (observado) {
-    let vpl = 0, vpt = 0;
-    for (const uf of Object.values(observado)) { vpl += uf.pl; vpt += uf.pt; }
+  {
+    const vpl = votosPl, vpt = votosPt;
     if (vpl + vpt > 0) {
       $("cartaoVotos").style.display = "";
       $("votosPL").textContent = mil(vpl);
@@ -1624,7 +1654,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=347bebdf85").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=240ea5868e").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

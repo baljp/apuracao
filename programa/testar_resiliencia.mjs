@@ -126,14 +126,14 @@ const CENARIOS = [
   {
     nome: "votos negativos",
     rota: (req) => eTSE(req.url())
-      ? servirAlterado(req, (t) => t.replace(/"vap":"(\d+)"/g, '"vap":"-$1"'))
+      ? servirAlterado(req, (t) => t.replace(/"vap"\s*:\s*"(\d+)"/g, '"vap" : "-$1"'))
       : req.continue(),
     espero: "nenhum NaN, nenhum percentual fora de 0–100",
   },
   {
     nome: "votos absurdamente grandes",
     rota: (req) => eTSE(req.url())
-      ? servirAlterado(req, (t) => t.replace(/"vap":"(\d+)"/g, '"vap":"9999999999999"'))
+      ? servirAlterado(req, (t) => t.replace(/"vap"\s*:\s*"(\d+)"/g, '"vap" : "9999999999999"'))
       : req.continue(),
     espero: "nenhum NaN, nenhum percentual fora de 0–100",
   },
@@ -144,8 +144,8 @@ const CENARIOS = [
       const u = req.url();
       if (!eTSE(u)) return req.continue();
       if (!u.includes("-ab.json")) return servirReal(req);
-      return servirAlterado(req, (t) => t.replace(/"est":"(\d+)"/g,
-        (_, n) => '"est":"' + (parseInt(n, 10) * 2) + '"'));
+      return servirAlterado(req, (t) => t.replace(/"est"\s*:\s*"(\d+)"/g,
+        (_, n) => '"est" : "' + (parseInt(n, 10) * 2) + '"'));
     },
     espero: "apurado não passa de 100%",
   },
