@@ -524,13 +524,20 @@ class Modelo:
         frac_falta = (falta_total / self.validos_base_total
                       if self.validos_base_total else 1.0)
         # Quanto menos falta apurar, menos espaço há para errar.
-        escala = SIGMA_SWING * math.sqrt(max(frac_falta, 0.0))
+        #
+        # ATENÇÃO ao nome: esta variável é o DESVIO do ruído, e não tem nada
+        # a ver com o parâmetro `escala` (o fator de votos válidos por UF).
+        # Chamar as duas de "escala" fazia a local sobrescrever o parâmetro,
+        # e daí o bootstrap rodava sem a correção de votos válidos — e
+        # estourava AttributeError ao passar um float onde se esperava dict.
+        # O erro só aparecia com n_bootstrap > 0, que os backtests não usam.
+        sigma = SIGMA_SWING * math.sqrt(max(frac_falta, 0.0))
 
         amostras = []
         ufs = list(self.por_uf)
         for _ in range(n):
-            comum = rng.gauss(0.0, escala * 0.75)
-            ruido = {u: comum + rng.gauss(0.0, escala * 0.6) for u in ufs}
+            comum = rng.gauss(0.0, sigma * 0.75)
+            ruido = {u: comum + rng.gauss(0.0, sigma * 0.6) for u in ufs}
             amostras.append(
                 self._somar(swing_final, observado, ruido, b_perfil, escala)["pct_pl"])
 

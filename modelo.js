@@ -115,6 +115,8 @@ export class Modelo {
      * O swing é a diferença, em log-odds, contra o que saiu da urna. */
     const swingUf = new Map();
     const pesoUf = new Map();
+    const escalaUf = new Map();
+    const pesoEscala = new Map();
     const detalhe = new Map();
 
     for (const [uf, idx] of this.indicesPorUf) {
@@ -129,6 +131,21 @@ export class Modelo {
         espPt += v * (1 - s);
       }
       const votosObs = obsPl + obsPt;
+
+      // Quanto voto válido o 2º turno está rendendo, comparado ao que o 1º
+      // rendeu nos mesmos lugares.
+      //
+      // O modelo estima o que falta como "o mesmo volume de votos do 1º
+      // turno". Se brancos, nulos e abstenções mudarem — e mudam, geralmente
+      // crescendo mais onde o candidato eliminado era forte —, o peso de cada
+      // município na soma nacional sai errado. Esta razão corrige a escala
+      // com o que de fato saiu das urnas.
+      const esperadoVotos = espPl + espPt;
+      if (esperadoVotos > 0 && votosObs >= MIN_VOTOS_SWING) {
+        escalaUf.set(uf, votosObs / esperadoVotos);
+        pesoEscala.set(uf, votosObs);
+      }
+
       if (votosObs >= MIN_VOTOS_SWING && espPl > 0 && espPt > 0) {
         swingUf.set(uf, logit(obsPl, obsPt) - logit(espPl, espPt));
         pesoUf.set(uf, votosObs);
@@ -170,11 +187,29 @@ export class Modelo {
         : prior);
     }
 
+    // A escala de votos válidos segue o mesmo encolhimento do swing: com
+    // pouca apuração num estado, vale a escala nacional.
+    let pesoEscTotal = 0, somaEsc = 0;
+    for (const [uf, e] of escalaUf) {
+      somaEsc += e * pesoEscala.get(uf);
+      pesoEscTotal += pesoEscala.get(uf);
+    }
+    const escalaNacional = pesoEscTotal > 0 ? somaEsc / pesoEscTotal : 1;
+    const escalaFinal = new Map();
+    for (const uf of this.indicesPorUf.keys()) {
+      const e = escalaUf.has(uf)
+        ? encolher(escalaUf.get(uf), pesoEscala.get(uf), escalaNacional, K_UF)
+        : escalaNacional;
+      // Fora desta faixa é sinal de dado estranho, não de mudança real de
+      // comparecimento.
+      escalaFinal.set(uf, Math.min(Math.max(e, 0.75), 1.25));
+    }
+
     const bPerfil = this._coefPerfil(swingUf, pesoUf);
 
     /* --- passo 4: projeção e margem -------------------------------------- */
-    const central = this._somar(swingFinal, observado, null, bPerfil);
-    const faixa = this._bootstrap(swingFinal, observado, nBootstrap, bPerfil);
+    const central = this._somar(swingFinal, observado, null, bPerfil, escalaFinal);
+    const faixa = this._bootstrap(swingFinal, observado, nBootstrap, bPerfil, escalaFinal);
 
     let eleitoradoApurado = 0, votosApurados = 0, somaObsPl = 0;
     for (let i = 0; i < this.n; i++) eleitoradoApurado += this.fracao[i] * this.eleitorado[i];
@@ -240,7 +275,7 @@ export class Modelo {
 
   /* O que já apurou entra como veio da urna (é real); o que falta recebe a
    * base do município mais o swing que lhe cabe. */
-  _somar(swingFinal, observado, ruido, bPerfil) {
+  _somar(swingFinal, observado, ruido, bPerfil, escala) {
     let totalPl = 0, totalPt = 0;
     const porUf = new Map();
 
@@ -260,13 +295,17 @@ export class Modelo {
         if (peso > 0) perfilApurado = soma / peso;
       }
 
+      // O volume do que falta é corrigido pelo que o 2º turno está rendendo
+      // de voto válido naquele estado.
+      const fator = (escala && escala.get(uf)) || 1;
+
       for (const i of idx) {
         const falta = 1 - this.fracao[i];
         if (falta <= 1e-9) continue;
         let swM = sw;
         if (perfilApurado !== null) swM += bPerfil * (this.perfil[i] - perfilApurado);
         const s = share(this.baseLogit[i] + swM);
-        const v = falta * this.validosBase[i];
+        const v = falta * this.validosBase[i] * fator;
         pl += v * s;
         pt += v * (1 - s);
       }
@@ -281,23 +320,26 @@ export class Modelo {
   /* Margem de 90%: o swing é perturbado por um termo comum a todos os estados
    * (erro nacional, que não some com mais apuração) e um termo próprio de cada
    * um. A escala encolhe conforme menos resta a apurar. */
-  _bootstrap(swingFinal, observado, n, bPerfil) {
-    const central = this._somar(swingFinal, observado, null, bPerfil).pctPl;
+  _bootstrap(swingFinal, observado, n, bPerfil, escala) {
+    const central = this._somar(swingFinal, observado, null, bPerfil, escala).pctPl;
     if (n <= 0) return { faixa: [central, central], probPl: central > 50 ? 1 : 0 };
 
     let falta = 0;
     for (let i = 0; i < this.n; i++) falta += (1 - this.fracao[i]) * this.validosBase[i];
     const fracFalta = this.validosBaseTotal ? falta / this.validosBaseTotal : 1;
-    const escala = SIGMA_SWING * Math.sqrt(Math.max(fracFalta, 0));
+    // sigma, e não "escala": o parâmetro escala é outra coisa (o fator de
+    // votos válidos por UF). Confundir os dois foi exatamente o bug que
+    // apagava a correção dentro do bootstrap no lado Python.
+    const sigma = SIGMA_SWING * Math.sqrt(Math.max(fracFalta, 0));
 
     const rand = rng(12345);
     const ufs = [...this.indicesPorUf.keys()];
     const amostras = [];
     for (let k = 0; k < n; k++) {
-      const comum = normal(rand) * escala * 0.75;
+      const comum = normal(rand) * sigma * 0.75;
       const ruido = new Map();
-      for (const u of ufs) ruido.set(u, comum + normal(rand) * escala * 0.6);
-      amostras.push(this._somar(swingFinal, observado, ruido, bPerfil).pctPl);
+      for (const u of ufs) ruido.set(u, comum + normal(rand) * sigma * 0.6);
+      amostras.push(this._somar(swingFinal, observado, ruido, bPerfil, escala).pctPl);
     }
     amostras.sort((a, b) => a - b);
     return {
