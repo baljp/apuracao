@@ -242,6 +242,34 @@ rodar centenas de cenários restritos a eleições apertadas.
 
 ---
 
+### A confiança declarada é honesta?
+
+300 eleições **apertadas** (resultado final entre 48,5% e 51,5%), que é onde a
+probabilidade é posta à prova — numa eleição de 10 pontos qualquer modelo diz
+99,9% e acerta, o que não ensina nada.
+
+| Quando o painel diz | Ele acerta | n |
+|---|---|---|
+| 60–70% de certeza | 59,5% | 37 |
+| 70–80% | 81,2% | 32 |
+| 80–90% | 89,5% | 38 |
+| 90–95% | 88,5% | 26 |
+| 95–99% | 100% | 24 |
+| 99–100% | 100% | 130 |
+
+**A faixa de 90% cobriu o resultado real em 90,7% dos casos** (largura média:
+1,79 ponto). **Zero vezes cravou acima de 95% no lado errado, em 300.**
+
+Em seis das sete faixas o desvio fica dentro de 6 pontos, o que para essas
+amostras é ruído. Há uma leve tendência a confiança um pouco alta nas faixas
+de 60–70% e 90–95%, pequena o bastante para não justificar mexer no modelo —
+ajustar com base em desvios dessa ordem seria perseguir ruído.
+
+O erro médio da projeção nesses cenários apertados é de 0,41 pp, maior que os
+0,34 pp do conjunto geral, como esperado: são justamente os casos difíceis.
+
+---
+
 ## Três formas de usar
 
 **1. Site.** https://baljp.github.io/apuracao-2026/ — abre em qualquer
