@@ -283,6 +283,7 @@
         <div class="barra"><i id="pBarraPL"></i><i id="pBarraPT"></i></div>
         <div class="meio"><span>50%</span></div>
         <div class="faixa" id="pResumo"></div>
+        <div class="faixa" id="pAtualizado" style="margin-top:4px"></div>
       </div>
     </div>
 
@@ -436,10 +437,15 @@ async function iniciar() {
     tick();
     setInterval(tick, INTERVALO);
 
-    // As pesquisas mudam devagar, então têm ritmo próprio: de 10 em 10
-    // minutos, e só enquanto a aba delas estiver aberta.
+    // As pesquisas têm ritmo próprio, de 10 em 10 minutos, e esse ritmo
+    // não muda no dia da eleição: pesquisa sai de hora em hora, no máximo,
+    // então buscá-la a cada 25 segundos seria desperdício. Quem fica
+    // contínuo no domingo é a apuração, que é outra coisa.
+    //
+    // A busca só acontece com a aba de pesquisas aberta — não faz sentido
+    // gastar os dados de quem está acompanhando a apuração.
     setInterval(() => {
-      if (!$("painelPesquisas").hidden) { pesquisas = null; carregarPesquisas(); }
+      if (!$("painelPesquisas").hidden) recarregarPesquisas();
     }, ESPERA);
 
     // Uma aba deixada aberta a noite toda pode ter o temporizador suspenso
@@ -601,6 +607,12 @@ iniciar();
 
 let pesquisas = null;
 let mostrando = 12;
+let ultimaCargaPesquisas = 0;
+
+function recarregarPesquisas() {
+  pesquisas = null;
+  carregarPesquisas();
+}
 
 document.querySelectorAll(".aba").forEach((b) => {
   b.addEventListener("click", () => {
@@ -609,7 +621,12 @@ document.querySelectorAll(".aba").forEach((b) => {
     const qual = b.dataset.aba;
     $("painelApuracao").hidden = qual !== "apuracao";
     $("painelPesquisas").hidden = qual !== "pesquisas";
-    if (qual === "pesquisas" && pesquisas === null) carregarPesquisas();
+    if (qual === "pesquisas") {
+      // Ao abrir a aba: carrega se nunca carregou, ou recarrega se o que
+      // está na tela já passou dos 10 minutos.
+      if (pesquisas === null) carregarPesquisas();
+      else if (Date.now() - ultimaCargaPesquisas > ESPERA) recarregarPesquisas();
+    }
   });
 });
 
@@ -619,6 +636,7 @@ async function carregarPesquisas() {
     const lista = await pq.buscarSegundoTurno();
     await pq.cruzarComTSE(lista);
     pesquisas = lista;
+    ultimaCargaPesquisas = Date.now();
     pintaPesquisas();
     calcularAcerto();
   } catch (e) {
@@ -651,6 +669,10 @@ function pintaPesquisas() {
     $("pBarraPL").style.cssText = "width:" + ag.pl + "%;background:var(--pl)";
     $("pBarraPT").style.cssText = "width:" + ag.pt + "%;background:var(--pt)";
     const dist = Math.abs(ag.pl - 50);
+    const hCarga = new Date(ultimaCargaPesquisas).toLocaleTimeString("pt-BR",
+      { hour: "2-digit", minute: "2-digit" });
+    $("pAtualizado").textContent =
+      "Lido da Wikipédia às " + hCarga + " · atualiza a cada 10 minutos";
     $("pResumo").textContent =
       ag.nUsadas + " pesquisas dos últimos 21 dias, ponderadas por data e amostra. "
       + (dist < ag.erro
@@ -754,7 +776,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=eef02064ec").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=0d70e8348a").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
