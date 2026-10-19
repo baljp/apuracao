@@ -56,6 +56,22 @@ SIGMA_SWING = 0.035
 
 MIN_VOTOS_SWING = 400  # abaixo disso o swing de uma UF é só ruído
 
+# Âncora das pesquisas.
+#
+# Com pouquíssima apuração, o modelo precisa de algum palpite sobre para onde
+# o país se moveu entre os turnos. Sem âncora, ele parte de "nada mudou" e vai
+# descobrindo o swing conforme os votos chegam — o que funciona bem quando a
+# mudança é parecida em todo lugar (2022), mas atrasa quando ela é muito
+# desigual entre regiões (2018), porque as regiões que apuram primeiro não
+# representam as que faltam.
+#
+# A âncora é o swing que as pesquisas finais sugerem. K_PRIOR diz quantos
+# votos apurados valem o mesmo que ela: passado esse volume, o dado real
+# manda e as pesquisas somem da conta. É deliberadamente baixo, porque as
+# pesquisas erram — em 2022 elas apontavam cerca de 2 pontos para o lado
+# errado, e em 2026 erraram o líder do 1º turno.
+K_PRIOR = 1_500_000
+
 # Regressão do swing sobre o perfil do município (quanto do voto do 1º turno
 # foi para candidatos eliminados). Onde havia muito voto de terceiro, o swing
 # tende a ser diferente, porque esse eleitorado precisou escolher de novo.
@@ -140,11 +156,27 @@ class Modelo:
                                 for m in self.municipios) / peso
 
     # ------------------------------------------------------------------
+    def swing_das_pesquisas(self, pct_pl_pesquisas: float) -> float:
+        """
+        Converte "as pesquisas dão X% para o candidato do PL nos válidos" no
+        swing correspondente, em log-odds, contra a base do 1º turno.
+        """
+        base_pl = sum(_share(m.base_logit) * m.validos_base
+                      for m in self.municipios)
+        base_pt = self.validos_base_total - base_pl
+        alvo = min(max(pct_pl_pesquisas, 1.0), 99.0) / 100.0
+        return math.log(alvo / (1 - alvo)) - _logit(base_pl, base_pt)
+
+    # ------------------------------------------------------------------
     def projetar(self, andamento: dict, observado: dict,
-                 n_bootstrap: int = 400, semente: int = 12345) -> dict:
+                 n_bootstrap: int = 400, semente: int = 12345,
+                 prior_swing: float | None = None) -> dict:
         """
         andamento: {"uf/cd": fracao_do_eleitorado_totalizada}
         observado: {"uf": {"pl": votos, "pt": votos}}  — apurado do 2º turno
+        prior_swing: swing sugerido pelas pesquisas (use swing_das_pesquisas).
+                     Pesa muito no início e desaparece conforme a apuração
+                     avança. Sem ele, o modelo parte de "nada mudou".
         """
         for m in self.municipios:
             m.fracao = min(max(andamento.get(m.chave, 0.0), 0.0), 1.0)
@@ -185,6 +217,15 @@ class Modelo:
             swing_nacional = sum(swing_uf[u] * peso_uf[u] for u in swing_uf) / peso_total
         else:
             swing_nacional = 0.0
+
+        # A âncora das pesquisas entra aqui, e só aqui: ela move o swing
+        # nacional enquanto há pouco voto contado, e é engolida pelo dado real
+        # depois. Nada do que vem das pesquisas sobrevive a uma apuração
+        # adiantada.
+        swing_nacional_sem_prior = swing_nacional
+        if prior_swing is not None:
+            swing_nacional = _encolher(swing_nacional, peso_total,
+                                       prior_swing, K_PRIOR)
 
         por_regiao = {}
         for uf, sw in swing_uf.items():
