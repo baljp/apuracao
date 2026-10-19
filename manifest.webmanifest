@@ -1,0 +1,19 @@
+{
+  "name": "Projeção da apuração — Presidente",
+  "short_name": "Apuração",
+  "description": "Projeção do resultado final da eleição presidencial a partir dos arquivos oficiais do TSE, corrigindo o viés da ordem de apuração.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "categories": ["news", "politics", "utilities"],
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icone-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

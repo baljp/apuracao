@@ -97,6 +97,29 @@ concentrada numa região, ele vai demorar mais a perceber.
 
 ---
 
+## Três formas de usar
+
+**1. Site.** https://baljp.github.io/apuracao-2026/ — abre em qualquer
+navegador, nada para instalar.
+
+**2. Como aplicativo no celular.** Abra o site e toque em **Instalar** (no
+Android) ou em **Compartilhar → Adicionar à Tela de Início** (no iPhone). Vira
+um ícone na tela inicial e abre em tela cheia, sem barra de navegador. A página
+fica guardada no aparelho, então abre na hora mesmo com internet ruim — mas os
+dados do TSE nunca são guardados em cache, para nunca mostrar número velho.
+
+**3. Arquivo único.** O [`apuracao.html`](apuracao.html) tem tudo dentro dele —
+página, modelo e a base dos 5.716 municípios, em 298 KB. Dá para salvar no
+celular, mandar por WhatsApp ou levar num pendrive. Abre direto, sem servidor.
+Funciona porque o TSE libera CORS até para origem nula, que é o caso de um
+arquivo aberto do próprio aparelho. Só precisa de internet na hora de buscar os
+dados, que é o ponto.
+
+Para regerar o arquivo único depois de mexer no site:
+`python3 programa/gerar_html_unico.py`
+
+---
+
 ## O site
 
 Não tem servidor, não tem banco de dados e não guarda nada. O TSE serve os

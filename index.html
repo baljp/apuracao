@@ -6,7 +6,21 @@
 <title>Projeção da apuração — Presidente 2026</title>
 <meta name="description" content="Projeção do resultado final da eleição presidencial a partir dos arquivos oficiais de divulgação do TSE, corrigindo o viés da ordem de apuração.">
 <meta name="color-scheme" content="dark light">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<meta name="theme-color" content="#0f1117">
+
+<!-- Permite instalar na tela de início do celular e abrir como aplicativo. -->
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./favicon.png">
+<link rel="apple-touch-icon" href="./icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Apuração">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta property="og:title" content="Projeção da apuração — Presidente 2026">
+<meta property="og:description" content="Com 5% apurado, o percentual bruto erra por 9 pontos. Este modelo erra por 0,2. Dados oficiais do TSE, ao vivo.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <style>
   :root{
     --fundo:#0f1117; --cartao:#171a23; --linha:#272b38;
@@ -82,12 +96,36 @@
   details b{color:var(--texto)}
   a{color:var(--pl)}
   .vazio{text-align:center;padding:26px 10px;color:var(--fraco);font-size:14px}
+
+  .instalar{display:none;align-items:center;gap:12px;flex-wrap:wrap}
+  .instalar .txt{flex:1;min-width:180px;font-size:13px;color:var(--fraco)}
+  .instalar .txt b{color:var(--texto)}
+  button.bt{background:var(--pl);color:#fff;border:0;border-radius:9px;
+    padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;
+    font-family:inherit}
+  button.bt:hover{filter:brightness(1.08)}
+  button.fechar{background:none;color:var(--fraco);border:0;cursor:pointer;
+    font-size:19px;line-height:1;padding:4px 6px;font-family:inherit}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Projeção da apuração — Presidente</h1>
   <div class="sub" id="status"><span class="pisca"></span>carregando a base…</div>
+
+  <div class="cartao instalar" id="cartaoInstalar">
+    <div class="txt"><b>Instale na tela de início</b><br>
+      Abre como aplicativo, em tela cheia e sem barra de navegador.</div>
+    <button class="bt" id="btInstalar">Instalar</button>
+    <button class="fechar" id="btFechar" title="Agora não">&times;</button>
+  </div>
+
+  <div class="cartao instalar" id="cartaoIOS">
+    <div class="txt"><b>Deixe na tela de início</b><br>
+      Toque em <b>Compartilhar</b> na barra do Safari e escolha
+      <b>Adicionar à Tela de Início</b>.</div>
+    <button class="fechar" id="btFecharIOS" title="Agora não">&times;</button>
+  </div>
 
   <div class="cartao" id="cartaoPlacar">
     <div id="vazio" class="vazio">Aguardando o início da apuração.</div>
@@ -313,6 +351,57 @@ function desenha() {
 }
 
 iniciar();
+
+/* ---- instalação na tela de início ------------------------------------- */
+
+// Service worker: guarda o casco da página no aparelho (nunca os dados do
+// TSE) e é o que torna a instalação possível.
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+
+const jaInstalado = window.matchMedia("(display-mode: standalone)").matches
+  || window.navigator.standalone === true;
+const dispensado = (() => {
+  try { return localStorage.getItem("instalar-dispensado") === "1"; }
+  catch { return false; }
+})();
+const dispensar = () => {
+  try { localStorage.setItem("instalar-dispensado", "1"); } catch {}
+};
+
+// Android e desktop: o navegador avisa quando a instalação é possível.
+let promptInstalar = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  promptInstalar = e;
+  if (!jaInstalado && !dispensado) $("cartaoInstalar").style.display = "flex";
+});
+
+$("btInstalar").addEventListener("click", async () => {
+  if (!promptInstalar) return;
+  $("cartaoInstalar").style.display = "none";
+  promptInstalar.prompt();
+  await promptInstalar.userChoice;
+  promptInstalar = null;
+});
+
+$("btFechar").addEventListener("click", () => {
+  $("cartaoInstalar").style.display = "none";
+  dispensar();
+});
+
+// iPhone e iPad: o Safari não oferece o aviso, então explicamos o caminho.
+const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+if (ehIOS && !jaInstalado && !dispensado) {
+  $("cartaoIOS").style.display = "flex";
+}
+$("btFecharIOS").addEventListener("click", () => {
+  $("cartaoIOS").style.display = "none";
+  dispensar();
+});
 </script>
 </body>
 </html>
