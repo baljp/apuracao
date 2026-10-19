@@ -230,8 +230,8 @@
 
   <div class="cartao" id="cartaoMapa" style="display:none">
     <h2>Mapa da apuração</h2>
-    <svg id="mapa" viewBox="0 0 310 400" style="width:100%;max-width:420px;
-      margin:0 auto;display:block;height:auto"></svg>
+    <svg id="mapa" viewBox="0 0 1000 1005" style="width:100%;
+      max-width:560px;margin:0 auto;display:block;height:auto"></svg>
     <div class="faixa" id="legendaMapa" style="margin-top:10px"></div>
   </div>
 
@@ -640,7 +640,7 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   }
   desenha();
   preverConclusao(r);
-  desenhaMapa(r);
+  desenhaMapa(r).catch(() => {});
 }
 
 /* Previsão de quando a apuração termina.
@@ -675,144 +675,87 @@ function preverConclusao(r) {
     + Math.round(faltam) + " minutos";
 }
 
-/* Mapa do Brasil em blocos.
+/* Mapa do Brasil, com o contorno real dos estados.
  *
- * Não é um mapa geográfico: cada estado é um quadrado do mesmo tamanho,
- * posicionado mais ou menos onde fica no país. É de propósito. Num mapa de
- * verdade o Amazonas ocupa um quarto da tela e o Distrito Federal some,
- * o que faria a leitura ser sobre área, e não sobre eleição. Aqui cada
- * estado pesa igual e todos são legíveis no celular.
+ * A geometria vem da malha oficial do IBGE (mapa.json, gerado por
+ * programa/gerar_mapa.py) e está em projeção cônica equivalente de Albers:
+ * em Mercator, a projeção dos mapas de rua, Roraima apareceria maior do que
+ * é e o Sul encolheria. Numa projeção equivalente a área na tela guarda
+ * proporção com a área real.
  *
- * A cor mostra quem lidera na projeção; a opacidade, o quanto já apurou.
+ * A cor diz quem lidera na projeção; a saturação, o quanto já apurou. Um
+ * estado pálido avisa que ali a projeção ainda vem do padrão da região, e
+ * não de urna contada — distinção que um mapa chapado esconderia.
  */
-const GRADE_UF = {
-  RR: [2, 0], AP: [3, 0],
-  AM: [1, 1], PA: [2, 1], MA: [3, 1], CE: [4, 1], RN: [5, 1],
-  AC: [0, 2], RO: [1, 2], TO: [2, 2], PI: [3, 2], PB: [4, 2], PE: [5, 2],
-  MT: [1, 3], GO: [2, 3], BA: [3, 3], AL: [4, 3], SE: [5, 3],
-  MS: [1, 4], DF: [2, 4], MG: [3, 4], ES: [4, 4],
-  SP: [2, 5], RJ: [3, 5],
-  PR: [1, 6],
-  SC: [1, 7],
-  RS: [1, 8],
-};
+let geoMapa = null;
 
-function desenhaMapa(r) {
+async function desenhaMapa(r) {
   if (!r.estados || !r.estados.length) return;
+  if (geoMapa === null) {
+    try {
+      geoMapa = await (await fetch("./mapa.json", { cache: "force-cache" })).json();
+    } catch { geoMapa = false; return; }
+  }
+  if (!geoMapa) return;
   $("cartaoMapa").style.display = "block";
 
-  const L = 44, G = 4;   // lado do bloco e espaçamento
-  let svg = "";
+  const porUf = new Map(r.estados.map((e) => [e.uf, e]));
+  let formas = "", textos = "";
   let semDado = 0;
 
-  for (const e of r.estados) {
-    const pos = GRADE_UF[e.uf];
-    if (!pos) continue;                       // exterior (ZZ) não entra
-    const x = pos[0] * (L + G) + 2;
-    const y = pos[1] * (L + G) + 2;
-    const lideraPL = e.projPl > 50;
-    const cor = lideraPL ? "var(--pl)" : "var(--pt)";
-    // Quanto mais apurado, mais sólido. Nunca totalmente transparente,
-    // para o estado continuar visível.
-    const apu = Math.max(0, Math.min(e.pctApurado, 100));
-    const opac = 0.18 + 0.82 * (apu / 100);
+  for (const [uf, d] of Object.entries(geoMapa.ufs)) {
+    const e = porUf.get(uf);
+    const apu = e ? Math.max(0, Math.min(e.pctApurado, 100)) : 0;
     if (apu < 1) semDado++;
-    const margem = Math.abs(e.projPl - 50);
-    svg += `<g>`
-      + `<rect x="${x}" y="${y}" width="${L}" height="${L}" rx="7"`
-      + ` fill="${cor}" opacity="${opac.toFixed(2)}"/>`
-      + `<text x="${x + L / 2}" y="${y + L / 2 - 2}" text-anchor="middle"`
-      + ` font-size="14" font-weight="700" fill="#fff"`
-      + ` style="paint-order:stroke">${esc(e.uf)}</text>`
-      + `<text x="${x + L / 2}" y="${y + L / 2 + 13}" text-anchor="middle"`
-      + ` font-size="10" fill="#fff" opacity="0.9">`
-      + (apu < 1 ? "—" : n1(e.projPl) + "%") + `</text>`
-      + `<title>${esc(e.uf)}: ${n1(e.pctApurado)}% apurado, projeção `
-      + `${n1(e.projPl)}% para ${esc(nomes.pl.split(" ")[0])}`
-      + (margem < 2 ? " (disputa apertada)" : "") + `</title>`
-      + `</g>`;
+
+    let fill = "var(--linha)", opac = 1;
+    if (e && apu >= 1) {
+      fill = e.projPl > 50 ? "var(--pl)" : "var(--pt)";
+      // A distância até os 50% também pesa: um estado dividido fica mais
+      // claro que um decidido, mesmo com a mesma apuração.
+      const margem = Math.min(Math.abs(e.projPl - 50) / 12, 1);
+      opac = 0.30 + 0.55 * margem * (0.45 + 0.55 * (apu / 100));
+    } else if (e) {
+      fill = e.projPl > 50 ? "var(--pl)" : "var(--pt)";
+      opac = 0.13;
+    }
+
+    const titulo = e
+      ? `${uf} · ${n1(apu)}% apurado · projeção ${n1(e.projPl)}% para `
+        + `${nomes.pl.split(" ")[0]}`
+      : uf;
+    formas += `<path d="${d}" fill="${fill}" fill-opacity="${opac.toFixed(2)}"`
+      + ` stroke="var(--fundo)" stroke-width="2.5" stroke-linejoin="round"`
+      + ` vector-effect="non-scaling-stroke"><title>${esc(titulo)}</title></path>`;
+
+    const pos = geoMapa.rotulos[uf];
+    if (pos && e) {
+      const pequeno = ["DF", "SE", "AL", "RJ", "ES", "PB", "RN", "PE"].includes(uf);
+      const fs = pequeno ? 20 : 26;
+      textos += `<text x="${pos[0]}" y="${pos[1] - (pequeno ? 1 : 4)}"`
+        + ` text-anchor="middle" font-size="${fs}" font-weight="700"`
+        + ` fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="3"`
+        + ` paint-order="stroke" pointer-events="none">${esc(uf)}</text>`;
+      if (!pequeno && apu >= 1) {
+        textos += `<text x="${pos[0]}" y="${pos[1] + 20}" text-anchor="middle"`
+          + ` font-size="21" font-weight="600" fill="#fff"`
+          + ` stroke="rgba(0,0,0,.35)" stroke-width="3" paint-order="stroke"`
+          + ` pointer-events="none">${n1(e.projPl)}%</text>`;
+      }
+    }
   }
-  $("mapa").innerHTML = svg;
+
+  $("mapa").setAttribute("viewBox", geoMapa.viewBox);
+  $("mapa").innerHTML = formas + textos;
   $("legendaMapa").innerHTML =
-    "Cor: quem lidera na <strong>projeção</strong> do estado — "
+    "Cor: quem lidera na <strong>projeção</strong> de cada estado — "
     + '<span style="color:var(--pl)">' + esc(nomes.pl.split(" ")[0]) + "</span> ou "
     + '<span style="color:var(--pt)">' + esc(nomes.pt.split(" ")[0]) + "</span>. "
-    + "Quanto mais forte a cor, mais apurado. Blocos pálidos ainda têm pouca "
-    + "ou nenhuma urna contada, e a projeção neles vem do padrão da região."
-    + (semDado ? " <strong>" + semDado + " estado(s) sem apuração.</strong>" : "");
-}
-
-/* A faixa de estado diz, em todo momento, DE ONDE vem o número que está na
- * tela. São três fases bem diferentes, e confundi-las é o erro mais fácil de
- * cometer numa noite de apuração:
- *
- *   antes    não existe voto contado; o que há são pesquisas, que são
- *            intenção declarada e podem errar — erraram no 1º turno de 2026
- *   durante  dados oficiais do TSE, com a projeção corrigindo o viés da
- *            ordem de apuração
- *   fim      apuração encerrada; vale o resultado do TSE, não a projeção
- */
-function atualizarFaixa(r, comecou) {
-  const faixa = $("faixaStatus");
-  const encerrada = r.pctApurado >= 99.95;
-
-  if (!comecou) {
-    faixa.className = "status pesq";
-    $("statusTitulo").textContent = "A apuração ainda não começou";
-    $("statusTexto").innerHTML =
-      "O número abaixo é a <strong>média das pesquisas</strong> — intenção de "
-      + "voto declarada, não resultado. Quando as urnas começarem a ser "
-      + "totalizadas, esta faixa muda e o painel passa a usar os "
-      + "<strong>dados oficiais do TSE</strong>.";
-    mostrarPreviaPesquisas();
-    return;
-  }
-
-  if (encerrada) {
-    faixa.className = "status fim";
-    $("statusTitulo").textContent = "Apuração encerrada";
-    $("statusTexto").innerHTML =
-      "Com tudo apurado, vale o <strong>resultado oficial do TSE</strong> — "
-      + "a projeção já não serve para nada, e os dois números coincidem.";
-    return;
-  }
-
-  faixa.className = "status vivo";
-  $("statusTitulo").textContent = "Ao vivo · apuração oficial do TSE";
-  $("statusTexto").innerHTML =
-    "<strong>" + n1(r.pctApurado) + "% do eleitorado já totalizado.</strong> "
-    + "Os votos são oficiais, lidos direto do TSE. A projeção corrige o viés "
-    + "da ordem em que os estados apuram — as pesquisas não entram mais nesta "
-    + "conta.";
-}
-
-/* Antes da apuração, o painel principal mostra a média das pesquisas, para
- * não ficar uma tela vazia. Vem com rótulo próprio, para ninguém confundir
- * com apuração. */
-async function mostrarPreviaPesquisas() {
-  if (pesquisas === null) {
-    try { await carregarPesquisas(); } catch { return; }
-  }
-  if (!pesquisas || !pesquisas.length) return;
-  const ag = pq.agregar(pesquisas);
-  if (!ag) return;
-  const alvo = $("previaPesquisas");
-  if (!alvo) return;
-  alvo.innerHTML =
-    '<div class="faixa" style="margin-bottom:10px">MÉDIA DAS PESQUISAS '
-    + "· ainda não há votos apurados</div>"
-    + '<div class="placar"><div class="lado pl">'
-    + '<div class="nome">' + esc(nomes.pl) + "</div>"
-    + '<div class="pct">' + n2(ag.pl) + "%</div>"
-    + '<div class="faixa">entre ' + n2(ag.faixa[0]) + "% e "
-    + n2(ag.faixa[1]) + "%</div></div>"
-    + '<div class="lado pt dir"><div class="nome">' + esc(nomes.pt) + "</div>"
-    + '<div class="pct">' + n2(ag.pt) + "%</div>"
-    + '<div class="faixa">entre ' + n2(100 - ag.faixa[1]) + "% e "
-    + n2(100 - ag.faixa[0]) + "%</div></div></div>"
-    + '<div class="faixa" style="margin-top:12px;text-align:left">'
-    + ag.nUsadas + " pesquisas dos últimos 21 dias. No 1º turno de 2026 as "
-    + "pesquisas erraram o líder da eleição — veja a aba Pesquisas.</div>";
+    + "Mais forte a cor, mais decidido e mais apurado o estado; estados "
+    + "pálidos ainda têm pouca ou nenhuma urna contada, e a projeção neles vem "
+    + "do padrão da região."
+    + (semDado ? " <strong>" + semDado + " sem apuração.</strong>" : "")
+    + ' <span style="opacity:.75">Contornos: malha territorial do IBGE.</span>';
 }
 
 function desenha() {
@@ -1014,7 +957,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=2265309aa3").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=949be109e1").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

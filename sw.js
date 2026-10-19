@@ -12,7 +12,7 @@
  *   não existir.
  */
 
-const VERSAO = "apuracao-2265309aa3";
+const VERSAO = "apuracao-949be109e1";
 
 // Só estes dois destinos externos são buscados pela página. Qualquer outro é
 // recusado aqui, de modo que nem um script injetado conseguiria usar o
@@ -26,6 +26,7 @@ const CASCO = [
   "./tse.js",
   "./pesquisas.js",
   "./base.json",
+  "./mapa.json",
   "./manifest.webmanifest",
   "./icone-192.png",
   "./icone-512.png",
