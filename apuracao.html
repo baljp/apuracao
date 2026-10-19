@@ -1042,6 +1042,25 @@ async function lerResultados(eleicao) {
               if (c.n === NUM_PL) { pl += num(c.vap); nomes.pl = (c.nmu || "").toLowerCase(); }
               else if (c.n === NUM_PT) { pt += num(c.vap); nomes.pt = (c.nmu || "").toLowerCase(); }
             }
+      // Sanidade antes de aceitar. O TSE não manda número negativo nem voto
+      // a mais do que existe eleitor — mas a página não fala só com o TSE:
+      // fala com a rede inteira entre ele e o aparelho de quem está olhando.
+      // Um proxy de operadora, um cache intermediário ou um wifi de shopping
+      // com "portal de login" podem devolver corpo trocado ou corrompido.
+      //
+      // Sem esta conferência, votos negativos e votos gigantes passavam
+      // direto e viravam um placar de aparência perfeitamente normal — um
+      // 50% × 50% inventado é muito pior do que tela vazia. Descoberto em
+      // programa/testar_resiliencia.mjs.
+      //
+      // O teto é o maior eleitorado estadual (São Paulo, cerca de 35
+      // milhões) com folga larga: qualquer UF acima disso é corrupção, não
+      // apuração.
+      const TETO_UF = 40e6;
+      if (!(pl >= 0 && pt >= 0 && isFinite(pl) && isFinite(pt)
+            && pl + pt <= TETO_UF)) {
+        throw new Error("votos fora de qualquer faixa plausível em " + uf);
+      }
       observado[uf] = { pl, pt };
 
       const v = doc.v || {}, e = doc.e || {}, s = doc.s || {};
