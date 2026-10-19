@@ -12,7 +12,7 @@
  *   não existir.
  */
 
-const VERSAO = "apuracao-a91658c543";
+const VERSAO = "apuracao-772a8f8048";
 
 // Só estes dois destinos externos são buscados pela página. Qualquer outro é
 // recusado aqui, de modo que nem um script injetado conseguiria usar o
