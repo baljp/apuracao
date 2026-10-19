@@ -1,0 +1,53 @@
+*Por que o número do começo da apuração engana*
+
+Domingo, assim que as urnas fecharem, vai começar a aparecer um percentual na TV. Ele não está errado — ele só não é o país ainda.
+
+A conta divulgada junta o que já foi contado. E nem todo lugar termina de contar na mesma hora: município pequeno fecha em minutos, município grande leva horas, e cada estado tem uma mistura diferente dos dois. Então os primeiros percentuais retratam quem já terminou, não o Brasil.
+
+Isso dá para medir. Com *5% apurado*, usando a ordem real de chegada dos municípios no 1º turno deste ano, o retrato é este:
+
+• *Centro-Oeste* — 7,6% dos eleitores do país, mas *40,2%* do que já foi contado
+• *Norte* — 8,3% dos eleitores, 16,0% do contado
+• *Sul* — 14,4% dos eleitores, 19,6% do contado
+• *Sudeste* — 41,8% dos eleitores, 18,7% do contado
+• *Nordeste* — 27,4% dos eleitores, *4,4%* do contado
+
+Nos primeiros minutos o Centro-Oeste pesa cinco vezes mais do que ele é, e o Nordeste pesa seis vezes menos. É por isso que o número balança tanto no começo da noite e vai "virando" com o passar das horas. Não é recontagem nem erro do TSE — é o resto do país entrando na conta.
+
+*O que a gente fez*
+
+Uma página que corrige essa distorção enquanto a apuração acontece.
+
+Ela não tenta adivinhar quem ganha. Para cada um dos 5.716 municípios ela sabe, pelos arquivos do próprio TSE, quanto já foi contado ali, e sabe como aquele município votou no 1º turno. Com isso calcula quanto a parte já apurada *deveria* ter dado se o eleitorado repetisse o 1º turno, e compara com o que de fato saiu da urna. A diferença é pequena e estável — e é só ela que precisa ser estimada. Depois a página aplica essa diferença ao que ainda falta, município por município, e refaz a conta a cada boletim novo.
+
+*Testamos nos últimos cinco segundos turnos*
+
+Rodamos o modelo contra 2006, 2010, 2014, 2018 e 2022, usando em cada caso o 1º turno daquele ano como base e o resultado real como alvo. Com 5% apurado, comparando o erro do percentual bruto com o erro da projeção:
+
+• *2006* — bruto errava 11,9 pontos | projeção: 0,1
+• *2010* — bruto 8,1 | projeção: 0,9
+• *2014* — bruto 7,5 | projeção: 1,8
+• *2018* — bruto 8,0 | projeção: 1,7
+• *2022* — bruto 9,4 | projeção: 0,2
+
+Na média: o número bruto erra cerca de *9 pontos* com 5% apurado; a projeção erra *0,96*. Com 20% apurado o erro médio cai para 0,73; com 50%, para 0,30.
+
+Também rodamos mil eleições simuladas, inventadas de propósito para fugir do que o modelo espera. Com 5% apurado ele apontou o vencedor certo em 96 de cada 100.
+
+*O que ele não resolve — e isso importa*
+
+Em disputa muito apertada, decidida por menos de 1 ponto, o acerto com 5% apurado cai para cerca de 70%. É limite de informação, não de programação: com pouca urna contada, não existe como saber. Nesses casos a página *se recusa a declarar favorito* e diz que a diferença está dentro da margem.
+
+O pior desempenho histórico foi em 2018, com erro de 1,7 ponto aos 5%. Estamos contando isso de propósito: um número que só mostra o melhor caso não serve para confiar.
+
+E a palavra final nunca é dessa página. *É uma projeção estatística, não o resultado oficial.* O que vale é a totalização do TSE — e se a projeção divergir do resultado, significa que o modelo errou, não que a apuração teve problema.
+
+*Acompanhe domingo, a partir das 17h*
+https://oxeeraassim.github.io/apuracao
+
+Dá para instalar no celular como aplicativo. É gratuito, não pede cadastro e não tem anúncio. Não existe servidor nosso no meio: os números são buscados no site do TSE pelo seu próprio celular, e o histórico da noite fica guardado só no seu aparelho — ninguém, nem a gente, vê o que você acessou.
+
+O código está aberto para quem quiser conferir:
+https://github.com/oxeeraassim/apuracao
+
+Uma parceria com o *Oxe, era assim?* 🌵
