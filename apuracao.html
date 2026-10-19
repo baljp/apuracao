@@ -1442,8 +1442,22 @@ function pinta(r, falhas, totais, horaTSE, observado) {
 
   const p = r.probPl;
   let txt;
+  // Quando a margem cruza os 50%, os dois lados ainda cabem dentro dela: o
+  // modelo simplesmente não sabe quem ganhou, e dizer "chance estimada de
+  // vitória: 93% para Fulano" esconde isso atrás de um número de aparência
+  // precisa.
+  //
+  // Isso não é preciosismo estatístico, é o que impede a página de virar
+  // munição. Um print de "93% de chance de vitória" às 17h20, sem a margem
+  // ao lado, circula sozinho e some do contexto em dois encaminhamentos.
+  // Enquanto a disputa couber na margem, a página diz exatamente isso.
+  const dentroDaMargem = r.faixaPl && r.faixaPl[0] < 50 && r.faixaPl[1] > 50;
+
   if (r.pctApurado < 1) {
     txt = "Apuração ainda muito inicial — abaixo de 1% a projeção é instável.";
+  } else if (dentroDaMargem) {
+    txt = "A diferença está dentro da margem de erro — ainda não dá para "
+        + "dizer quem ganhou.";
   } else if (p > 0.995) {
     txt = "O modelo dá mais de 99% de chance de vitória de " + nomes.pl + ".";
   } else if (p < 0.005) {

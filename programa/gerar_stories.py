@@ -119,37 +119,55 @@ def mapa_svg(dy, alvo):
 
 
 def slide_1() -> str:
-    """O que é, e o aviso. Este é o slide que para o dedo."""
+    """O problema que a página resolve. Este é o slide que para o dedo."""
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{L}" height="{A}" '
          f'viewBox="0 0 {L} {A}">',
          f'<rect width="{L}" height="{A}" fill="{PAPEL}"/>',
          cabecalho()]
 
-    p.append(txt(L / 2, 300, "Vamos tentar", 76, "700"))
-    p.append(txt(L / 2, 390, "antecipar o resultado", 76, "700"))
-    p.append(txt(L / 2, 480, "da eleição", 76, "700"))
-    p.append(f'<rect x="{L / 2 - 80}" y="528" width="160" height="4" '
+    # O gancho é o problema, não a promessa. "Vamos antecipar o resultado"
+    # soa como quem vai dar o vencedor antes da hora — e é assim que um
+    # print da tela vira munição de campanha. "O número engana" desperta a
+    # mesma curiosidade e descreve o que a página realmente faz.
+    p.append(txt(L / 2, 290, "No começo da apuração,", 62, "700"))
+    p.append(txt(L / 2, 364, "o número engana", 62, "700"))
+    p.append(f'<rect x="{L / 2 - 80}" y="406" width="160" height="4" '
              f'fill="{VERMELHO}"/>')
 
-    p.append(txt(L / 2, 596, "Um algoritmo preditivo acompanha a apuração", 31,
-                 "400", TINTA_FRACA))
-    p.append(txt(L / 2, 640, "e estima onde ela vai terminar.", 31, "400",
-                 TINTA_FRACA))
-
-    p.append(mapa_svg(720, 480))
-
-    p.append(txt(L / 2, 1330, "É uma tentativa, baseada no comportamento das", 31,
+    p.append(txt(L / 2, 474, "As urnas não terminam de contar todas na mesma", 29,
                  "400", TINTA))
-    p.append(txt(L / 2, 1374, "cinco últimas eleições presidenciais —", 31, "400",
-                 TINTA))
-    p.append(txt(L / 2, 1418, "e não é garantia de acerto.", 31, "700", TINTA))
+    p.append(txt(L / 2, 514, "hora. Nos primeiros minutos, o percentual oficial", 29,
+                 "400", TINTA))
+    p.append(txt(L / 2, 554, "mostra só os lugares que já fecharam a contagem", 29,
+                 "400", TINTA))
+    p.append(txt(L / 2, 594, "— e não o país inteiro.", 29, "700", TINTA))
 
-    p.append(f'<rect x="60" y="1486" width="{L - 120}" height="222" rx="12" '
-             f'fill="{VERMELHO}"/>')
-    p.append(txt(L / 2, 1572, "ISTO NÃO É", 58, "700", PAPEL, esp="2"))
-    p.append(txt(L / 2, 1640, "RESULTADO OFICIAL", 58, "700", PAPEL, esp="2"))
-    p.append(txt(L / 2, 1682, "O resultado que vale é sempre o do TSE.", 27, "400",
-                 PAPEL, op="0.92"))
+    p.append(mapa_svg(656, 430))
+
+    p.append(txt(L / 2, 1212, "Um algoritmo preditivo calcula o que ainda falta", 29,
+                 "400", TINTA_FRACA))
+    p.append(txt(L / 2, 1252, "de cada lugar e estima onde a apuração vai", 29,
+                 "400", TINTA_FRACA))
+    p.append(txt(L / 2, 1292, "terminar, se ajustando a cada urna contada.", 29,
+                 "400", TINTA_FRACA))
+
+    y = 1360
+    p.append(f'<rect x="88" y="{y}" width="4" height="118" fill="{VERDE}"/>')
+    p.append(txt(126, y + 34, "A APURAÇÃO", 25, "700", VERDE, "start", esp="3"))
+    p.append(txt(126, y + 76, "Dados oficiais do TSE, lidos ao vivo,", 28, "400",
+                 TINTA, "start"))
+    p.append(txt(126, y + 112, "com a margem sempre ao lado do número.", 28, "400",
+                 TINTA, "start"))
+
+    y = 1520
+    p.append(f'<rect x="88" y="{y}" width="4" height="158" fill="{VERMELHO}"/>')
+    p.append(txt(126, y + 34, "AS PESQUISAS", 25, "700", VERMELHO, "start", esp="3"))
+    p.append(txt(126, y + 76, "Sempre as mais recentes, com a porcentagem", 28,
+                 "400", TINTA, "start"))
+    p.append(txt(126, y + 112, "ponderada por pesquisa — atualizada assim", 28,
+                 "400", TINTA, "start"))
+    p.append(txt(126, y + 148, "que uma nova é divulgada.", 28, "400", TINTA,
+                 "start"))
 
     p.append(rodape())
     p.append("</svg>")
@@ -157,56 +175,59 @@ def slide_1() -> str:
 
 
 def slide_2() -> str:
-    """O tamanho do erro, e o que a página tem."""
+    """O tamanho do erro e a postura da página."""
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{L}" height="{A}" '
          f'viewBox="0 0 {L} {A}">',
          f'<rect width="{L}" height="{A}" fill="{PAPEL}"/>',
          cabecalho()]
 
-    p.append(txt(L / 2, 290, "Quanto o modelo errou", 56, "700"))
-    p.append(txt(L / 2, 358, "nas últimas 5 eleições", 56, "700"))
-    p.append(txt(L / 2, 412, "(em pontos percentuais)", 27, "400", TINTA_FRACA))
+    p.append(txt(L / 2, 272, "E pode errar.", 58, "700"))
+    p.append(txt(L / 2, 342, "Veja o quanto.", 58, "700"))
+    p.append(txt(L / 2, 396, "Erro nas últimas 5 eleições, em pontos percentuais",
+                 26, "400", TINTA_FRACA))
 
-    topo = 466
-    alt = 92
+    topo = 440
+    alt = 88
     p.append(f'<rect x="72" y="{topo}" width="{L - 144}" height="{alt * 5 + 16}" '
              f'rx="14" fill="{PAPEL_2}"/>')
-    p.append(txt(195, topo + 58, "APURADO", 26, "700", TINTA_FRACA, esp="2"))
-    p.append(txt(610, topo + 58, "EM MÉDIA", 26, "700", TINTA_FRACA, esp="2"))
-    p.append(txt(890, topo + 58, "PIOR CASO", 26, "700", TINTA_FRACA, esp="2"))
+    p.append(txt(195, topo + 56, "APURADO", 25, "700", TINTA_FRACA, esp="2"))
+    p.append(txt(610, topo + 56, "EM MÉDIA", 25, "700", TINTA_FRACA, esp="2"))
+    p.append(txt(890, topo + 56, "PIOR CASO", 25, "700", TINTA_FRACA, esp="2"))
     for i, (marco, medio, pior) in enumerate(ERROS):
-        y = topo + alt * (i + 1) + 62
-        p.append(f'<rect x="100" y="{y - 64}" width="{L - 200}" height="2" '
+        y = topo + alt * (i + 1) + 58
+        p.append(f'<rect x="100" y="{y - 60}" width="{L - 200}" height="2" '
                  f'fill="{TINTA}" opacity="0.12"/>')
-        p.append(txt(195, y, marco, 44, "700", TINTA))
-        p.append(txt(610, y, "± " + medio, 44, "700", VERDE))
-        p.append(txt(890, y, "± " + pior, 44, "400", TINTA_FRACA))
+        p.append(txt(195, y, marco, 42, "700", TINTA))
+        p.append(txt(610, y, "± " + medio, 42, "700", VERDE))
+        p.append(txt(890, y, "± " + pior, 42, "400", TINTA_FRACA))
 
-    y = topo + alt * 5 + 90
-    p.append(txt(L / 2, y, "Numa disputa decidida por menos que isso,", 30, "400",
-                 TINTA))
-    p.append(txt(L / 2, y + 44, "a projeção pode apontar o candidato errado", 30,
+    y = topo + alt * 5 + 86
+    p.append(txt(L / 2, y, "Numa disputa decidida por menos que isso, a", 29,
+                 "400", TINTA))
+    p.append(txt(L / 2, y + 40, "projeção pode apontar o candidato errado", 29,
                  "700", TINTA))
-    p.append(txt(L / 2, y + 88, "no começo da noite.", 30, "700", TINTA))
+    p.append(txt(L / 2, y + 80, "no começo da noite.", 29, "700", TINTA))
 
-    # ---- o que a página tem ----
-    y = 1320
-    p.append(f'<rect x="88" y="{y}" width="4" height="124" fill="{VERDE}"/>')
-    p.append(txt(126, y + 34, "A APURAÇÃO", 26, "700", VERDE, "start", esp="3"))
-    p.append(txt(126, y + 78, "Projeção ao vivo com os dados oficiais do", 29,
-                 "400", TINTA, "start"))
-    p.append(txt(126, y + 116, "TSE, ajustada a cada urna contada.", 29, "400",
-                 TINTA, "start"))
+    # ---- a postura, que é o que protege a página ----
+    y = 1130
+    p.append(f'<rect x="60" y="{y}" width="{L - 120}" height="268" rx="12" '
+             f'fill="none" stroke="{TINTA}" stroke-width="3" opacity="0.35"/>')
+    p.append(txt(L / 2, y + 62, "SEM LADO", 30, "700", TINTA, esp="5"))
+    p.append(txt(L / 2, y + 118, "A página não torce por ninguém e não", 29, "400",
+                 TINTA))
+    p.append(txt(L / 2, y + 158, "declara vencedor. Mostra sempre a margem", 29,
+                 "400", TINTA))
+    p.append(txt(L / 2, y + 198, "junto do número — e, enquanto a diferença", 29,
+                 "400", TINTA))
+    p.append(txt(L / 2, y + 238, "couber nela, diz que ainda não dá para saber.",
+                 29, "700", TINTA))
 
-    y = 1490
-    p.append(f'<rect x="88" y="{y}" width="4" height="164" fill="{VERMELHO}"/>')
-    p.append(txt(126, y + 34, "AS PESQUISAS", 26, "700", VERMELHO, "start", esp="3"))
-    p.append(txt(126, y + 78, "Sempre as mais recentes, com a porcentagem", 29,
-                 "400", TINTA, "start"))
-    p.append(txt(126, y + 116, "ponderada por pesquisa — atualizada assim", 29,
-                 "400", TINTA, "start"))
-    p.append(txt(126, y + 154, "que uma nova é divulgada.", 29, "400", TINTA,
-                 "start"))
+    p.append(f'<rect x="60" y="1456" width="{L - 120}" height="230" rx="12" '
+             f'fill="{VERMELHO}"/>')
+    p.append(txt(L / 2, 1544, "ISTO NÃO É", 58, "700", PAPEL, esp="2"))
+    p.append(txt(L / 2, 1612, "RESULTADO OFICIAL", 58, "700", PAPEL, esp="2"))
+    p.append(txt(L / 2, 1656, "O resultado que vale é sempre o do TSE.", 27, "400",
+                 PAPEL, op="0.92"))
 
     p.append(rodape(escuro=False))
     p.append("</svg>")
