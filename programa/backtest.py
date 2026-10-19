@@ -32,12 +32,20 @@ import modelo
 import tse
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-BASE2022 = os.path.join(AQUI, "base2022.json")
 ORDEM = os.path.join(AQUI, "ordem_1t_2026.json")
 
+NOMES = {
+    2018: ("Bolsonaro", "Haddad"),
+    2022: ("Bolsonaro", "Lula"),
+}
 
-def carregar():
-    with open(BASE2022, encoding="utf-8") as fh:
+
+def caminho_base(ano: int) -> str:
+    return os.path.join(AQUI, "base%d.json" % ano)
+
+
+def carregar(ano: int = 2022):
+    with open(caminho_base(ano), encoding="utf-8") as fh:
         base = json.load(fh)
     with open(ORDEM, encoding="utf-8") as fh:
         ordem = json.load(fh)["ordem"]
@@ -113,7 +121,7 @@ def rodar(base, sequencia, passos=None, n_bootstrap=0, verbose=False):
     return linhas, alvo
 
 
-def resumo(linhas, alvo):
+def resumo(linhas, alvo, ano=2022):
     marcos = [1, 2, 3, 5, 10, 15, 20, 30, 50, 75]
     print("\n  %-7s %-22s %-22s" % ("apurado", "percentual bruto", "projeção do modelo"))
     print("  " + "-" * 54)
@@ -125,7 +133,8 @@ def resumo(linhas, alvo):
         print("  %5.0f%%  %6.2f%%  (erro %+6.2f)   %6.2f%%  (erro %+5.2f)"
               % (marco, l["bruto"], l["erro_bruto"], l["proj"], l["erro_proj"]))
     print("  " + "-" * 54)
-    print("  resultado real do 2º turno de 2022: %.2f%%" % alvo)
+    print("  resultado real do 2º turno de %d: %.2f%% para %s"
+          % (ano, alvo, NOMES.get(ano, ("A", "B"))[0]))
 
     apos5 = [abs(l["erro_proj"]) for l in linhas if l["pct"] >= 5]
     apos1 = [abs(l["erro_proj"]) for l in linhas if l["pct"] >= 1]
@@ -164,24 +173,42 @@ def calibrar(base, sequencia):
 
 
 def main() -> int:
-    if not os.path.exists(BASE2022):
-        print("Falta base2022.json — rode antes: python3 preparar_2022.py")
+    ano = 2022
+    for i, arg in enumerate(sys.argv):
+        if arg == "--ano" and i + 1 < len(sys.argv):
+            ano = int(sys.argv[i + 1])
+
+    if not os.path.exists(caminho_base(ano)):
+        print("Falta base%d.json — rode antes: "
+              "python3 preparar_historico.py --ano %d" % (ano, ano))
         return 1
     if not os.path.exists(ORDEM):
         print("Falta ordem_1t_2026.json — rode antes: python3 andamento.py")
         return 1
 
-    base, sequencia = carregar()
-    print("Backtest do 2º turno de 2022")
-    print("  %d municípios, ordem de chegada real do 1º turno de 2026\n"
+    base, sequencia = carregar(ano)
+    a, b = NOMES.get(ano, ("finalista A", "finalista B"))
+    print("Backtest do 2º turno de %d  (%s x %s)" % (ano, a, b))
+    print("  %d municípios, ordem de chegada real do 1º turno de 2026"
           % len(sequencia))
+
+    # O swing verdadeiro: quanto o resultado do 2º turno se afastou do 1º.
+    # Quanto maior, mais difícil o teste.
+    pl1 = sum(m["votos"].get("22", 0) for m in base["municipios"])
+    pt1 = sum(m["votos"].get("13", 0) for m in base["municipios"])
+    base_pct = 100.0 * pl1 / (pl1 + pt1)
+    alvo_pct = resultado_final(base)
+    print("  1º turno entre os dois finalistas: %.2f%% para %s" % (base_pct, a))
+    print("  2º turno (resultado real):         %.2f%% para %s" % (alvo_pct, a))
+    print("  swing a ser descoberto pelo modelo: %+.2f pp\n"
+          % (alvo_pct - base_pct))
 
     if "--calibrar" in sys.argv:
         melhor = calibrar(base, sequencia)
         modelo.K_UF, modelo.K_REGIAO = float(melhor[1]), float(melhor[2])
 
     linhas, alvo = rodar(base, sequencia, n_bootstrap=0)
-    resumo(linhas, alvo)
+    resumo(linhas, alvo, ano)
     return 0
 
 

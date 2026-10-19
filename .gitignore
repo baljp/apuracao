@@ -1,6 +1,8 @@
 __pycache__/
 *.pyc
-programa/dados2022/
-programa/base2022.json
+# Dados brutos das eleições passadas: são centenas de MB e qualquer um pode
+# baixá-los do TSE com os scripts em programa/.
+programa/dados20*/
+programa/base20*.json
 programa/*.log
 .DS_Store

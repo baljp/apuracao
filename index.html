@@ -97,6 +97,13 @@
   a{color:var(--pl)}
   .vazio{text-align:center;padding:26px 10px;color:var(--fraco);font-size:14px}
 
+  .abas{display:flex;gap:4px;margin-bottom:14px;background:var(--cartao);
+    border:1px solid var(--linha);border-radius:11px;padding:4px}
+  .aba{flex:1;background:none;border:0;border-radius:8px;padding:9px 12px;
+    font:600 14px inherit;font-family:inherit;color:var(--fraco);cursor:pointer}
+  .aba.ativa{background:var(--linha);color:var(--texto)}
+  .aba:hover:not(.ativa){color:var(--texto)}
+
   .instalar{display:none;align-items:center;gap:12px;flex-wrap:wrap}
   .instalar .txt{flex:1;min-width:180px;font-size:13px;color:var(--fraco)}
   .instalar .txt b{color:var(--texto)}
@@ -113,6 +120,11 @@
   <h1>Projeção da apuração — Presidente</h1>
   <div class="sub" id="status"><span class="pisca"></span>carregando a base…</div>
 
+  <nav class="abas" id="abas">
+    <button class="aba ativa" data-aba="apuracao">Apuração</button>
+    <button class="aba" data-aba="pesquisas">Pesquisas</button>
+  </nav>
+
   <div class="cartao instalar" id="cartaoInstalar">
     <div class="txt"><b>Instale na tela de início</b><br>
       Abre como aplicativo, em tela cheia e sem barra de navegador.</div>
@@ -127,6 +139,7 @@
     <button class="fechar" id="btFecharIOS" title="Agora não">&times;</button>
   </div>
 
+  <div id="painelApuracao">
   <div class="cartao" id="cartaoPlacar">
     <div id="vazio" class="vazio">Aguardando o início da apuração.</div>
     <div id="placar" style="display:none">
@@ -201,6 +214,92 @@
     </details>
   </div>
 
+  </div><!-- fim painelApuracao -->
+
+  <div id="painelPesquisas" hidden>
+    <div class="cartao" id="cartaoMedia">
+      <h2>Média das pesquisas</h2>
+      <div id="mediaVazio" class="vazio">Carregando as pesquisas…</div>
+      <div id="mediaCorpo" style="display:none">
+        <div class="placar">
+          <div class="lado pl">
+            <div class="nome" id="pNomePL">—</div>
+            <div class="pct" id="pPctPL">—</div>
+            <div class="faixa" id="pFaixaPL"></div>
+          </div>
+          <div class="lado pt dir">
+            <div class="nome" id="pNomePT">—</div>
+            <div class="pct" id="pPctPT">—</div>
+            <div class="faixa" id="pFaixaPT"></div>
+          </div>
+        </div>
+        <div class="barra"><i id="pBarraPL"></i><i id="pBarraPT"></i></div>
+        <div class="meio"><span>50%</span></div>
+        <div class="faixa" id="pResumo"></div>
+      </div>
+    </div>
+
+    <div class="cartao" id="cartaoAlerta">
+      <div class="aviso" style="border-left:2px solid var(--alerta);padding-left:12px">
+        <strong>Leia antes de confiar nos números acima.</strong> No 1º turno de
+        2026, as pesquisas erraram de forma sistemática: a maioria dos
+        institutos apontava Lula à frente, e Flávio venceu por
+        <strong>47,03% a 45,16%</strong>. O erro não foi aleatório — foi na
+        mesma direção em quase todos. A média abaixo pode estar errada do mesmo
+        jeito, e a margem mostrada já embute um piso de erro por causa disso.
+      </div>
+    </div>
+
+    <div class="cartao" id="cartaoTendencia" style="display:none">
+      <h2>Tendência</h2>
+      <svg class="graf" id="grafPesquisas" viewBox="0 0 600 130"
+           preserveAspectRatio="none"></svg>
+      <div class="faixa" style="margin-top:8px">
+        Cada ponto é uma pesquisa, posicionada pela data de término do campo.
+        A linha é a média ponderada. Acima de 50% favorece
+        <span id="legNomePL">o candidato do PL</span>.
+      </div>
+    </div>
+
+    <div class="cartao">
+      <h2>Como cada instituto se saiu no 1º turno</h2>
+      <div id="acertoVazio" class="vazio">Calculando…</div>
+      <table id="tabAcerto" style="display:none">
+        <thead><tr><th>Instituto</th><th>Última pesquisa</th>
+          <th>Erro no 1º turno</th></tr></thead>
+        <tbody id="corpoAcerto"></tbody>
+      </table>
+      <div class="faixa" style="margin-top:10px">
+        Erro é a diferença entre a vantagem que o instituto projetou e a
+        vantagem real de 1,87 ponto de Flávio sobre Lula no 1º turno. Sinal
+        negativo significa que subestimou Flávio.
+      </div>
+    </div>
+
+    <div class="cartao">
+      <h2>Pesquisas do 2º turno</h2>
+      <table>
+        <thead><tr><th>Instituto</th><th>Campo</th><th>Amostra</th>
+          <th id="thPT">PT</th><th id="thPL">PL</th><th>TSE</th></tr></thead>
+        <tbody id="listaPesquisas"><tr><td colspan="6" class="vazio">—</td></tr></tbody>
+      </table>
+      <div style="text-align:center;margin-top:14px">
+        <button class="bt" id="btMais" style="display:none">Ver mais antigas</button>
+      </div>
+    </div>
+
+    <div class="cartao aviso">
+      <strong>De onde vêm estes dados.</strong> Os percentuais vêm da tabela
+      mantida na <a href="https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2026"
+      target="_blank" rel="noopener">Wikipédia</a> (licença livre), buscados
+      pelo seu navegador a cada hora. O TSE registra toda pesquisa divulgada —
+      empresa, protocolo, contratante, amostra e metodologia — mas
+      <strong>não publica os percentuais</strong>; por isso o registro oficial
+      entra aqui como validação, na coluna TSE, e não como fonte dos números.
+      A coluna confirma que a pesquisa existe e sob qual protocolo.
+    </div>
+  </div>
+
   <div class="cartao aviso">
     Isto é uma <strong>estimativa estatística</strong>, não um resultado oficial.
     O único resultado válido é a totalização do TSE. Se a projeção divergir do
@@ -213,6 +312,7 @@
 <script type="module">
 import { Modelo } from "./modelo.js";
 import * as tse from "./tse.js";
+import * as pq from "./pesquisas.js";
 
 // O CDN do TSE revalida os arquivos a cada 27 segundos (cache-control:
 // max-age=27), então ler mais rápido que isso só gastaria banda sem trazer
@@ -351,6 +451,149 @@ function desenha() {
 }
 
 iniciar();
+
+/* ---- aba de pesquisas -------------------------------------------------- */
+
+let pesquisas = null;
+let mostrando = 12;
+
+document.querySelectorAll(".aba").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".aba").forEach((x) => x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    const qual = b.dataset.aba;
+    $("painelApuracao").hidden = qual !== "apuracao";
+    $("painelPesquisas").hidden = qual !== "pesquisas";
+    if (qual === "pesquisas" && pesquisas === null) carregarPesquisas();
+  });
+});
+
+async function carregarPesquisas() {
+  pesquisas = [];  // evita duas cargas simultâneas
+  try {
+    const lista = await pq.buscarSegundoTurno();
+    await pq.cruzarComTSE(lista);
+    pesquisas = lista;
+    pintaPesquisas();
+    calcularAcerto();
+  } catch (e) {
+    pesquisas = null;
+    $("mediaVazio").textContent = "Não consegui carregar as pesquisas agora ("
+      + e.message + "). Tente de novo em alguns minutos.";
+  }
+}
+
+function pintaPesquisas() {
+  if (!pesquisas || !pesquisas.length) {
+    $("mediaVazio").textContent = "Nenhuma pesquisa de 2º turno divulgada ainda.";
+    return;
+  }
+  const ag = pq.agregar(pesquisas);
+  $("pNomePL").textContent = nomes.pl;
+  $("pNomePT").textContent = nomes.pt;
+  $("legNomePL").textContent = nomes.pl;
+  $("thPL").textContent = nomes.pl.split(" ")[0];
+  $("thPT").textContent = nomes.pt.split(" ")[0];
+
+  if (ag) {
+    $("mediaVazio").style.display = "none";
+    $("mediaCorpo").style.display = "block";
+    $("pPctPL").textContent = n1(ag.pl) + "%";
+    $("pPctPT").textContent = n1(ag.pt) + "%";
+    $("pFaixaPL").textContent = "entre " + n1(ag.faixa[0]) + "% e " + n1(ag.faixa[1]) + "%";
+    $("pFaixaPT").textContent = "entre " + n1(100 - ag.faixa[1]) + "% e "
+                              + n1(100 - ag.faixa[0]) + "%";
+    $("pBarraPL").style.cssText = "width:" + ag.pl + "%;background:var(--pl)";
+    $("pBarraPT").style.cssText = "width:" + ag.pt + "%;background:var(--pt)";
+    const dist = Math.abs(ag.pl - 50);
+    $("pResumo").textContent =
+      ag.nUsadas + " pesquisas dos últimos 21 dias, ponderadas por data e amostra. "
+      + (dist < ag.erro
+          ? "A diferença é menor que a margem — as pesquisas não distinguem o vencedor."
+          : "A vantagem é maior que a margem, mas veja o aviso abaixo.");
+    desenhaPesquisas(ag);
+  }
+
+  const corpo = pesquisas.slice(0, mostrando).map((p) => {
+    const tse = p.tse
+      ? '<span style="color:var(--ok)" title="Protocolo ' + p.tse.protocolo + '">✓</span>'
+      : '<span style="color:var(--fraco)" title="não localizada no registro">–</span>';
+    return "<tr><td class='uf'>" + p.instituto + "</td>"
+      + "<td>" + p.periodo + "</td>"
+      + "<td>" + (p.amostra ? p.amostra.toLocaleString("pt-BR") : "—") + "</td>"
+      + "<td>" + n1(p.pt) + "%</td>"
+      + "<td><strong>" + n1(p.pl) + "%</strong></td>"
+      + "<td>" + tse + "</td></tr>";
+  }).join("");
+  $("listaPesquisas").innerHTML = corpo;
+  $("btMais").style.display = mostrando < pesquisas.length ? "inline-block" : "none";
+  $("btMais").textContent = "Ver mais antigas (" + (pesquisas.length - mostrando) + ")";
+}
+
+$("btMais").addEventListener("click", () => { mostrando += 20; pintaPesquisas(); });
+
+function desenhaPesquisas(ag) {
+  const pts = pesquisas.filter((p) => (new Date() - p.fim) / 86400000 <= 28);
+  if (pts.length < 4) return;
+  $("cartaoTendencia").style.display = "block";
+
+  const t0 = Math.min(...pts.map((p) => +p.fim));
+  const t1 = Math.max(...pts.map((p) => +p.fim));
+  const vals = pts.map((p) => p.validosPl);
+  let lo = Math.min(...vals, 48), hi = Math.max(...vals, 52);
+  const pad = (hi - lo) * 0.15 || 1; lo -= pad; hi += pad;
+  const X = (d) => t1 === t0 ? 300 : ((+d - t0) / (t1 - t0)) * 600;
+  const Y = (v) => 130 - ((v - lo) / (hi - lo)) * 130;
+
+  const bolinhas = pts.map((p) =>
+    `<circle cx="${X(p.fim).toFixed(1)}" cy="${Y(p.validosPl).toFixed(1)}" r="3"
+      fill="var(--pl)" opacity="0.5"/>`).join("");
+  const meio = (lo < 50 && hi > 50)
+    ? `<line x1="0" y1="${Y(50)}" x2="600" y2="${Y(50)}" stroke="var(--fraco)"
+       stroke-width="1" stroke-dasharray="3 3" opacity=".7"
+       vector-effect="non-scaling-stroke"/>` : "";
+  const linha = `<line x1="0" y1="${Y(ag.pl)}" x2="600" y2="${Y(ag.pl)}"
+     stroke="var(--pl)" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+  $("grafPesquisas").innerHTML = meio + bolinhas + linha;
+}
+
+/* Erro de cada instituto no 1º turno: compara a vantagem que ele projetou
+   com a vantagem real de Flávio sobre Lula (47,03 − 45,16 = 1,87 ponto). */
+async function calcularAcerto() {
+  try {
+    const t1 = await pq.buscarPrimeiroTurno();
+    const real = pq.REAL_1T.pl - pq.REAL_1T.pt;
+    const porInstituto = new Map();
+    for (const p of t1) {
+      const ord = [...p.nums].sort((a, b) => b - a);
+      if (ord.length < 2) continue;
+      const vantagem = ord[0] - ord[1];
+      const ja = porInstituto.get(p.instituto);
+      if (!ja || p.fim > ja.fim) {
+        porInstituto.set(p.instituto, { fim: p.fim, vantagem });
+      }
+    }
+    const atuais = new Set(pesquisas.map((p) => p.instituto));
+    const linhas = [...porInstituto.entries()]
+      .filter(([nome]) => atuais.has(nome))
+      .map(([nome, v]) => ({ nome, erro: v.vantagem - real, fim: v.fim }))
+      .sort((a, b) => Math.abs(a.erro) - Math.abs(b.erro));
+
+    if (!linhas.length) { $("acertoVazio").textContent =
+      "Não consegui cruzar os institutos atuais com os do 1º turno."; return; }
+
+    $("acertoVazio").style.display = "none";
+    $("tabAcerto").style.display = "table";
+    $("corpoAcerto").innerHTML = linhas.map((l) => {
+      const p = pesquisas.find((x) => x.instituto === l.nome);
+      return "<tr><td class='uf'>" + l.nome + "</td>"
+        + "<td>" + (p ? n1(p.validosPl) + "% " + nomes.pl.split(" ")[0] : "—") + "</td>"
+        + "<td>" + (l.erro >= 0 ? "+" : "−") + n1(Math.abs(l.erro)) + " pp</td></tr>";
+    }).join("");
+  } catch {
+    $("acertoVazio").textContent = "Não consegui calcular o erro do 1º turno.";
+  }
+}
 
 /* ---- instalação na tela de início ------------------------------------- */
 
