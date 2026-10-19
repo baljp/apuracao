@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+programa/dados2022/
+programa/base2022.json
+programa/*.log
+.DS_Store

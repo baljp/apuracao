@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projeção da apuração — Presidente 2026</title>
+<meta name="description" content="Projeção do resultado final da eleição presidencial a partir dos arquivos oficiais de divulgação do TSE, corrigindo o viés da ordem de apuração.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<style>
+  :root{
+    --fundo:#0f1117; --cartao:#171a23; --linha:#272b38;
+    --texto:#e9ebf2; --fraco:#949bb0;
+    --pl:#4a90d9; --pt:#d9544a; --ok:#49c98a; --alerta:#e0913a;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --fundo:#f5f6f9; --cartao:#fff; --linha:#e3e6ed;
+           --texto:#171a23; --fraco:#666d82; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--texto);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif;
+    padding:22px 16px 56px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 3px;font-weight:600;letter-spacing:-.2px}
+  h2{font-size:14px;margin:0 0 12px;font-weight:600;color:var(--fraco);
+     text-transform:uppercase;letter-spacing:.5px}
+  .sub{color:var(--fraco);font-size:13px;margin-bottom:20px}
+  .cartao{background:var(--cartao);border:1px solid var(--linha);
+    border-radius:14px;padding:20px;margin-bottom:14px}
+
+  .placar{display:flex;gap:16px;flex-wrap:wrap}
+  .lado{flex:1;min-width:190px}
+  .lado.dir{text-align:right}
+  .nome{font-size:12px;color:var(--fraco);text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:5px;font-weight:600}
+  .pct{font-size:clamp(38px,11vw,50px);font-weight:650;line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:-1.5px}
+  .pl .pct{color:var(--pl)} .pt .pct{color:var(--pt)}
+  .faixa{font-size:12px;color:var(--fraco);margin-top:7px;
+    font-variant-numeric:tabular-nums}
+
+  .barra{height:11px;border-radius:6px;overflow:hidden;display:flex;
+    margin:20px 0 0;background:var(--linha);position:relative}
+  .barra i{display:block;height:100%;transition:width .6s ease}
+  .meio{position:relative;height:16px}
+  .meio:after{content:"";position:absolute;left:50%;top:-11px;width:2px;
+    height:21px;background:var(--texto);opacity:.5}
+  .meio span{position:absolute;left:50%;top:7px;transform:translateX(-50%);
+    font-size:10px;color:var(--fraco)}
+  #probabilidade{font-size:14px;margin-top:6px}
+
+  .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:16px}
+  .item .r{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+  .item .l{font-size:12px;color:var(--fraco);margin-top:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;
+    font-variant-numeric:tabular-nums}
+  th,td{padding:8px;text-align:right;border-bottom:1px solid var(--linha)}
+  th{color:var(--fraco);font-weight:600;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.4px}
+  th:first-child,td:first-child{text-align:left}
+  tr:last-child td{border-bottom:none}
+  td.uf{font-weight:650}
+  .reg{color:var(--fraco);font-size:10.5px;font-weight:400;margin-left:3px}
+  .mini{height:5px;background:var(--linha);border-radius:3px;overflow:hidden;
+    width:48px;display:inline-block;vertical-align:middle;margin-right:5px}
+  .mini i{display:block;height:100%;background:var(--ok)}
+
+  .aviso{font-size:12.5px;color:var(--fraco);line-height:1.65}
+  .aviso strong{color:var(--texto)}
+  .pisca{display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--ok);margin-right:7px;animation:p 2s infinite;
+    vertical-align:middle}
+  @keyframes p{50%{opacity:.2}}
+  .erro{color:var(--alerta)}
+  svg.graf{display:block;width:100%;height:130px;overflow:visible}
+  details{font-size:13px;color:var(--fraco)}
+  summary{cursor:pointer;color:var(--texto);font-weight:600;font-size:13.5px;
+    padding:2px 0}
+  details p{margin:10px 0}
+  details b{color:var(--texto)}
+  a{color:var(--pl)}
+  .vazio{text-align:center;padding:26px 10px;color:var(--fraco);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Projeção da apuração — Presidente</h1>
+  <div class="sub" id="status"><span class="pisca"></span>carregando a base…</div>
+
+  <div class="cartao" id="cartaoPlacar">
+    <div id="vazio" class="vazio">Aguardando o início da apuração.</div>
+    <div id="placar" style="display:none">
+      <div class="placar">
+        <div class="lado pl">
+          <div class="nome" id="nomePL">—</div>
+          <div class="pct" id="pctPL">—</div>
+          <div class="faixa" id="faixaPL"></div>
+        </div>
+        <div class="lado pt dir">
+          <div class="nome" id="nomePT">—</div>
+          <div class="pct" id="pctPT">—</div>
+          <div class="faixa" id="faixaPT"></div>
+        </div>
+      </div>
+      <div class="barra"><i id="barraPL"></i><i id="barraPT"></i></div>
+      <div class="meio"><span>50%</span></div>
+      <div class="faixa" id="probabilidade"></div>
+    </div>
+  </div>
+
+  <div class="cartao grade">
+    <div class="item"><div class="r" id="apurado">—</div>
+      <div class="l">do eleitorado apurado</div></div>
+    <div class="item"><div class="r" id="bruto">—</div>
+      <div class="l">percentual bruto do TSE</div></div>
+    <div class="item"><div class="r" id="correcao">—</div>
+      <div class="l">correção do viés de apuração</div></div>
+  </div>
+
+  <div class="cartao" id="cartaoGrafico" style="display:none">
+    <h2>Trajetória</h2>
+    <svg class="graf" id="grafico" viewBox="0 0 600 130" preserveAspectRatio="none"></svg>
+    <div class="faixa" style="margin-top:8px">
+      Linha cheia: projeção do modelo. Pontilhada: percentual bruto do TSE.
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>Por estado</h2>
+    <table>
+      <thead><tr><th>Estado</th><th>Apurado</th><th>Na urna</th>
+        <th>Projeção</th><th>Dif.</th></tr></thead>
+      <tbody id="estados"><tr><td colspan="5" class="vazio">—</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="cartao">
+    <details>
+      <summary>Como isso funciona, e por que o número bruto engana</summary>
+      <p>Sul e Centro-Oeste apuram rápido; o Nordeste demora. Com <b>5% apurado</b>,
+      o Nordeste — que é 27% do eleitorado do país — costuma representar cerca de
+      <b>4%</b> do que já foi contado. O percentual que aparece na TV não está
+      errado: é uma amostra enviesada pela geografia.</p>
+      <p>O modelo não adivinha o resultado. Para cada um dos 5.716 municípios ele
+      sabe, pelos arquivos de andamento do TSE, quanto já foi totalizado, e sabe
+      como aquele município votou no 1º turno. Com isso calcula <b>quanto a parte
+      já apurada deveria ter dado se o eleitorado repetisse o 1º turno</b>. A
+      diferença contra o que de fato saiu da urna é o <b>swing</b> — e é só isso
+      que precisa ser estimado, uma quantidade pequena e estável.</p>
+      <p>Com pouca apuração, o swing de um estado isolado é ruído. Então ele é
+      puxado para o da sua região, e o da região para o nacional, com força
+      inversa à informação disponível. No início da noite o modelo é quase
+      nacional; conforme os votos entram, vira estadual.</p>
+      <p>No backtest contra o 2º turno de 2022 — usando o 1º turno como base, o
+      resultado real como alvo e a ordem real de chegada observada em 2026 — a
+      projeção errou <b>0,24 ponto percentual com 5% apurado</b>, contra 9,4
+      pontos do percentual bruto. O erro médio a partir de 5% foi de 0,07 ponto.</p>
+      <p>Os dados vêm direto do <a href="https://resultados.tse.jus.br"
+      target="_blank" rel="noopener">TSE</a>, no seu navegador. Esta página não
+      tem servidor e não guarda nada.</p>
+    </details>
+  </div>
+
+  <div class="cartao aviso">
+    Isto é uma <strong>estimativa estatística</strong>, não um resultado oficial.
+    O único resultado válido é a totalização do TSE. Se a projeção divergir do
+    resultado final, significa que o modelo errou — modelos erram, e é para isso
+    que serve a margem mostrada acima. Diferença entre projeção e apuração não é
+    evidência de problema na apuração.
+  </div>
+</div>
+
+<script type="module">
+import { Modelo } from "./modelo.js";
+import * as tse from "./tse.js";
+
+// O CDN do TSE revalida os arquivos a cada 27 segundos (cache-control:
+// max-age=27), então ler mais rápido que isso só gastaria banda sem trazer
+// nenhum dado novo.
+const INTERVALO = 30000;
+const TURNO = new URLSearchParams(location.search).get("turno") === "1"
+  ? tse.ELEICAO_1T : tse.ELEICAO_2T;
+
+const $ = (id) => document.getElementById(id);
+const n1 = (v) => (v == null || isNaN(v)) ? "—" : v.toFixed(1).replace(".", ",");
+
+let modelo = null;
+let nomes = { pl: "Flávio Bolsonaro", pt: "Lula" };
+const historico = [];
+
+function titulo(s) {
+  return s.replace(/\S+/g, (p) =>
+    p.length <= 2 ? p.toLowerCase() : p[0].toUpperCase() + p.slice(1).toLowerCase());
+}
+
+async function iniciar() {
+  try {
+    const base = await (await fetch("./base.json", { cache: "force-cache" })).json();
+    modelo = new Modelo(base);
+    if (base.nomes) {
+      nomes = { pl: titulo(base.nomes.pl), pt: titulo(base.nomes.pt) };
+    }
+    $("nomePL").textContent = nomes.pl;
+    $("nomePT").textContent = nomes.pt;
+    tick();
+    setInterval(tick, INTERVALO);
+  } catch (e) {
+    $("status").innerHTML = '<span class="erro">⚠ não consegui carregar a base: '
+      + e.message + "</span>";
+  }
+}
+
+async function tick() {
+  try {
+    const { observado, fracoes, nomes: nms, falhas } = await tse.lerTudo(TURNO);
+    if (nms && nms.pl) {
+      nomes = { pl: titulo(nms.pl), pt: titulo(nms.pt) };
+      $("nomePL").textContent = nomes.pl;
+      $("nomePT").textContent = nomes.pt;
+    }
+    const r = modelo.projetar(fracoes, observado, 240);
+    pinta(r, falhas);
+  } catch (e) {
+    $("status").innerHTML = '<span class="erro">⚠ falha ao ler o TSE — tentando de novo'
+      + " em 1 minuto</span>";
+  }
+}
+
+function pinta(r, falhas) {
+  const hora = new Date().toLocaleTimeString("pt-BR");
+  let st = '<span class="pisca"></span>atualizado às ' + hora
+         + " · dados oficiais do TSE";
+  if (falhas && falhas.length) {
+    st += ' · <span class="erro">' + falhas.length
+        + " estado(s) sem resposta</span>";
+  }
+  $("status").innerHTML = st;
+
+  const comecou = r.pctApurado > 0.05;
+  $("vazio").style.display = comecou ? "none" : "block";
+  $("placar").style.display = comecou ? "block" : "none";
+  $("apurado").textContent = n1(r.pctApurado) + "%";
+  if (!comecou) return;
+
+  $("pctPL").textContent = n1(r.projecaoPl) + "%";
+  $("pctPT").textContent = n1(r.projecaoPt) + "%";
+  $("faixaPL").textContent = "entre " + n1(r.faixaPl[0]) + "% e " + n1(r.faixaPl[1]) + "%";
+  $("faixaPT").textContent = "entre " + n1(100 - r.faixaPl[1]) + "% e "
+                           + n1(100 - r.faixaPl[0]) + "%";
+  $("barraPL").style.cssText = "width:" + r.projecaoPl + "%;background:var(--pl)";
+  $("barraPT").style.cssText = "width:" + r.projecaoPt + "%;background:var(--pt)";
+
+  const p = r.probPl;
+  let txt;
+  if (r.pctApurado < 1) {
+    txt = "Apuração ainda muito inicial — abaixo de 1% a projeção é instável.";
+  } else if (p > 0.995) {
+    txt = "O modelo dá mais de 99% de chance de vitória de " + nomes.pl + ".";
+  } else if (p < 0.005) {
+    txt = "O modelo dá mais de 99% de chance de vitória de " + nomes.pt + ".";
+  } else if (p >= 0.5) {
+    txt = "Chance estimada de vitória: " + n1(p * 100) + "% para " + nomes.pl + ".";
+  } else {
+    txt = "Chance estimada de vitória: " + n1(100 - p * 100) + "% para " + nomes.pt + ".";
+  }
+  $("probabilidade").textContent = txt;
+
+  $("bruto").textContent = r.brutoPl == null ? "—" : n1(r.brutoPl) + "%";
+  const dif = r.brutoPl == null ? null : r.projecaoPl - r.brutoPl;
+  $("correcao").textContent = dif == null ? "—"
+    : (dif >= 0 ? "+" : "−") + n1(Math.abs(dif)) + " pp";
+
+  $("estados").innerHTML = r.estados.map((e) => {
+    const d = e.obsPl == null ? null : e.projPl - e.obsPl;
+    return "<tr><td class='uf'>" + e.uf + "<span class='reg'>" + e.regiao + "</span></td>"
+      + "<td><span class='mini'><i style='width:" + Math.min(e.pctApurado, 100)
+      + "%'></i></span>" + n1(e.pctApurado) + "%</td>"
+      + "<td>" + (e.obsPl == null ? "—" : n1(e.obsPl) + "%") + "</td>"
+      + "<td><strong>" + n1(e.projPl) + "%</strong></td>"
+      + "<td>" + (d == null ? "—" : (d >= 0 ? "+" : "−") + n1(Math.abs(d))) + "</td></tr>";
+  }).join("");
+
+  if (!historico.length || r.pctApurado > historico[historico.length - 1].pct + 0.05) {
+    historico.push({ pct: r.pctApurado, proj: r.projecaoPl, bruto: r.brutoPl });
+  }
+  desenha();
+}
+
+function desenha() {
+  if (historico.length < 3) return;
+  $("cartaoGrafico").style.display = "block";
+  const vals = historico.flatMap((p) => [p.proj, p.bruto]).filter((v) => v != null);
+  let lo = Math.min(...vals, 49), hi = Math.max(...vals, 51);
+  const pad = (hi - lo) * 0.12 || 1;
+  lo -= pad; hi += pad;
+  const X = (p) => (p.pct / 100) * 600;
+  const Y = (v) => 130 - ((v - lo) / (hi - lo)) * 130;
+  const linha = (k, extra) => {
+    const pts = historico.filter((p) => p[k] != null)
+      .map((p) => X(p) + "," + Y(p[k])).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="var(--pl)"
+      stroke-width="2" vector-effect="non-scaling-stroke" ${extra}/>`;
+  };
+  const meio = (lo < 50 && hi > 50)
+    ? `<line x1="0" y1="${Y(50)}" x2="600" y2="${Y(50)}" stroke="var(--fraco)"
+       stroke-width="1" stroke-dasharray="3 3" opacity=".6"
+       vector-effect="non-scaling-stroke"/>` : "";
+  $("grafico").innerHTML = meio
+    + linha("bruto", 'stroke-dasharray="4 4" opacity=".45"')
+    + linha("proj", "");
+}
+
+iniciar();
+</script>
+</body>
+</html>
