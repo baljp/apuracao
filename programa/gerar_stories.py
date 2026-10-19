@@ -1,14 +1,26 @@
 """
 Gera a imagem de divulgação para os stories do Instagram (1080 × 1920).
 
-A peça é escura e usa o mesmo mapa enchendo de baixo para cima que está no
-ícone do aplicativo: quem vir o story e depois instalar reconhece a mesma
-coisa. Verde continua significando andamento da apuração, nunca candidato —
-um story eleitoral em azul ou vermelho vira propaganda, e a página não é.
+IDENTIDADE VISUAL
+Tirada da Biblioteca do Oxe (oxeeraassim.github.io), que é a mesma marca:
+fundo quase preto #191a1f, creme de papel velho #e8e2d3, verde #7cc492 e
+terracota #e06a5f. A tipografia de lá é Zilla Slab com Literata; aqui a
+substituta é a Lora, da mesma família editorial com serifa — quem vê o story
+e depois abre a Biblioteca reconhece a mesma mão.
 
-O texto promete o que a página entrega e nada além: projeção é estimativa,
-não resultado. Exagerar aqui é o jeito mais rápido de queimar a credibilidade
-da página justamente na noite em que ela precisa ter alguma.
+Verde continua significando andamento da apuração e nunca candidato. Um story
+eleitoral em azul ou vermelho vira propaganda, e a página não é.
+
+SOBRE O TEXTO
+A primeira versão dizia "o Sul conta rápido, o Nordeste demora". Soa como
+julgamento de região, e nem é a explicação certa. O que acontece é mais
+simples e vale para o país inteiro: as urnas não terminam todas na mesma
+hora, então o número do começo mostra só os lugares que já fecharam a
+contagem. O modelo calcula o que falta e vai montando o cenário completo.
+
+O texto promete o que a página entrega e nada além, inclusive a linha de que
+projeção é estimativa. Exagerar na divulgação é o jeito mais rápido de
+queimar a credibilidade da página na noite em que ela precisa ter alguma.
 
 Uso:  python3 gerar_stories.py
 """
@@ -25,25 +37,30 @@ RAIZ = os.path.dirname(AQUI)
 
 L, A = 1080, 1920
 
-FUNDO_1 = "#16203A"
-FUNDO_2 = "#070A12"
-VERDE = "#34D399"
-VERDE_2 = "#10B981"
-CINZA_MAPA = "#2E3A52"
-BRANCO = "#FFFFFF"
-SUAVE = "#9FB0CC"
-LINHA_AGUA = "#A7F3D0"
+# Paleta da Biblioteca do Oxe.
+TINTA = "#191a1f"
+TINTA_2 = "#24252c"
+CREME = "#e8e2d3"
+CREME_FORTE = "#fbf8f1"
+VERDE = "#7cc492"
+VERDE_FUNDO = "#3d7a4f"
+TERRACOTA = "#e06a5f"
+CINZA = "#a3a6b2"
+MAPA_FALTA = "#3a3b44"
 
-ENDERECO = "baljp.github.io/apuracao"
+SERIF = "Lora, Georgia, serif"
+
+ENDERECO = "oxeeraassim.github.io/apuracao"
 PERFIL = "@oxe_eraassim"
 
-NIVEL = 0.58   # quanto do mapa aparece "apurado"
+NIVEL = 0.58
 
 
-def texto(x, y, t, tam, peso="600", cor=BRANCO, anc="middle", esp="0", op="1"):
+def txt(x, y, t, tam, peso="400", cor=CREME, anc="middle", esp="0", op="1",
+        fonte=SERIF):
     return (f'<text x="{x}" y="{y}" text-anchor="{anc}" fill="{cor}" '
-            f'font-family="Helvetica Neue,Helvetica,Arial" font-size="{tam}" '
-            f'font-weight="{peso}" letter-spacing="{esp}" opacity="{op}">{t}</text>')
+            f'font-family="{fonte}" font-size="{tam}" font-weight="{peso}" '
+            f'letter-spacing="{esp}" opacity="{op}">{t}</text>')
 
 
 def montar() -> str:
@@ -51,69 +68,84 @@ def montar() -> str:
         mapa = json.load(fh)
     _, _, lm, am = (float(v) for v in mapa["viewBox"].split())
 
-    # O mapa ocupa a faixa central da peça.
-    alvo = 560.0
+    alvo = 520.0
     esc = alvo / max(lm, am)
     dx = (L - lm * esc) / 2
-    dy = 560
+    dy = 600
     formas = "".join(f'<path d="{d}"/>' for d in mapa["ufs"].values())
     corte = dy + am * esc * (1 - NIVEL)
 
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{L}" height="{A}" '
          f'viewBox="0 0 {L} {A}">',
          '<defs>',
-         f'<linearGradient id="ceu" x1="0" y1="0" x2="0.4" y2="1">'
-         f'<stop offset="0" stop-color="{FUNDO_1}"/>'
-         f'<stop offset="1" stop-color="{FUNDO_2}"/></linearGradient>',
+         f'<linearGradient id="fundo" x1="0" y1="0" x2="0.3" y2="1">'
+         f'<stop offset="0" stop-color="{TINTA_2}"/>'
+         f'<stop offset="1" stop-color="{TINTA}"/></linearGradient>',
          f'<linearGradient id="nivel" x1="0" y1="{dy}" x2="0" y2="{dy + am * esc}"'
          f' gradientUnits="userSpaceOnUse">'
-         f'<stop offset="0" stop-color="{CINZA_MAPA}"/>'
-         f'<stop offset="{1 - NIVEL}" stop-color="{CINZA_MAPA}"/>'
+         f'<stop offset="0" stop-color="{MAPA_FALTA}"/>'
+         f'<stop offset="{1 - NIVEL}" stop-color="{MAPA_FALTA}"/>'
          f'<stop offset="{1 - NIVEL}" stop-color="{VERDE}"/>'
-         f'<stop offset="1" stop-color="{VERDE_2}"/></linearGradient>',
+         f'<stop offset="1" stop-color="{VERDE_FUNDO}"/></linearGradient>',
          '<clipPath id="br" clipPathUnits="userSpaceOnUse">'
          f'<g transform="translate({dx:.1f},{dy:.1f}) scale({esc:.5f})">{formas}</g>'
          '</clipPath>',
          '</defs>',
-         f'<rect width="{L}" height="{A}" fill="url(#ceu)"/>']
+         f'<rect width="{L}" height="{A}" fill="url(#fundo)"/>']
 
     # ---- topo ----
-    p.append(texto(L / 2, 180, "DOMINGO, 25 DE OUTUBRO", 34, "700", VERDE, esp="4"))
-    p.append(texto(L / 2, 290, "O resultado", 88, "700"))
-    p.append(texto(L / 2, 390, "antes do fim", 88, "700"))
-    p.append(texto(L / 2, 490, "da apuração", 88, "700"))
+    p.append(f'<rect x="{L / 2 - 180}" y="150" width="360" height="52" rx="26" '
+             f'fill="none" stroke="{TERRACOTA}" stroke-width="2"/>')
+    p.append(txt(L / 2, 186, "25 DE OUTUBRO", 28, "700", TERRACOTA, esp="5"))
+
+    p.append(txt(L / 2, 320, "O resultado antes", 76, "700", CREME_FORTE))
+    p.append(txt(L / 2, 410, "do fim da apuração", 76, "700", CREME_FORTE))
+    p.append(txt(L / 2, 490, "Uma projeção que se ajusta a cada urna contada.",
+                 31, "400", CINZA))
 
     # ---- mapa ----
     p.append('<g clip-path="url(#br)">')
     p.append(f'<rect x="0" y="{dy}" width="{L}" height="{am * esc}" fill="url(#nivel)"/>')
-    p.append(f'<rect x="0" y="{corte - 4}" width="{L}" height="8" '
-             f'fill="{LINHA_AGUA}" opacity="0.9"/>')
+    p.append(f'<rect x="0" y="{corte - 3}" width="{L}" height="6" '
+             f'fill="{CREME}" opacity="0.75"/>')
     p.append('</g>')
 
-    # ---- as duas coisas que a página faz ----
-    y = 1240
-    p.append(f'<rect x="90" y="{y}" width="4" height="150" fill="{VERDE}" rx="2"/>')
-    p.append(texto(130, y + 36, "PROJEÇÃO AO VIVO", 30, "700", VERDE, "start", esp="2"))
-    p.append(texto(130, y + 86, "O Sul conta rápido, o Nordeste demora.", 33, "500",
-                   BRANCO, "start"))
-    p.append(texto(130, y + 130, "O modelo corrige isso e mostra onde vai dar.", 33,
-                   "500", BRANCO, "start"))
+    # ---- o que a página faz ----
+    y = 1225
+    p.append(f'<rect x="88" y="{y}" width="3" height="166" fill="{VERDE}"/>')
+    p.append(txt(128, y + 34, "A APURAÇÃO", 27, "700", VERDE, "start", esp="3"))
+    p.append(txt(128, y + 88, "As urnas não terminam todas na mesma hora.",
+                 31, "400", CREME, "start"))
+    p.append(txt(128, y + 130, "Um modelo preditivo calcula o que ainda falta",
+                 31, "400", CREME, "start"))
+    p.append(txt(128, y + 172, "e vai montando o cenário completo do país.",
+                 31, "400", CREME, "start"))
 
-    y = 1430
-    p.append(f'<rect x="90" y="{y}" width="4" height="150" fill="{SUAVE}" rx="2"/>')
-    p.append(texto(130, y + 36, "PESQUISAS", 30, "700", SUAVE, "start", esp="2"))
-    p.append(texto(130, y + 86, "Vários institutos num lugar só, com média", 33, "500",
-                   BRANCO, "start"))
-    p.append(texto(130, y + 130, "que pesa mais as recentes e as maiores.", 33, "500",
-                   BRANCO, "start"))
+    y = 1455
+    p.append(f'<rect x="88" y="{y}" width="3" height="124" fill="{TERRACOTA}"/>')
+    p.append(txt(128, y + 34, "AS PESQUISAS", 27, "700", TERRACOTA, "start", esp="3"))
+    p.append(txt(128, y + 88, "Vários institutos num lugar só, com média",
+                 31, "400", CREME, "start"))
+    p.append(txt(128, y + 130, "que pesa mais as recentes e as maiores.",
+                 31, "400", CREME, "start"))
 
     # ---- rodapé ----
-    p.append(texto(L / 2, 1690, "É uma estimativa estatística, não o resultado oficial.",
-                   27, "500", SUAVE, op="0.8"))
-    p.append(f'<rect x="{L / 2 - 310}" y="1730" width="620" height="92" rx="46" '
-             f'fill="{VERDE}"/>')
-    p.append(texto(L / 2, 1790, ENDERECO, 40, "700", "#06281D"))
-    p.append(texto(L / 2, 1878, PERFIL, 30, "600", SUAVE, esp="1"))
+    # O aviso não é letra miúda de rodapé: é o que separa a página de um
+    # perfil que chuta resultado. Fica em caixa própria, com o mesmo peso de
+    # leitura do resto, e diz as duas coisas que importam — que o modelo
+    # pode errar, e quem dá a palavra final.
+    y = 1640
+    p.append(f'<rect x="88" y="{y}" width="{L - 176}" height="118" rx="14" '
+             f'fill="none" stroke="{MAPA_FALTA}" stroke-width="2"/>')
+    p.append(txt(L / 2, y + 48, "Modelo preditivo: é uma estimativa e pode errar.",
+                 27, "700", CREME, op="0.95"))
+    p.append(txt(L / 2, y + 88, "O resultado que vale é sempre o do TSE.",
+                 27, "400", CINZA))
+
+    p.append(f'<rect x="{L / 2 - 340}" y="1790" width="680" height="84" rx="42" '
+             f'fill="{CREME}"/>')
+    p.append(txt(L / 2, 1843, ENDERECO, 33, "700", TINTA))
+    p.append(txt(L / 2, 1902, PERFIL, 26, "400", CINZA, esp="2"))
 
     p.append("</svg>")
     return "".join(p)
