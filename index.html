@@ -600,7 +600,7 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 
 <script type="module">
 import { Modelo } from "./modelo.js?v=f9cbc40f4d";
-import * as tse from "./tse.js?v=836fd3c161";
+import * as tse from "./tse.js?v=09e06f4733";
 import * as pq from "./pesquisas.js?v=2e88ac00d0";
 
 /* Ritmo de atualização.
@@ -741,7 +741,7 @@ async function iniciar() {
       document.title = "[TESTE 1º turno] " + document.title;
     }
     tick();
-    setInterval(tick, INTERVALO);
+    agendarProximo();
 
     // As pesquisas têm ritmo próprio, de 10 em 10 minutos, e esse ritmo
     // não muda no dia da eleição: pesquisa sai de hora em hora, no máximo,
@@ -765,8 +765,31 @@ async function iniciar() {
   }
 }
 
+/* Agenda a próxima leitura com um empurrãozinho aleatório.
+ *
+ * Um setInterval fixo faz todos os aparelhos que abriram juntos pedirem
+ * juntos para sempre — e eles abrem juntos, porque chegam todos do mesmo
+ * link publicado no mesmo instante. Dez mil celulares em fase são meio
+ * milhão de pedidos num segundo e silêncio nos vinte e quatro seguintes.
+ * Qualquer servidor suporta muito mais tráfego espalhado do que em rajada.
+ *
+ * Variando cada espera em ±20%, as fases se desmancham sozinhas em poucos
+ * ciclos e o mesmo volume vira um fluxo constante. Para quem está olhando
+ * não muda nada: continua atualizando a cada vinte e poucos segundos.
+ */
+function agendarProximo() {
+  const espera = INTERVALO * (0.8 + 0.4 * Math.random());
+  setTimeout(async () => {
+    await tick();
+    agendarProximo();
+  }, espera);
+}
+
 async function tick() {
   if (DEMO !== null) return tickDemo();
+  // Aba em segundo plano não precisa de número novo: ninguém está vendo.
+  // Quando a pessoa volta para ela, o visibilitychange atualiza na hora.
+  if (document.hidden && jaLeuTSE) return;
   // Fora da janela da apuração, nem toca no TSE.
   if (TURNO === tse.ELEICAO_2T && Date.now() < ABERTURA) return tickEspera();
   try {
@@ -1437,7 +1460,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=a7e1d13fcb").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=2e88888a42").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

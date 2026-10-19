@@ -37,7 +37,18 @@ function num(txt) {
 }
 
 async function buscar(url) {
-  const r = await fetch(url, { cache: "no-store" });
+  // "no-cache" e não "no-store": os dois vão SEMPRE perguntar ao servidor, e
+  // nenhum dos dois serve número velho. A diferença é o que acontece quando
+  // o arquivo não mudou desde a última leitura — com "no-store" o TSE reenvia
+  // o arquivo inteiro, com "no-cache" o navegador manda a etiqueta da versão
+  // que já tem e recebe um "continua igual" de poucos bytes.
+  //
+  // Como a página pergunta a cada 25 segundos e o TSE republica mais devagar
+  // que isso, a maior parte das leituras não traz novidade nenhuma. Pedir o
+  // arquivo inteiro para descobrir isso é desperdício — de dados de quem
+  // está olhando e de banda do TSE, multiplicado por todo mundo que estiver
+  // acompanhando ao mesmo tempo.
+  const r = await fetch(url, { cache: "no-cache" });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
