@@ -367,6 +367,21 @@ summary:focus-visible{outline:2px solid var(--pl);outline-offset:3px}
 details p{margin:11px 0}
 details b{color:var(--texto)}
 
+/* ---------- caminho para o oficial ---------- */
+.oficial{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  border-color:var(--linha-forte);
+}
+.oficial > div{flex:1;min-width:210px}
+.oficial b{display:block;font-size:14.5px;font-weight:650;margin-bottom:3px}
+.oficial .faixa{display:block}
+.btOficial{
+  background:var(--texto);color:var(--superficie);text-decoration:none;
+  border-radius:10px;padding:11px 18px;font-size:14px;font-weight:650;
+  white-space:nowrap;
+}
+.btOficial:hover{filter:brightness(1.25)}
+
 /* ---------- crédito ---------- */
 .creditos{
   text-align:center;font-size:12.5px;color:var(--fraco);
@@ -541,10 +556,24 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
       puxado para o da sua região, e o da região para o nacional, com força
       inversa à informação disponível. No início da noite o modelo é quase
       nacional; conforme os votos entram, vira estadual.</p>
-      <p>No backtest contra o 2º turno de 2022 — usando o 1º turno como base, o
-      resultado real como alvo e a ordem real de chegada observada em 2026 — a
-      projeção errou <b>0,24 ponto percentual com 5% apurado</b>, contra 9,4
-      pontos do percentual bruto. O erro médio a partir de 5% foi de 0,07 ponto.</p>
+      <p><b>O que os testes mostram.</b> O modelo foi rodado contra os segundos
+      turnos de 2006, 2010, 2014, 2018 e 2022 — usando em cada caso o 1º turno
+      daquele ano como base, o resultado real como alvo e a ordem de chegada
+      observada em 2026. Com 5% apurado, o erro médio da projeção foi de
+      <b>0,96 ponto percentual</b>, contra cerca de 9 pontos do percentual
+      bruto; o pior caso foi 1,83, em 2014. Com 20% apurado o erro médio cai
+      para 0,73; com 50%, para 0,30.</p>
+      <p>Também foi testado contra mil eleições simuladas sobre o eleitorado
+      real, com resultados inventados de propósito para fugir do que o modelo
+      espera. Com 5% apurado ele apontou o vencedor certo em <b>96 de cada
+      100</b>. Separando pelo aperto da disputa: quando a diferença final
+      passou de 2 pontos, acertou em todos os casos; abaixo de 1 ponto,
+      em 70%. É por isso que a página mostra a margem junto do número e avisa
+      quando a diferença ainda cabe nela — num resultado apertado o modelo não
+      tem como saber, e dizer o contrário seria enganar quem está lendo.</p>
+      <p>O modelo, os testes e esta página são abertos e podem ser conferidos
+      em <a href="https://github.com/oxeeraassim/apuracao" target="_blank"
+      rel="noopener noreferrer">github.com/oxeeraassim/apuracao</a>.</p>
       <p>Os dados vêm direto do <a href="https://resultados.tse.jus.br"
       target="_blank" rel="noopener">TSE</a>, no seu navegador. Esta página não
       tem servidor e não guarda nada.</p>
@@ -646,6 +675,20 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
     resultado final, significa que o modelo errou — modelos erram, e é para isso
     que serve a margem mostrada acima. Diferença entre projeção e apuração não é
     evidência de problema na apuração.
+  </div>
+
+  <!-- Caminho para o oficial, à vista.
+       Uma página de projeção tem o dever de dizer, o tempo todo, onde fica o
+       número que vale — e não só avisar que ela não é ele. Quem bate o olho e
+       quer conferir precisa de um clique, não de uma busca. -->
+  <div class="cartao oficial">
+    <div>
+      <b>O resultado oficial é o do TSE</b>
+      <span class="faixa">Esta página é uma projeção. A totalização oficial,
+      que é a que vale, fica no site do Tribunal Superior Eleitoral.</span>
+    </div>
+    <a class="btOficial" href="https://resultados.tse.jus.br" target="_blank"
+       rel="noopener noreferrer">Ver no TSE</a>
   </div>
 
   <!-- Crédito. Deliberadamente discreto e sem nada pessoal: nome de autor,
@@ -1689,7 +1732,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=9ed5ad2853").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=cfdba07810").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
