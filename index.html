@@ -23,7 +23,7 @@
   default-src 'none';
   script-src 'self' 'unsafe-inline';
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data:;
+  img-src 'self' data: https://oxeapuracao.goatcounter.com;
   font-src 'self';
   connect-src 'self' https://resultados.tse.jus.br https://pt.wikipedia.org;
   manifest-src 'self';
@@ -791,7 +791,7 @@ const INTERVALO = AO_VIVO;
  * CONTADOR vazio desliga tudo: nenhuma requisição sai. É assim que o
  * arquivo fica no repositório enquanto não há código configurado.
  */
-const CONTADOR = "";   // ex.: "oxeapuracao" → oxeapuracao.goatcounter.com
+const CONTADOR = "oxeapuracao";   // ex.: "oxeapuracao" → oxeapuracao.goatcounter.com
 
 function contarVisita() {
   if (!CONTADOR) return;
@@ -1799,7 +1799,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=772a8f8048").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=7b1e8285e8").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

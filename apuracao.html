@@ -23,7 +23,7 @@
   default-src 'none';
   script-src 'self' 'unsafe-inline';
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data:;
+  img-src 'self' data: https://oxeapuracao.goatcounter.com;
   font-src 'self';
   connect-src 'self' https://resultados.tse.jus.br https://pt.wikipedia.org;
   manifest-src 'self';
@@ -1657,6 +1657,52 @@ const ESPERA = 10 * 60 * 1000;             // pesquisas: de 10 em 10 minutos
 // regressiva na tela, o que é de graça.
 const INTERVALO = AO_VIVO;
 
+/* Contagem de visitas — um pixel, não um script.
+ *
+ * A forma comum de medir acesso é colar o script de uma empresa de analytics
+ * na página. Isso aqui seria um retrocesso: passaria a rodar código de
+ * terceiro dentro de uma página que hoje tem `script-src 'self'`, com acesso
+ * a tudo o que está na tela. Num site de apuração, não vale a troca.
+ *
+ * Então a contagem é uma imagem. O navegador pede um pixel ao servidor do
+ * contador; o pedido chegar JÁ É a contagem. Nenhum código de fora executa,
+ * e a exceção na política de segurança é uma entrada em `img-src` — nada em
+ * `script-src`.
+ *
+ * O que o contador fica sabendo: que houve um acesso. A página manda
+ * `referrer: no-referrer`, então nem de onde a pessoa veio ele recebe.
+ *
+ * CONTADOR vazio desliga tudo: nenhuma requisição sai. É assim que o
+ * arquivo fica no repositório enquanto não há código configurado.
+ */
+const CONTADOR = "oxeapuracao";   // ex.: "oxeapuracao" → oxeapuracao.goatcounter.com
+
+function contarVisita() {
+  if (!CONTADOR) return;
+  // Uma contagem por sessão, e não por carregamento. Na primeira visita o
+  // service worker ativa, avisa a aba e ela se recarrega sozinha — sem esta
+  // trava, esse recarregamento vira um segundo acesso e toda primeira visita
+  // conta dobrado. O mesmo valeria para cada vez que uma correção publicada
+  // no meio da noite recarregasse as abas abertas.
+  try {
+    if (sessionStorage.getItem("visita-contada")) return;
+    sessionStorage.setItem("visita-contada", "1");
+  } catch { /* aba anônima sem armazenamento: conta e segue */ }
+  const img = new Image();
+  img.alt = "";
+  img.referrerPolicy = "no-referrer";
+  img.style.display = "none";
+  // cb derruba o cache do navegador. Sem isso, a segunda visita da mesma
+  // pessoa seria servida do cache e não chegaria a ser contada — o contador
+  // marcaria um acesso por aparelho, para sempre.
+  img.src = "https://" + CONTADOR + ".goatcounter.com/count"
+    + "?p=/apuracao&cb=" + Date.now();
+  // Contador fora do ar não pode quebrar nada nem sujar o console numa noite
+  // em que o console é onde se procura problema de verdade.
+  img.onerror = () => {};
+  document.body.appendChild(img);
+}
+
 const TURNO = new URLSearchParams(location.search).get("turno") === "1"
   ? tse.ELEICAO_1T : tse.ELEICAO_2T;
 
@@ -2253,6 +2299,7 @@ function desenha() {
 }
 
 iniciar();
+contarVisita();
 
 /* A contagem regressiva, de segundo em segundo.
  *

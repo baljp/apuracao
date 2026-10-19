@@ -24,8 +24,14 @@ const SITE = process.argv[2] || "http://localhost:8899/";
 // O host do próprio site sai da URL testada, senão rodar contra um servidor
 // local acusa "localhost" como vazamento — falso positivo que esconde os
 // verdadeiros no meio.
+// O contador de visitas entra aqui porque é um destino que a página tem
+// motivo para procurar — mas ele só pode aparecer como UM PIXEL. Se algum dia
+// virar um script carregado de fora, é gc.zgo.at que apareceria nesta lista,
+// e aí a reprovação é desejada: a decisão de não rodar código de terceiro na
+// página não deve poder ser revertida sem alguém perceber.
 const ESPERADOS = [new URL(SITE).hostname,
-                   "resultados.tse.jus.br", "pt.wikipedia.org"];
+                   "resultados.tse.jus.br", "pt.wikipedia.org",
+                   "oxeapuracao.goatcounter.com"];
 
 /* Nomes de instituto com carga: cada um é uma forma diferente de fazer
  * código rodar numa página que monta HTML com texto de fora. */
