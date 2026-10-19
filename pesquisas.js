@@ -109,11 +109,20 @@ export async function buscarSegundoTurno() {
     if (pt + pl < 50 || pt + pl > 150) continue;  // linha que não é pesquisa
     const fim = dataFinal(l[1]);
     if (!fim) continue;
+
+    // A Wikipédia é aberta a qualquer editor, então nada que venha dela entra
+    // sem conferência. Aqui vão os limites de sanidade; o escape de HTML
+    // acontece na hora de exibir, na página.
+    const amostra = inteiro(l[2]);
+    if (amostra != null && (amostra < 100 || amostra > 500000)) continue;
+    if (+fim > Date.now() + 7 * 86400000) continue;  // pesquisa "do futuro"
+    if (+fim < Date.UTC(2026, 9, 1)) continue;       // velha demais para o 2º turno
+
     saida.push({
-      instituto: l[0].replace(/\[\d+\]/g, "").trim(),
-      periodo: l[1],
+      instituto: l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60),
+      periodo: String(l[1]).slice(0, 40),
       fim,
-      amostra: inteiro(l[2]),
+      amostra,
       margem: numero(l[3]),
       pt, pl,
       // Percentuais sobre votos válidos, para comparar maçã com maçã: cada

@@ -12,13 +12,19 @@
  *   não existir.
  */
 
-const VERSAO = "apuracao-v1";
+const VERSAO = "apuracao-v2";
+
+// Só estes dois destinos externos são buscados pela página. Qualquer outro é
+// recusado aqui, de modo que nem um script injetado conseguiria usar o
+// service worker para falar com outro servidor.
+const PERMITIDOS = ["resultados.tse.jus.br", "pt.wikipedia.org"];
 
 const CASCO = [
   "./",
   "./index.html",
   "./modelo.js",
   "./tse.js",
+  "./pesquisas.js",
   "./base.json",
   "./manifest.webmanifest",
   "./icone-192.png",
@@ -50,15 +56,39 @@ self.addEventListener("fetch", (evento) => {
 
   const url = new URL(req.url);
 
-  // Dados do TSE: sempre da rede, nunca do cache.
-  if (url.hostname.endsWith("tse.jus.br")) return;
+  // Dados ao vivo (TSE, Wikipédia): sempre da rede, nunca do cache.
+  if (PERMITIDOS.some((h) => url.hostname === h)) return;
 
-  // Casco: responde do cache na hora e atualiza em segundo plano, para que
-  // uma correção publicada chegue na próxima abertura.
+  // Qualquer outro destino externo não é coisa desta página: deixa passar
+  // sem tocar, para o navegador aplicar a política de segurança normalmente.
+  if (url.origin !== self.location.origin) return;
+
+  // A página em si vai PRIMEIRO à rede, com o cache como rede de segurança.
+  // Se fosse o contrário, uma correção publicada só apareceria na segunda
+  // vez que a pessoa abrisse o app — que foi exatamente o que aconteceu
+  // quando a aba de pesquisas entrou no ar.
+  const ehPagina = req.mode === "navigate" ||
+    (req.destination === "" && url.pathname.endsWith(".html")) ||
+    url.pathname === "/" || url.pathname.endsWith("/");
+
+  if (ehPagina) {
+    evento.respondWith(
+      fetch(req).then((resp) => {
+        if (resp && resp.ok) {
+          const copia = resp.clone();
+          caches.open(VERSAO).then((cache) => cache.put(req, copia));
+        }
+        return resp;
+      }).catch(() => caches.match(req).then((g) => g || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Scripts, base e ícones: do cache na hora, atualizando em segundo plano.
   evento.respondWith(
     caches.match(req).then((guardado) => {
       const daRede = fetch(req).then((resp) => {
-        if (resp && resp.ok && url.origin === self.location.origin) {
+        if (resp && resp.ok) {
           const copia = resp.clone();
           caches.open(VERSAO).then((cache) => cache.put(req, copia));
         }

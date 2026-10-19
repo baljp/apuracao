@@ -8,6 +8,33 @@
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0f1117">
 
+<!--
+  Política de segurança de conteúdo.
+
+  A página só pode buscar dados de dois lugares: o TSE e a Wikipédia. Se
+  algum script estranho for injetado aqui, ele não consegue mandar nada para
+  fora, porque nenhum outro destino é permitido. Também não há script de
+  terceiros, nem rastreador, nem CDN: tudo o que roda vem deste repositório.
+
+  'unsafe-inline' em script-src é necessário porque o código da página é
+  inline; em compensação, nenhuma origem externa de script é aceita.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  font-src 'self';
+  connect-src 'self' https://resultados.tse.jus.br https://pt.wikipedia.org;
+  manifest-src 'self';
+  worker-src 'self';
+  base-uri 'none';
+  form-action 'none';
+  frame-ancestors 'none';
+  object-src 'none';
+  upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+
 <!-- Permite instalar na tela de início do celular e abrir como aplicativo. -->
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./favicon.png">
@@ -314,15 +341,47 @@ import { Modelo } from "./modelo.js";
 import * as tse from "./tse.js";
 import * as pq from "./pesquisas.js";
 
-// O CDN do TSE revalida os arquivos a cada 27 segundos (cache-control:
-// max-age=27), então ler mais rápido que isso só gastaria banda sem trazer
-// nenhum dado novo.
-const INTERVALO = 30000;
+/* Ritmo de atualização.
+ *
+ * Fora do dia da eleição não há apuração acontecendo: o que muda são as
+ * pesquisas, e no máximo algumas por dia. Ler o TSE a cada 30 segundos ali
+ * seria gastar a bateria e os dados de quem está vendo para receber sempre a
+ * mesma coisa. Então o site trabalha em dois ritmos.
+ *
+ * No dia da eleição, a leitura é contínua. O limite real não é escolha
+ * nossa: o CDN do TSE revalida os arquivos a cada 27 segundos
+ * (cache-control: max-age=27), então ler mais rápido que isso devolve
+ * exatamente os mesmos bytes. 25 segundos garante que nenhuma atualização
+ * seja perdida, sem pedir nada à toa.
+ */
+const DIA_ELEICAO = "2026-10-25";          // 2º turno
+const AO_VIVO = 25000;                     // no dia: contínuo
+const ESPERA = 10 * 60 * 1000;             // antes: a cada 10 minutos
+
+function ehDiaDaEleicao() {
+  // Fuso de Brasília, que é o que define o dia da apuração.
+  const agora = new Date();
+  const brasilia = new Date(agora.getTime() - 3 * 3600000);
+  return brasilia.toISOString().slice(0, 10) === DIA_ELEICAO;
+}
+
+const INTERVALO = ehDiaDaEleicao() ? AO_VIVO : ESPERA;
 const TURNO = new URLSearchParams(location.search).get("turno") === "1"
   ? tse.ELEICAO_1T : tse.ELEICAO_2T;
 
 const $ = (id) => document.getElementById(id);
 const n1 = (v) => (v == null || isNaN(v)) ? "—" : v.toFixed(1).replace(".", ",");
+
+/* Escapa texto que veio de fora antes de montar HTML.
+ *
+ * Isto não é zelo decorativo: os nomes dos institutos vêm da Wikipédia, que
+ * qualquer pessoa pode editar. Sem escapar, bastaria alguém pôr uma tag numa
+ * célula da tabela para rodar código no navegador de quem abrisse esta
+ * página. Toda string de origem externa passa por aqui.
+ */
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 let modelo = null;
 let nomes = { pl: "Flávio Bolsonaro", pt: "Lula" };
@@ -344,6 +403,18 @@ async function iniciar() {
     $("nomePT").textContent = nomes.pt;
     tick();
     setInterval(tick, INTERVALO);
+
+    // As pesquisas mudam devagar, então têm ritmo próprio: de 10 em 10
+    // minutos, e só enquanto a aba delas estiver aberta.
+    setInterval(() => {
+      if (!$("painelPesquisas").hidden) { pesquisas = null; carregarPesquisas(); }
+    }, ESPERA);
+
+    // Uma aba deixada aberta a noite toda pode ter o temporizador suspenso
+    // pelo navegador. Quando a pessoa volta para ela, atualiza na hora.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") tick();
+    });
   } catch (e) {
     $("status").innerHTML = '<span class="erro">⚠ não consegui carregar a base: '
       + e.message + "</span>";
@@ -412,7 +483,8 @@ function pinta(r, falhas) {
 
   $("estados").innerHTML = r.estados.map((e) => {
     const d = e.obsPl == null ? null : e.projPl - e.obsPl;
-    return "<tr><td class='uf'>" + e.uf + "<span class='reg'>" + e.regiao + "</span></td>"
+    return "<tr><td class='uf'>" + esc(e.uf)
+      + "<span class='reg'>" + esc(e.regiao) + "</span></td>"
       + "<td><span class='mini'><i style='width:" + Math.min(e.pctApurado, 100)
       + "%'></i></span>" + n1(e.pctApurado) + "%</td>"
       + "<td>" + (e.obsPl == null ? "—" : n1(e.obsPl) + "%") + "</td>"
@@ -516,10 +588,11 @@ function pintaPesquisas() {
 
   const corpo = pesquisas.slice(0, mostrando).map((p) => {
     const tse = p.tse
-      ? '<span style="color:var(--ok)" title="Protocolo ' + p.tse.protocolo + '">✓</span>'
+      ? '<span style="color:var(--ok)" title="Protocolo '
+        + esc(p.tse.protocolo) + '">✓</span>'
       : '<span style="color:var(--fraco)" title="não localizada no registro">–</span>';
-    return "<tr><td class='uf'>" + p.instituto + "</td>"
-      + "<td>" + p.periodo + "</td>"
+    return "<tr><td class='uf'>" + esc(p.instituto) + "</td>"
+      + "<td>" + esc(p.periodo) + "</td>"
       + "<td>" + (p.amostra ? p.amostra.toLocaleString("pt-BR") : "—") + "</td>"
       + "<td>" + n1(p.pt) + "%</td>"
       + "<td><strong>" + n1(p.pl) + "%</strong></td>"
@@ -586,8 +659,8 @@ async function calcularAcerto() {
     $("tabAcerto").style.display = "table";
     $("corpoAcerto").innerHTML = linhas.map((l) => {
       const p = pesquisas.find((x) => x.instituto === l.nome);
-      return "<tr><td class='uf'>" + l.nome + "</td>"
-        + "<td>" + (p ? n1(p.validosPl) + "% " + nomes.pl.split(" ")[0] : "—") + "</td>"
+      return "<tr><td class='uf'>" + esc(l.nome) + "</td>"
+        + "<td>" + (p ? n1(p.validosPl) + "% " + esc(nomes.pl.split(" ")[0]) : "—") + "</td>"
         + "<td>" + (l.erro >= 0 ? "+" : "−") + n1(Math.abs(l.erro)) + " pp</td></tr>";
     }).join("");
   } catch {
