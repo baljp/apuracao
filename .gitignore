@@ -1,8 +1,8 @@
 __pycache__/
 *.pyc
-# Dados brutos das eleições passadas: são centenas de MB e qualquer um pode
-# baixá-los do TSE com os scripts em programa/.
+# Os ZIPs brutos do TSE (240-270 MB cada) ficam de fora; os base20XX.json
+# derivados deles são pequenos e ficam versionados de propósito, para que
+# dê para rodar o backtest sem baixar meio giga.
 programa/dados20*/
-programa/base20*.json
 programa/*.log
 .DS_Store
