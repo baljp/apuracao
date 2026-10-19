@@ -662,7 +662,7 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 </div>
 
 <script type="module">
-import { Modelo } from "./modelo.js?v=f9cbc40f4d";
+import { Modelo } from "./modelo.js?v=bad45c47ec";
 import * as tse from "./tse.js?v=bb091c76fd";
 import * as pq from "./pesquisas.js?v=de8b73e06e";
 
@@ -1689,7 +1689,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=d4ab9852bf").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=9ed5ad2853").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

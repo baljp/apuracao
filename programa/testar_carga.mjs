@@ -27,7 +27,10 @@ import puppeteer from "puppeteer-core";
 
 const CHROME = "/root/.cache/puppeteer/chrome/linux-131.0.6778.204/"
   + "chrome-linux64/chrome";
-const SITE = "https://baljp.github.io/apuracao-2026/";
+// A URL vem por argumento: deixá-la fixa no código fez este teste rodar
+// contra um endereço que tinha mudado e reprovar 25 de 25 por 404, como se
+// o site estivesse quebrado.
+const SITE = process.env.SITE || "https://oxeeraassim.github.io/apuracao/";
 const NOITE = Date.UTC(2026, 9, 25, 21, 0);
 
 const modo = process.argv[2] || "tudo";

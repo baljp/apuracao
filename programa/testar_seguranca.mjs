@@ -21,7 +21,11 @@ const SITE = process.argv[2] || "https://baljp.github.io/apuracao-2026/";
 
 /* Hospedeiros que a página tem motivo para procurar. Qualquer outro é
  * vazamento, seja de dado, seja de atenção. */
-const ESPERADOS = ["baljp.github.io", "resultados.tse.jus.br", "pt.wikipedia.org"];
+// O host do próprio site sai da URL testada, senão rodar contra um servidor
+// local acusa "localhost" como vazamento — falso positivo que esconde os
+// verdadeiros no meio.
+const ESPERADOS = [new URL(SITE).hostname,
+                   "resultados.tse.jus.br", "pt.wikipedia.org"];
 
 /* Nomes de instituto com carga: cada um é uma forma diferente de fazer
  * código rodar numa página que monta HTML com texto de fora. */
