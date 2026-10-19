@@ -339,9 +339,9 @@
 </div>
 
 <script type="module">
-import { Modelo } from "./modelo.js";
-import * as tse from "./tse.js";
-import * as pq from "./pesquisas.js";
+import { Modelo } from "./modelo.js?v=4";
+import * as tse from "./tse.js?v=4";
+import * as pq from "./pesquisas.js?v=4";
 
 /* Ritmo de atualização.
  *
@@ -683,7 +683,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=4").catch(() => {});
   });
 }
 
