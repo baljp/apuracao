@@ -20,7 +20,13 @@ import { fileURLToPath } from "node:url";
 
 const CHROME = "/root/.cache/puppeteer/chrome/linux-131.0.6778.204/"
   + "chrome-linux64/chrome";
-const SITE = process.argv[2] || "https://baljp.github.io/apuracao-2026/";
+/* Endereço padrão: a cópia local servida por `python3 -m http.server 8899`,
+ * que é a versão que está sendo mexida agora. Apontar para um site publicado
+ * já fez este teste mentir: ficou meses com um endereço que havia saído do ar,
+ * e todo cenário respondia 404 — nenhum chegava a exercitar o modelo, e os que
+ * só verificavam ausência de número passavam. Por isso há um CONTROLE no fim,
+ * que reprova se dado bom não produzir placar. */
+const SITE = process.argv[2] || "http://localhost:8899/";
 
 // Durante a apuração, para que a página realmente fale com o TSE.
 const NOITE = Date.UTC(2026, 9, 25, 21, 0);   // 18h de Brasília

@@ -183,13 +183,52 @@ export async function lerAndamento(eleicao) {
 
 export async function lerTudo(eleicao) {
   const [res, and] = await Promise.all([lerResultados(eleicao), lerAndamento(eleicao)]);
+
+  // Os votos de uma UF e o andamento dela vêm de arquivos diferentes, e um
+  // pode chegar sem o outro. Esse descasamento é grave, e silencioso:
+  //
+  // Se os votos de São Paulo chegam e o andamento de São Paulo falha, o
+  // modelo recebe 22 milhões de votos observados E não sabe que nenhuma
+  // parte do estado foi apurada — então soma esses votos ao total e, em
+  // cima disso, projeta São Paulo inteiro como se ainda estivesse zerado.
+  // Os mesmos votos entram duas vezes. Medido: desloca a projeção nacional
+  // em 1,12 ponto percentual, sem nenhum aviso na tela.
+  //
+  // O inverso — andamento sem votos — faz o modelo tratar como "ainda não
+  // apurado" uma parte que já foi, e também distorce.
+  //
+  // Então uma UF só entra no cálculo quando os DOIS arquivos dela chegaram.
+  // Faltando um, ela é tratada como falha: sai da conta e aparece no aviso
+  // de estados sem resposta. Projeção com dado pela metade é pior que
+  // projeção sem aquele estado.
+  // (Apontado por uma auditoria externa do código.)
+  const ufsComVotos = new Set(Object.keys(res.observado));
+  const ufsComAndamento = new Set();
+  for (const chave of and.fracoes.keys()) {
+    ufsComAndamento.add(chave.split("/")[0]);
+  }
+
+  const incompletas = [];
+  const observado = {};
+  for (const uf of ufsComVotos) {
+    if (ufsComAndamento.has(uf)) observado[uf] = res.observado[uf];
+    else incompletas.push(uf);
+  }
+
+  const fracoes = new Map();
+  for (const [chave, v] of and.fracoes) {
+    const uf = chave.split("/")[0];
+    if (ufsComVotos.has(uf)) fracoes.set(chave, v);
+    else if (!incompletas.includes(uf)) incompletas.push(uf);
+  }
+
   return {
-    observado: res.observado,
-    fracoes: and.fracoes,
+    observado,
+    fracoes,
     nomes: res.nomes,
     totais: res.totais,
     horaTSE: res.horaTSE,
     dispersao: res.dispersao,
-    falhas: [...new Set([...res.falhas, ...and.falhas])],
+    falhas: [...new Set([...res.falhas, ...and.falhas, ...incompletas])],
   };
 }

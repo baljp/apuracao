@@ -17,7 +17,7 @@ import puppeteer from "puppeteer-core";
 
 const CHROME = "/root/.cache/puppeteer/chrome/linux-131.0.6778.204/"
   + "chrome-linux64/chrome";
-const SITE = process.argv[2] || "https://baljp.github.io/apuracao-2026/";
+const SITE = process.argv[2] || "http://localhost:8899/";
 
 /* Hospedeiros que a página tem motivo para procurar. Qualquer outro é
  * vazamento, seja de dado, seja de atenção. */

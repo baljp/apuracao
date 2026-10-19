@@ -542,16 +542,28 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
   <div class="cartao">
     <details>
       <summary>Como isso funciona, e por que o número bruto engana</summary>
-      <p>Sul e Centro-Oeste apuram rápido; o Nordeste demora. Com <b>5% apurado</b>,
-      o Nordeste — que é 27% do eleitorado do país — costuma representar cerca de
-      <b>4%</b> do que já foi contado. O percentual que aparece na TV não está
-      errado: é uma amostra enviesada pela geografia.</p>
+      <p>A totalização não termina na mesma hora em todo o país. Municípios
+      pequenos fecham a contagem em minutos; os grandes levam horas, e cada
+      estado tem uma mistura diferente dos dois. Então o percentual dos
+      primeiros minutos retrata sobretudo quem já terminou, não o país. Para
+      dar a ordem de grandeza: com <b>5% apurado</b>, o Nordeste — 27% do
+      eleitorado — costuma responder por cerca de <b>4%</b> do que já foi
+      contado. O número que aparece na TV não está errado; ele é uma amostra
+      enviesada pela geografia, não uma contagem furada.</p>
       <p>O modelo não adivinha o resultado. Para cada um dos 5.716 municípios ele
       sabe, pelos arquivos de andamento do TSE, quanto já foi totalizado, e sabe
       como aquele município votou no 1º turno. Com isso calcula <b>quanto a parte
       já apurada deveria ter dado se o eleitorado repetisse o 1º turno</b>. A
       diferença contra o que de fato saiu da urna é o <b>swing</b> — e é só isso
       que precisa ser estimado, uma quantidade pequena e estável.</p>
+      <p>Entre um turno e outro muda também <b>quanta gente vota e quantos
+      votos são válidos</b> — abstenção, branco e nulo não se repetem iguais, e
+      não mudam igual em todo estado. Então o modelo não assume que o que falta
+      vai render o mesmo volume de votos do 1º turno: ele mede essa diferença
+      estado por estado e corrige o volume projetado. O que ele não faz é
+      prever branco e nulo município a município — esses números aparecem na
+      tela como o TSE os publica, e entram na conta pelo volume de voto válido
+      que sobra.</p>
       <p>Com pouca apuração, o swing de um estado isolado é ruído. Então ele é
       puxado para o da sua região, e o da região para o nacional, com força
       inversa à informação disponível. No início da noite o modelo é quase

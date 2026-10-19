@@ -169,9 +169,11 @@ Erros graves (confiança > 95% no lado errado): **0 de 60**.
 
 A acurácia é medida em Python; o site roda JavaScript. `paridade.py` +
 `paridade.mjs` comparam os dois em 11 pontos da apuração, com os mesmos dados
-e num cenário com swing e comparecimento variando por região. Tolerância:
-projeção e cada estado batendo até 1e-14; margem dentro do ruído de 240
-sorteios.
+e num cenário com swing e comparecimento variando por região. Tolerâncias
+configuradas em `paridade.mjs`: `TOL_PROJECAO = 1e-6` ponto percentual na
+projeção nacional, `TOL_ESTADO = 1e-5` em cada estado, `TOL_MARGEM = 0.18` e
+`TOL_PROB = 0.05` — margem e probabilidade com tolerância folgada porque saem
+de 240 sorteios, que não são reprodutíveis entre as duas linguagens.
 
 **Este teste existe porque a versão anterior dele só comparava com 100%
 apurado** — ponto em que não sobra nada para projetar e qualquer modelo
@@ -224,6 +226,15 @@ Documentados no repositório para não serem retentados:
 - **Sem voto observado, não há placar.** Antes, se os votos falhassem e o
   andamento não, a página exibia "100% apurado · 50,0% × 50,0%" — um empate
   inventado com cara de resultado final.
+- **Votos e andamento têm de chegar juntos.** Uma UF só entra no cálculo
+  quando os DOIS arquivos dela responderam. Se só um chegar, o estado inteiro
+  sai da conta e aparece no aviso de "estados sem resposta". Antes disso, se os
+  votos de São Paulo chegassem e o andamento falhasse, os 22 milhões de votos
+  entravam no total e o estado era projetado de novo por cima, como se nada
+  tivesse sido apurado — **1,12 ponto percentual** de deslocamento na projeção
+  nacional, medido. Defeito encontrado por auditoria externa e coberto agora
+  por `programa/testar_desencontro.mjs`, que força os dois sentidos do
+  descasamento.
 - Com 20+ UFs sem resposta, a página diz que não conseguiu ler o TSE e não
   mostra número.
 - Testado em 10 cenários de falha forçada: TSE fora, 404, JSON corrompido,

@@ -38,22 +38,35 @@ def tirar_exports(js: str) -> str:
 
 
 def main() -> int:
-    for nome in ("index.html", "modelo.js", "tse.js", "base.json"):
+    for nome in ("index.html", "modelo.js", "tse.js", "pesquisas.js",
+                 "base.json", "mapa.json", "ordem.json"):
         if not os.path.exists(os.path.join(RAIZ, nome)):
             print("Falta %s — rode antes gerar_base_site.py" % nome)
             return 1
 
     html = ler("index.html")
+    html_original = html
     modelo = tirar_exports(ler("modelo.js"))
     tsejs = tirar_exports(ler("tse.js"))
+    pesquisasjs = tirar_exports(ler("pesquisas.js"))
     base = json.loads(ler("base.json"))
+    mapa = json.loads(ler("mapa.json"))
+    ordem = json.loads(ler("ordem.json"))
 
-    # O módulo tse.js expõe suas funções com nomes curtos; dentro do arquivo
-    # único elas viram globais, então o código da página passa a chamá-las
-    # por um objeto `tse` montado aqui.
+    # Os módulos expõem suas funções com nomes curtos; dentro do arquivo único
+    # elas viram globais, então o código da página passa a chamá-las por
+    # objetos (`tse`, `pq`) montados aqui, com os mesmos nomes dos imports.
+    #
+    # Esquecer um módulo aqui não quebra na geração: quebra no celular de quem
+    # abriu o arquivo, com "pq is not defined" e a aba de pesquisas vazia. Por
+    # isso a conferência no fim desta função é obrigatória.
     ponte = """
 const tse = { lerTudo, lerResultados, lerAndamento, ELEICAO_1T, ELEICAO_2T, UFS };
+const pq = { buscarSegundoTurno, buscarPrimeiroTurno, agregar, cruzarComTSE,
+             REAL_1T };
 const BASE_EMBUTIDA = __BASE__;
+const MAPA_EMBUTIDO = __MAPA__;
+const ORDEM_EMBUTIDA = __ORDEM__;
 """
 
     script_pagina = re.search(
@@ -66,21 +79,44 @@ const BASE_EMBUTIDA = __BASE__;
 
     # Sem imports (já estão embutidos) e lendo a base de dentro do arquivo.
     corpo = re.sub(r'^\s*import\s+.*?;\s*$', "", corpo, flags=re.MULTILINE | re.DOTALL)
-    corpo = corpo.replace(
-        'const base = await (await fetch("./base.json", { cache: "force-cache" })).json();',
-        "const base = BASE_EMBUTIDA;",
-    )
+    trocas = [
+        ('const base = await (await fetch("./base.json", { cache: "force-cache" })).json();',
+         "const base = await Promise.resolve(BASE_EMBUTIDA);"),
+        ('geoMapa = await (await fetch("./mapa.json", { cache: "force-cache" })).json();',
+         "geoMapa = await Promise.resolve(MAPA_EMBUTIDO);"),
+        ('const [ordem, base] = await Promise.all([\n'
+         '        fetch("./ordem.json", { cache: "force-cache" }).then((r) => r.json()),\n'
+         '        fetch("./base.json", { cache: "force-cache" }).then((r) => r.json()),\n'
+         '      ]);',
+         "const [ordem, base] = await Promise.resolve(\n        [ORDEM_EMBUTIDA, BASE_EMBUTIDA]);"),
+    ]
+    # O `await` é mantido de propósito em cada troca. Sem ele o arranque da
+    # página deixa de pausar no ponto em que pausava com `fetch`, passa a
+    # correr direto e toca em variáveis `let` que ainda não foram declaradas —
+    # "Cannot access 'pesquisas' before initialization", só no arquivo único.
+    for alvo, novo in trocas:
+        if alvo not in corpo:
+            print("Não achei no index.html o trecho a substituir:\n  %s" % alvo)
+            return 1
+        corpo = corpo.replace(alvo, novo)
     # Service worker e manifest não existem num arquivo solto.
     corpo = re.sub(
         r'if \("serviceWorker" in navigator.*?\n}\n', "", corpo, flags=re.DOTALL
     )
 
+    embutido = ponte.replace(
+        "__BASE__", json.dumps(base, ensure_ascii=False, separators=(",", ":"))
+    ).replace(
+        "__MAPA__", json.dumps(mapa, ensure_ascii=False, separators=(",", ":"))
+    ).replace(
+        "__ORDEM__", json.dumps(ordem, ensure_ascii=False, separators=(",", ":"))
+    )
     novo_script = (
         "<script>\n"
         + modelo + "\n"
         + tsejs + "\n"
-        + ponte.replace("__BASE__", json.dumps(base, ensure_ascii=False,
-                                               separators=(",", ":")))
+        + pesquisasjs + "\n"
+        + embutido
         + "\n" + corpo + "\n</script>"
     )
     html = html[:script_pagina.start()] + novo_script + html[script_pagina.end():]
@@ -95,6 +131,39 @@ const BASE_EMBUTIDA = __BASE__;
                         '<div class="cartao instalar" id="cartaoInstalar" hidden>')
     html = html.replace('<div class="cartao instalar" id="cartaoIOS">',
                         '<div class="cartao instalar" id="cartaoIOS" hidden>')
+
+    # Conferência antes de gravar.
+    #
+    # Isto existe porque o arquivo único já saiu quebrado sem ninguém notar: o
+    # index.html ganhou `import * as pq from "./pesquisas.js"`, o gerador não
+    # embutia esse módulo, e o resultado abria normalmente — só que a aba de
+    # pesquisas dizia "pq is not defined" no celular de quem baixou. O gerador
+    # não acusou nada, porque gerar deu certo. O que falhou foi o que ele
+    # deixou de fazer.
+    problemas = []
+
+    # Todo apelido de import do index.html precisa existir como variável aqui.
+    for apelido in re.findall(r'import\s+\*\s+as\s+(\w+)\s+from', html_original):
+        if not re.search(r'\b(?:const|let|var)\s+%s\s*=' % apelido, novo_script):
+            problemas.append("o módulo importado como `%s` não foi embutido"
+                             % apelido)
+    for chaves in re.findall(r'import\s*\{([^}]+)\}\s*from', html_original):
+        for nome in (c.strip().split()[0] for c in chaves.split(",") if c.strip()):
+            if not re.search(r'\b(?:function|class|const|let|var)\s+%s\b' % nome,
+                             novo_script):
+                problemas.append("`%s` foi importado e não está embutido" % nome)
+
+    # Nenhum arquivo local pode sobrar para ser buscado em tempo de execução:
+    # o HTML solto não tem pasta ao lado dele.
+    for alvo in re.findall(r'fetch\(\s*"\./([^"]+)"', novo_script):
+        if not alvo.startswith("registro-tse"):   # opcional, e já tratado
+            problemas.append("ainda busca o arquivo local ./%s" % alvo)
+
+    if problemas:
+        print("O arquivo único sairia quebrado:")
+        for p in problemas:
+            print("  - %s" % p)
+        return 1
 
     with open(SAIDA, "w", encoding="utf-8") as fh:
         fh.write(html)
