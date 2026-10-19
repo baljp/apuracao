@@ -5,23 +5,24 @@ IDENTIDADE VISUAL — tirada do próprio perfil @oxe_eraassim
 Papel velho: fundo creme, serifa escura e pesada, vermelho de tinta e o sol
 dourado do logo. Todas as capas dos reels são assim.
 
-POR QUE UM SLIDE SÓ
-A versão anterior tinha dois, e o segundo trazia uma tabela com erro médio e
-pior caso em quatro marcos de apuração. Informação correta, mas no lugar
-errado: num story a pessoa decide em segundos, e uma tabela de números faz
-ela passar. Quem passa não lê nem a parte técnica nem a ressalva.
+POR QUE SEM NÚMEROS
+Versões anteriores traziam a tabela de erro e depois o "acertou 96 em cada
+100". Informação correta, mas num story ela trabalha contra: número pede
+leitura atenta, e quem está passando o dedo não dá essa atenção — então
+some tanto o número quanto a ressalva que vinha com ele.
 
-A precisão continua aqui, só que dita como se diz para alguém na rua — "96
-em cada 100" — e com o limite colado nela, na mesma frase. Quem quiser o
-detalhe encontra a margem na própria página, ao lado de cada número.
+A peça agora explica o problema e diz que existe um modelo tentando
+corrigi-lo. Nada de desempenho, nada de promessa: só o convite para ver. A
+precisão, a margem e o aviso de quando não dá para saber estão na página, ao
+lado de cada número, que é onde eles têm como ser lidos com calma.
 
-ORDEM DA LEITURA
-1. o problema      por que o número do começo engana
-2. a solução       o que o modelo faz, em três linhas
-3. a precisão      quanto acerta, e quando erra
-4. o aviso         não é resultado oficial
-Essa ordem importa: a precisão só aparece depois de a pessoa entender o que
-está sendo medido, e nunca sem o limite ao lado.
+O que não sai em nenhuma versão: que isto não é resultado oficial.
+
+SOBRE A EXPLICAÇÃO REGIONAL
+"A apuração não corre igual no país inteiro" é o jeito honesto de dizer. A
+versão que citava quais regiões contam antes soava como julgamento, e nem
+era a explicação certa — o que importa é que os lugares terminam em tempos
+diferentes, não quais terminam primeiro.
 
 Uso:  python3 gerar_stories.py
 """
@@ -116,36 +117,34 @@ def montar() -> str:
     p.append(f'<rect x="{L / 2 - 70}" y="372" width="140" height="4" '
              f'fill="{VERMELHO}"/>')
 
-    # ---- 2. a explicação, em três frases curtas ----
-    p.append(txt(L / 2, 440, "As urnas não terminam de contar", 31, "400", TINTA))
-    p.append(txt(L / 2, 482, "todas na mesma hora. Nos primeiros", 31, "400", TINTA))
-    p.append(txt(L / 2, 524, "minutos, o número oficial mostra só", 31, "400", TINTA))
-    p.append(txt(L / 2, 566, "uma parte do país.", 31, "700", TINTA))
+    # ---- 2. a explicação ----
+    p.append(txt(L / 2, 446, "A apuração não corre igual no país", 32, "400", TINTA))
+    p.append(txt(L / 2, 490, "inteiro: cada lugar termina de contar", 32, "400", TINTA))
+    p.append(txt(L / 2, 534, "no seu tempo. Nos primeiros minutos,", 32, "400", TINTA))
+    p.append(txt(L / 2, 578, "o número oficial mostra só uma", 32, "400", TINTA))
+    p.append(txt(L / 2, 622, "parte do país.", 32, "700", TINTA))
 
-    p.append(mapa_svg(626, 410))
+    p.append(mapa_svg(686, 400))
 
-    p.append(txt(L / 2, 1130, "Esta página calcula o que ainda falta contar", 31,
-                 "400", TINTA))
-    p.append(txt(L / 2, 1172, "em cada lugar e completa o quadro, se", 31, "400",
-                 TINTA))
-    p.append(txt(L / 2, 1214, "ajustando a cada urna que entra.", 31, "400", TINTA))
-
-    # ---- 3. a precisão, com o limite na mesma respiração ----
-    p.append(f'<rect x="60" y="1274" width="{L - 120}" height="266" rx="14" '
+    # ---- 3. o que fizemos, sem prometer desempenho ----
+    p.append(f'<rect x="60" y="1192" width="{L - 120}" height="248" rx="14" '
              f'fill="{PAPEL_2}"/>')
-    p.append(txt(L / 2, 1342, "Com 5% das urnas contadas,", 31, "400", TINTA))
-    p.append(txt(L / 2, 1346 + 76, "acertou 96 em cada 100", 54, "700", VERDE))
-    p.append(txt(L / 2, 1472, "em mil eleições de teste. Mas pode errar quando", 27,
+    p.append(txt(L / 2, 1254, "Fizemos um modelo que tenta", 34, "400", TINTA))
+    p.append(txt(L / 2, 1300, "corrigir essa distorção", 34, "700", TINTA))
+    p.append(txt(L / 2, 1362, "Ele calcula o que ainda falta contar em cada", 28,
                  "400", TINTA_FRACA))
-    p.append(txt(L / 2, 1508, "a disputa é apertada — e aí a página avisa.", 27,
+    p.append(txt(L / 2, 1400, "lugar e vai refazendo a conta a cada urna.", 28,
                  "400", TINTA_FRACA))
+
+    p.append(txt(L / 2, 1510, "Acompanhe no domingo, a partir das 17h.", 31, "700",
+                 VERDE))
 
     # ---- 4. o aviso ----
-    p.append(f'<rect x="60" y="1576" width="{L - 120}" height="180" rx="12" '
+    p.append(f'<rect x="60" y="1580" width="{L - 120}" height="172" rx="12" '
              f'fill="{VERMELHO}"/>')
-    p.append(txt(L / 2, 1648, "ISTO NÃO É RESULTADO OFICIAL", 42, "700", PAPEL,
+    p.append(txt(L / 2, 1648, "ISTO NÃO É RESULTADO OFICIAL", 40, "700", PAPEL,
                  esp="1"))
-    p.append(txt(L / 2, 1706, "O resultado que vale é sempre o do TSE.", 28, "400",
+    p.append(txt(L / 2, 1702, "O resultado que vale é sempre o do TSE.", 27, "400",
                  PAPEL, op="0.92"))
 
     # ---- link ----
