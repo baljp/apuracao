@@ -140,12 +140,18 @@ def montar() -> str:
                  VERDE))
 
     # ---- 4. o aviso ----
-    p.append(f'<rect x="60" y="1580" width="{L - 120}" height="172" rx="12" '
+    # O aviso explica, em vez de só alertar. "Não é resultado oficial" avisa
+    # mas não ensina: quem nunca ouviu falar em projeção continua sem saber o
+    # que está vendo. Dizendo o que É — uma projeção, feita por um modelo — a
+    # pessoa entende a natureza do número antes de olhar para ele, e a frase
+    # seguinte diz de quem é a palavra final.
+    p.append(f'<rect x="60" y="1568" width="{L - 120}" height="188" rx="12" '
              f'fill="{VERMELHO}"/>')
-    p.append(txt(L / 2, 1648, "ISTO NÃO É RESULTADO OFICIAL", 40, "700", PAPEL,
-                 esp="1"))
-    p.append(txt(L / 2, 1702, "O resultado que vale é sempre o do TSE.", 27, "400",
-                 PAPEL, op="0.92"))
+    p.append(txt(L / 2, 1630, "É uma projeção, não o resultado", 38, "700", PAPEL))
+    p.append(txt(L / 2, 1684, "Os números saem de um modelo preditivo.", 27, "400",
+                 PAPEL, op="0.95"))
+    p.append(txt(L / 2, 1722, "O resultado oficial é o do TSE — e é ele que vale.",
+                 27, "400", PAPEL, op="0.95"))
 
     # ---- link ----
     p.append(f'<rect x="0" y="1786" width="{L}" height="134" fill="{TINTA}"/>')
