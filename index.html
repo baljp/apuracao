@@ -395,6 +395,18 @@ import * as pq from "./pesquisas.js?v=2e88ac00d0";
  * exatamente os mesmos bytes. 25 segundos garante que nenhuma atualização
  * seja perdida, sem pedir nada à toa.
  */
+/* Modo de ensaio: ?demo=5 mostra como a página fica com 5% apurado.
+ *
+ * Usa os votos reais do 1º turno e a ordem real em que os municípios
+ * fecharam, então o que aparece na tela é exatamente o que apareceria numa
+ * noite de verdade naquele ponto da apuração — mesma composição geográfica,
+ * mesmo viés para o modelo corrigir. Serve para ensaiar antes do domingo.
+ */
+const DEMO = (() => {
+  const v = parseFloat(new URLSearchParams(location.search).get("demo"));
+  return isFinite(v) && v > 0 && v <= 100 ? v : null;
+})();
+
 const DIA_ELEICAO = "2026-10-25";          // 2º turno
 const AO_VIVO = 25000;                     // no dia: contínuo
 const ESPERA = 10 * 60 * 1000;             // antes: a cada 10 minutos
@@ -518,6 +530,7 @@ async function iniciar() {
 }
 
 async function tick() {
+  if (DEMO !== null) return tickDemo();
   try {
     const { observado, fracoes, nomes: nms, falhas, totais, horaTSE } =
       await tse.lerTudo(TURNO);
@@ -546,7 +559,7 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   $("status").innerHTML = st;
 
   const comecou = r.pctApurado > 0.05;
-  atualizarFaixa(r, comecou);
+  if (DEMO === null) atualizarFaixa(r, comecou);
   $("vazio").style.display = comecou ? "none" : "block";
   $("placar").style.display = comecou ? "block" : "none";
   $("apurado").textContent = n1(r.pctApurado) + "%";
@@ -784,6 +797,62 @@ function desenha() {
 
 iniciar();
 
+/* Monta o estado da apuração num ponto qualquer, a partir dos votos reais do
+ * 1º turno e da ordem real de chegada. */
+let baseDemo = null;
+async function tickDemo() {
+  try {
+    if (baseDemo === null) {
+      const [ordem, base] = await Promise.all([
+        fetch("./ordem.json", { cache: "force-cache" }).then((r) => r.json()),
+        fetch("./base.json", { cache: "force-cache" }).then((r) => r.json()),
+      ]);
+      const idx = new Map();
+      for (let i = 0; i < base.ufs.length; i++) {
+        idx.set(base.ufs[i] + "/" + base.cds[i], i);
+      }
+      baseDemo = { ordem, base, idx };
+    }
+    const { ordem, base, idx } = baseDemo;
+    const total = base.ele.reduce((a, b) => a + b, 0);
+    const limite = (DEMO / 100) * total;
+
+    const fracoes = new Map();
+    const observado = {};
+    let acc = 0, secoes = 0, validos = 0;
+    for (const chave of ordem) {
+      if (acc >= limite) break;
+      const i = idx.get(chave);
+      if (i === undefined) continue;
+      fracoes.set(chave, 1);
+      const uf = base.ufs[i];
+      if (!observado[uf]) observado[uf] = { pl: 0, pt: 0 };
+      observado[uf].pl += base.pl[i];
+      observado[uf].pt += base.pt[i];
+      validos += base.pl[i] + base.pt[i] + base.out[i];
+      acc += base.ele[i];
+    }
+    const r = modelo.projetar(fracoes, observado, 240);
+    pinta(r, [], {
+      eleitorado: total, comparecimento: Math.round(validos * 1.06),
+      abstencao: Math.round(acc * 0.21), brancos: Math.round(validos * 0.019),
+      nulos: Math.round(validos * 0.029), validos,
+      secoes: 499248, secoesApuradas: Math.round(499248 * acc / total),
+    }, "ensaio", observado);
+
+    $("faixaStatus").className = "status pesq";
+    $("statusTitulo").textContent = "Ensaio — não é a apuração real";
+    $("statusTexto").innerHTML =
+      "Simulação com <strong>" + n1(DEMO) + "% apurado</strong>, usando os votos "
+      + "reais do 1º turno e a ordem real em que os municípios fecharam. "
+      + "É assim que a página vai se comportar no domingo nesse ponto da "
+      + "apuração. <a href='./' style='color:var(--pl)'>Ver o site de verdade</a>";
+  } catch (e) {
+    $("status").innerHTML = '<span class="erro">ensaio falhou: '
+      + esc(e.message) + "</span>";
+  }
+}
+
 /* ---- aba de pesquisas -------------------------------------------------- */
 
 let pesquisas = null;
@@ -957,7 +1026,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=949be109e1").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=1179349dd6").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
