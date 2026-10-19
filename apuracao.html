@@ -210,7 +210,10 @@ h2{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .pct{
-  font-size:clamp(40px,13vw,62px);
+  /* 11,5vw e não 13vw: a 13 o "51,0%" precisa de 126px numa tela de 320
+     (iPhone SE e afins) onde o lado do placar tem 115, e o número saía
+     cortado na borda. O teto de 62px mantém o tamanho no desktop. */
+  font-size:clamp(36px,11.5vw,62px);
   font-weight:700;line-height:.95;letter-spacing:-.04em;
 }
 .pl .pct{color:#7FB3EA}
@@ -1277,6 +1280,7 @@ async function tick() {
         + "<strong>sistema oficial do TSE</strong> e atualiza sozinho no "
         + "instante em que o primeiro voto for totalizado.";
       mostrarPreviaPesquisas();
+      desenhaMapa(null).catch(() => {});
       return;
     }
     $("status").innerHTML = '<span class="erro">⚠ falha ao ler o TSE — tentando de novo'
@@ -1307,7 +1311,7 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   $("apurado").nextElementSibling.textContent = r.pctApurado >= 99.95
     ? "do eleitorado apurado"
     : "apurado · faltam " + n1(100 - r.pctApurado) + "%";
-  if (!comecou) return;
+  if (!comecou) { desenhaMapa(null).catch(() => {}); return; }
 
   $("pctPL").textContent = n1(r.projecaoPl) + "%";
   $("pctPT").textContent = n1(r.projecaoPt) + "%";
@@ -1466,6 +1470,29 @@ function preverConclusao(r) {
  */
 let geoMapa = null;
 
+/* Estados pequenos demais para o rótulo caber dentro.
+ *
+ * Escrever "SE" em cima de Sergipe no tamanho que se lê num celular ocupa
+ * mais área do que o próprio estado tem: a sigla vaza para o mar, encobre o
+ * vizinho, e o DF some dentro de Goiás. A saída é a mesma dos mapas
+ * impressos — levar o rótulo para uma coluna ao lado, ligado por uma linha
+ * fina ao ponto exato de onde ele saiu. O mapa perde um pouco de largura e
+ * ganha oito estados legíveis.
+ */
+const ROTULO_FORA = {
+  RN: [1040, 300], PB: [1040, 348], PE: [1040, 396], AL: [1040, 444],
+  SE: [1040, 492], DF: [1040, 560], ES: [1040, 620], RJ: [1040, 668],
+};
+const LARGURA_COM_COLUNA = 1210;
+
+/* Estados achatados: cabem na largura, não na altura.
+ *
+ * Acre, Roraima e Santa Catarina têm área de sobra para o rótulo, mas são
+ * faixas horizontais — empilhar a sigla e o percentual em duas linhas gasta
+ * mais altura do que o estado tem, e o número acaba por cima da fronteira.
+ * Numa linha só, menor, os dois cabem dentro. */
+const ROTULO_DEITADO = ["AC", "RR", "SC"];
+
 /* Cor do estado no mapa: o lado define o matiz, a distância até os 50%
  * define o quanto ele é escuro. Um estado decidido fica forte, um
  * dividido fica claro — e isso é independente de quanto já apurou. */
@@ -1479,7 +1506,11 @@ function corMapa(pctPl) {
 }
 
 async function desenhaMapa(r) {
-  if (!r.estados || !r.estados.length) return;
+  // Sem nenhum estado apurado o mapa continua sendo desenhado, todo cinza.
+  // Um mapa vazio informa: mostra o tamanho real do país que falta contar, e
+  // já deixa a pessoa situada antes do primeiro voto — melhor do que um
+  // espaço em branco que aparece do nada às 17h.
+  const estados = (r && r.estados) || [];
   if (geoMapa === null) {
     try {
       geoMapa = await (await fetch("./mapa.json", { cache: "force-cache" })).json();
@@ -1488,7 +1519,7 @@ async function desenhaMapa(r) {
   if (!geoMapa) return;
   $("cartaoMapa").style.display = "block";
 
-  const porUf = new Map(r.estados.map((e) => [e.uf, e]));
+  const porUf = new Map(estados.map((e) => [e.uf, e]));
   let formas = "", textos = "";
   let semDado = 0;
 
@@ -1521,10 +1552,14 @@ async function desenhaMapa(r) {
         + ` vector-effect="non-scaling-stroke"><title>${esc(titulo)}</title></path>`;
     }
 
-    const pos = geoMapa.rotulos[uf];
-    if (pos && e) {
-      const pequeno = ["DF", "SE", "AL", "RJ", "ES", "PB", "RN", "PE"].includes(uf);
-      const fs = pequeno ? 20 : 26;
+    let pos = geoMapa.rotulos[uf];
+    if (pos && !ROTULO_FORA[uf]) {
+      const fs = 26;
+      // O rótulo é centralizado no ponto, e em estados colados na borda
+      // (Acre, Santa Catarina) isso joga metade do número para fora da
+      // moldura do mapa. Prende o texto a uma margem segura — ele sai um
+      // pouco do centro geográfico, o que é melhor do que sair cortado.
+      pos = [Math.min(Math.max(pos[0], 58), LARGURA_COM_COLUNA - 230), pos[1]];
       // Sombra leve por baixo, não contorno grosso: o contorno engrossa
       // tanto a letra que ela perde a cor de dentro e parece cinza.
       const letra = (x, y, txt, tam, peso) =>
@@ -1537,17 +1572,54 @@ async function desenhaMapa(r) {
         textos += `<text x="${pos[0]}" y="${pos[1]}" text-anchor="middle"`
           + ` font-size="${fs}" font-weight="700" fill="var(--fraco)"`
           + ` pointer-events="none">${esc(uf)}</text>`;
+      } else if (ROTULO_DEITADO.includes(uf)) {
+        textos += letra(pos[0], pos[1] + 6,
+                        esc(uf) + "  " + n1(e.projPl) + "%", 20, 700);
       } else {
         textos += letra(pos[0], pos[1] - 4, esc(uf), fs, 700);
-        if (!pequeno) {
-          textos += letra(pos[0], pos[1] + 21, n1(e.projPl) + "%", 22, 600);
-        }
+        textos += letra(pos[0], pos[1] + 21, n1(e.projPl) + "%", 22, 600);
       }
     }
   }
 
-  $("mapa").setAttribute("viewBox", geoMapa.viewBox);
+  // Os oito pequenos, na coluna à direita.
+  for (const [uf, [lx, ly]] of Object.entries(ROTULO_FORA)) {
+    const pos = geoMapa.rotulos[uf];
+    if (!pos) continue;
+    const e = porUf.get(uf);
+    const apu = e ? Math.max(0, Math.min(e.pctApurado, 100)) : 0;
+    const c = apu >= 1 ? corMapa(e.projPl) : "var(--linha-forte)";
+    const alvo = ly + 19;
+    textos += `<line x1="${pos[0]}" y1="${pos[1]}" x2="${lx - 8}" y2="${alvo}"`
+      + ` stroke="${c}" stroke-width="2" opacity=".5"`
+      + ` vector-effect="non-scaling-stroke" pointer-events="none"/>`
+      + `<circle cx="${pos[0]}" cy="${pos[1]}" r="5" fill="${c}"`
+      + ` pointer-events="none"/>`
+      + `<rect x="${lx}" y="${ly}" width="155" height="38" rx="9" fill="${c}"`
+      + ` opacity="${apu >= 1 ? 1 : 0.85}"/>`
+      + `<text x="${lx + 13}" y="${ly + 26}" font-size="22" font-weight="700"`
+      + ` fill="${apu >= 1 ? "#fff" : "var(--fraco)"}" pointer-events="none">`
+      + `${esc(uf)}</text>`
+      + `<text x="${lx + 142}" y="${ly + 26}" font-size="21" font-weight="600"`
+      + ` text-anchor="end" fill="${apu >= 1 ? "#fff" : "var(--fraco)"}"`
+      + ` pointer-events="none">${apu >= 1 ? n1(e.projPl) + "%" : "—"}</text>`;
+  }
+
+  // O viewBox fica mais largo que a malha para abrir a coluna de rótulos.
+  const vb = geoMapa.viewBox.split(/\s+/);
+  $("mapa").setAttribute("viewBox", `${vb[0]} ${vb[1]} ${LARGURA_COM_COLUNA} ${vb[3]}`);
   $("mapa").innerHTML = formas + textos;
+  if (!estados.length) {
+    $("legendaMapa").innerHTML =
+      "Os <strong>27 estados</strong> aguardando a primeira urna. Conforme a "
+      + "apuração avançar, cada um ganha a cor de quem lidera ali — "
+      + '<span style="color:var(--pl)">' + esc(nomes.pl.split(" ")[0])
+      + '</span> ou <span style="color:var(--pt)">'
+      + esc(nomes.pt.split(" ")[0]) + "</span> — e vai ficando mais sólido à "
+      + "medida que termina de contar."
+      + ' <span style="opacity:.75">Contornos: malha territorial do IBGE.</span>';
+    return;
+  }
   $("legendaMapa").innerHTML =
     "Cor: quem lidera na <strong>projeção</strong> de cada estado — "
     + '<span style="color:var(--pl)">' + esc(nomes.pl.split(" ")[0]) + "</span> ou "
@@ -1679,6 +1751,7 @@ function tickEspera() {
   $("placar").style.display = "none";
   $("apurado").textContent = "0%";
   mostrarPreviaPesquisas();
+  desenhaMapa(null).catch(() => {});
 }
 
 /* Monta o estado da apuração num ponto qualquer, a partir dos votos reais do
