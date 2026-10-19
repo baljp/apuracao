@@ -12,7 +12,7 @@
  *   não existir.
  */
 
-const VERSAO = "apuracao-bcd11b9925";
+const VERSAO = "apuracao-c7ffdcacae";
 
 // Só estes dois destinos externos são buscados pela página. Qualquer outro é
 // recusado aqui, de modo que nem um script injetado conseguiria usar o
@@ -31,6 +31,8 @@ const CASCO = [
   "./manifest.webmanifest",
   "./icone-192.png",
   "./icone-512.png",
+  "./icone-maskable.png",
+  "./favicon.png",
 ];
 
 self.addEventListener("install", (evento) => {

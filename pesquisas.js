@@ -115,7 +115,16 @@ export async function buscarSegundoTurno() {
     // acontece na hora de exibir, na página.
     const amostra = inteiro(l[2]);
     if (amostra != null && (amostra < 100 || amostra > 500000)) continue;
-    if (+fim > Date.now() + 7 * 86400000) continue;  // pesquisa "do futuro"
+    // Pesquisa cujo trabalho de campo termina DEPOIS de hoje não foi
+    // divulgada — não existe ainda. A tolerância é de um dia, só para o
+    // caso de a Wikipédia registrar a data num fuso à frente do nosso.
+    //
+    // Isto não é preciosismo: o peso da média cai pela metade a cada quatro
+    // dias, então uma data no futuro recebe o MAIOR peso de todos. Bastaria
+    // alguém editar a Wikipédia com uma pesquisa inventada e data de amanhã
+    // para dominar a média da página. O limite anterior aceitava até sete
+    // dias à frente.
+    if (+fim > Date.now() + 86400000) continue;
     if (+fim < Date.UTC(2026, 9, 1)) continue;       // velha demais para o 2º turno
 
     saida.push({

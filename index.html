@@ -643,7 +643,7 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 <script type="module">
 import { Modelo } from "./modelo.js?v=f9cbc40f4d";
 import * as tse from "./tse.js?v=09e06f4733";
-import * as pq from "./pesquisas.js?v=2e88ac00d0";
+import * as pq from "./pesquisas.js?v=de8b73e06e";
 
 /* Ritmo de atualização.
  *
@@ -1624,7 +1624,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=bcd11b9925").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=c7ffdcacae").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
