@@ -19,10 +19,22 @@ lado de cada número, que é onde eles têm como ser lidos com calma.
 O que não sai em nenhuma versão: que isto não é resultado oficial.
 
 SOBRE A EXPLICAÇÃO REGIONAL
-"A apuração não corre igual no país inteiro" é o jeito honesto de dizer. A
+"Cada lugar termina de contar no seu tempo" é o jeito honesto de dizer. A
 versão que citava quais regiões contam antes soava como julgamento, e nem
 era a explicação certa — o que importa é que os lugares terminam em tempos
 diferentes, não quais terminam primeiro.
+
+SOBRE O TAMANHO DO TEXTO
+Story é leitura de passagem: ninguém para o dedo para ler um parágrafo. A
+versão anterior tinha cinco linhas de explicação e quatro no cartão do
+meio, e a chance de a pessoa ler até o fim caía a cada linha. Cortado para
+três e três, com o mapa maior ocupando o espaço que sobrou — a imagem
+segura o olho melhor do que a frase a mais.
+
+O endereço aparece escrito no rodapé, mas texto em imagem não é clicável:
+na hora de postar, vai também o adesivo de link do Instagram apontando para
+a página. Sem ele, quem se interessa precisa digitar o endereço na mão, e
+não digita.
 
 Uso:  python3 gerar_stories.py
 """
@@ -118,25 +130,21 @@ def montar() -> str:
              f'fill="{VERMELHO}"/>')
 
     # ---- 2. a explicação ----
-    p.append(txt(L / 2, 446, "A apuração não corre igual no país", 32, "400", TINTA))
-    p.append(txt(L / 2, 490, "inteiro: cada lugar termina de contar", 32, "400", TINTA))
-    p.append(txt(L / 2, 534, "no seu tempo. Nos primeiros minutos,", 32, "400", TINTA))
-    p.append(txt(L / 2, 578, "o número oficial mostra só uma", 32, "400", TINTA))
-    p.append(txt(L / 2, 622, "parte do país.", 32, "700", TINTA))
+    p.append(txt(L / 2, 452, "Cada lugar termina de contar no seu", 34, "400", TINTA))
+    p.append(txt(L / 2, 498, "tempo. Nos primeiros minutos, o número", 34, "400", TINTA))
+    p.append(txt(L / 2, 544, "oficial mostra só uma parte do país.", 34, "700", TINTA))
 
-    p.append(mapa_svg(686, 400))
+    p.append(mapa_svg(610, 470))
 
     # ---- 3. o que fizemos, sem prometer desempenho ----
-    p.append(f'<rect x="60" y="1192" width="{L - 120}" height="248" rx="14" '
+    p.append(f'<rect x="60" y="1150" width="{L - 120}" height="200" rx="14" '
              f'fill="{PAPEL_2}"/>')
-    p.append(txt(L / 2, 1254, "Fizemos um modelo que tenta", 34, "400", TINTA))
-    p.append(txt(L / 2, 1300, "corrigir essa distorção", 34, "700", TINTA))
-    p.append(txt(L / 2, 1362, "Ele calcula o que ainda falta contar em cada", 28,
-                 "400", TINTA_FRACA))
-    p.append(txt(L / 2, 1400, "lugar e vai refazendo a conta a cada urna.", 28,
+    p.append(txt(L / 2, 1212, "Fizemos um modelo que tenta", 34, "400", TINTA))
+    p.append(txt(L / 2, 1258, "corrigir essa distorção", 34, "700", TINTA))
+    p.append(txt(L / 2, 1318, "Ele refaz a conta a cada urna que entra.", 28,
                  "400", TINTA_FRACA))
 
-    p.append(txt(L / 2, 1510, "Acompanhe no domingo, a partir das 17h.", 31, "700",
+    p.append(txt(L / 2, 1432, "Acompanhe no domingo, a partir das 17h.", 31, "700",
                  VERDE))
 
     # ---- 4. o aviso ----
@@ -145,12 +153,12 @@ def montar() -> str:
     # que está vendo. Dizendo o que É — uma projeção, feita por um modelo — a
     # pessoa entende a natureza do número antes de olhar para ele, e a frase
     # seguinte diz de quem é a palavra final.
-    p.append(f'<rect x="60" y="1568" width="{L - 120}" height="188" rx="12" '
+    p.append(f'<rect x="60" y="1510" width="{L - 120}" height="188" rx="12" '
              f'fill="{VERMELHO}"/>')
-    p.append(txt(L / 2, 1630, "É uma projeção, não o resultado", 38, "700", PAPEL))
-    p.append(txt(L / 2, 1684, "Os números saem de um modelo preditivo.", 27, "400",
+    p.append(txt(L / 2, 1572, "É uma projeção, não o resultado", 38, "700", PAPEL))
+    p.append(txt(L / 2, 1626, "Os números saem de um modelo preditivo.", 27, "400",
                  PAPEL, op="0.95"))
-    p.append(txt(L / 2, 1722, "O resultado oficial é o do TSE — e é ele que vale.",
+    p.append(txt(L / 2, 1664, "O resultado oficial é o do TSE — e é ele que vale.",
                  27, "400", PAPEL, op="0.95"))
 
     # ---- link ----

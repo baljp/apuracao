@@ -1,0 +1,14 @@
+🗳️ Por que o resultado pode mudar tanto no começo da apuração?
+
+Porque nem todo lugar termina de contar na mesma hora. Nos primeiros minutos, o percentual divulgado ainda não representa o país inteiro.
+
+Criamos uma ferramenta que compara os votos que vão chegando com o 1º turno de cada município, considera as diferenças entre regiões e as mudanças no volume de votos válidos, e atualiza uma projeção do resultado final.
+
+📊 Acompanhe domingo, a partir das 17h:
+👉 https://oxeeraassim.github.io/apuracao
+
+📱 Dá para instalar no celular como aplicativo.
+
+⚠️ É uma projeção estatística, não o resultado oficial. O que vale é sempre o TSE.
+
+Uma parceria com o Oxe, era assim? 🌵
