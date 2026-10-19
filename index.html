@@ -339,9 +339,9 @@
 </div>
 
 <script type="module">
-import { Modelo } from "./modelo.js?v=4";
-import * as tse from "./tse.js?v=4";
-import * as pq from "./pesquisas.js?v=4";
+import { Modelo } from "./modelo.js?v=5";
+import * as tse from "./tse.js?v=5";
+import * as pq from "./pesquisas.js?v=5";
 
 /* Ritmo de atualização.
  *
@@ -373,6 +373,16 @@ const TURNO = new URLSearchParams(location.search).get("turno") === "1"
 
 const $ = (id) => document.getElementById(id);
 const n1 = (v) => (v == null || isNaN(v)) ? "—" : v.toFixed(1).replace(".", ",");
+// Duas casas, para os números que o site calcula (média, margem, erro): ali a
+// diferença entre 50,4 e 50,44 pode ser a diferença entre parecer empate e
+// parecer vantagem.
+const n2 = (v) => (v == null || isNaN(v)) ? "—" : v.toFixed(2).replace(".", ",");
+
+// Para os valores publicados pelas pesquisas, mostra exatamente a precisão
+// que o instituto deu: 48 continua "48", 40,62 continua "40,62". Escrever
+// "48,00%" onde o instituto disse "48%" seria inventar precisão.
+const nFonte = (v) => (v == null || isNaN(v)) ? "—"
+  : String(Math.round(v * 100) / 100).replace(".", ",");
 
 /* Escapa texto que veio de fora antes de montar HTML.
  *
@@ -572,11 +582,11 @@ function pintaPesquisas() {
   if (ag) {
     $("mediaVazio").style.display = "none";
     $("mediaCorpo").style.display = "block";
-    $("pPctPL").textContent = n1(ag.pl) + "%";
-    $("pPctPT").textContent = n1(ag.pt) + "%";
-    $("pFaixaPL").textContent = "entre " + n1(ag.faixa[0]) + "% e " + n1(ag.faixa[1]) + "%";
-    $("pFaixaPT").textContent = "entre " + n1(100 - ag.faixa[1]) + "% e "
-                              + n1(100 - ag.faixa[0]) + "%";
+    $("pPctPL").textContent = n2(ag.pl) + "%";
+    $("pPctPT").textContent = n2(ag.pt) + "%";
+    $("pFaixaPL").textContent = "entre " + n2(ag.faixa[0]) + "% e " + n2(ag.faixa[1]) + "%";
+    $("pFaixaPT").textContent = "entre " + n2(100 - ag.faixa[1]) + "% e "
+                              + n2(100 - ag.faixa[0]) + "%";
     $("pBarraPL").style.cssText = "width:" + ag.pl + "%;background:var(--pl)";
     $("pBarraPT").style.cssText = "width:" + ag.pt + "%;background:var(--pt)";
     const dist = Math.abs(ag.pl - 50);
@@ -596,8 +606,8 @@ function pintaPesquisas() {
     return "<tr><td class='uf'>" + esc(p.instituto) + "</td>"
       + "<td>" + esc(p.periodo) + "</td>"
       + "<td>" + (p.amostra ? p.amostra.toLocaleString("pt-BR") : "—") + "</td>"
-      + "<td>" + n1(p.pt) + "%</td>"
-      + "<td><strong>" + n1(p.pl) + "%</strong></td>"
+      + "<td>" + nFonte(p.pt) + "%</td>"
+      + "<td><strong>" + nFonte(p.pl) + "%</strong></td>"
       + "<td>" + tse + "</td></tr>";
   }).join("");
   $("listaPesquisas").innerHTML = corpo;
@@ -667,9 +677,9 @@ async function calcularAcerto() {
       const acertouLider = l.vantagem >= 0;
       const cor = acertouLider ? "var(--ok)" : "var(--alerta)";
       return "<tr><td class='uf'>" + esc(l.nome) + "</td>"
-        + "<td>" + (p ? n1(p.validosPl) + "% " + curtoPL : "—") + "</td>"
+        + "<td>" + (p ? n2(p.validosPl) + "% " + curtoPL : "—") + "</td>"
         + "<td><span style='color:" + cor + "'>"
-        + (l.erro >= 0 ? "+" : "−") + n1(Math.abs(l.erro)) + " pp</span>"
+        + (l.erro >= 0 ? "+" : "−") + n2(Math.abs(l.erro)) + " pp</span>"
         + "<span class='reg'>dava " + liderava + "</span></td></tr>";
     }).join("");
   } catch {
@@ -683,7 +693,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=4").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=5").catch(() => {});
   });
 }
 

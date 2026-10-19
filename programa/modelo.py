@@ -79,6 +79,35 @@ K_PRIOR = 1_500_000
 USAR_REGRESSAO_PERFIL = True
 LAMBDA_PERFIL = 0.015
 
+# Regressão do swing sobre o NÍVEL do lugar — TESTADA E DESCARTADA.
+#
+# A hipótese era boa. Em 2018 o swing não foi parecido pelo país: onde
+# Bolsonaro era forte no 1º turno ele caiu muito (Sudeste, 73,5% -> -8,1
+# pontos) e onde era fraco caiu pouco (Nordeste, 33,8% -> -3,5). O swing era
+# função do nível, e medindo essa inclinação o modelo poderia inferir o
+# Nordeste a partir do Sul, em vez de copiar um no outro.
+#
+# Só que não funciona. Testado em 15 combinações de λ e limite (ver
+# testar_nivel.py), piora em TODAS: o pior caso sobe de 1,98 para 2,18 pp, e
+# quanto mais solto o coeficiente, pior fica.
+#
+# O motivo é instrutivo. Com tudo apurado, a inclinação verdadeira de 2018 é
+# -0,140. Mas no início da noite ela não pode ser medida: os estados que
+# apuram primeiro são justamente os de nível alto, e a parcela apurada deles
+# ainda não os representa. A reta ajustada ali mistura o padrão real com o
+# viés de composição, e depois é extrapolada para fora da amostra, justo nos
+# estados sobre os quais não há informação. Amplificar uma estimativa ruim na
+# direção de quem não apurou é pior do que não fazer nada.
+#
+# Fica desligada. O código permanece porque o experimento negativo é parte do
+# resultado: alguém que tiver a mesma ideia já sabe que ela foi tentada.
+USAR_REGRESSAO_NIVEL = False
+LAMBDA_NIVEL = 0.4
+# Teto para o quanto a extrapolação pode mexer no swing de um lugar, em
+# log-odds. Sem isso, um estado muito distante da média puxaria a conta para
+# território que nenhum dado sustenta.
+LIMITE_AJUSTE_NIVEL = 0.15
+
 
 def _logit(a: float, b: float) -> float:
     """log(a/b), protegido contra zero."""
@@ -154,6 +183,16 @@ class Modelo:
         peso = sum(m.validos_base for m in self.municipios) or 1.0
         self.perfil_medio = sum(m.perfil * m.validos_base
                                 for m in self.municipios) / peso
+
+        # Nível nacional e por UF: a posição do lugar no 1º turno, em
+        # log-odds. É a régua contra a qual a regressão do swing é medida.
+        self.nivel_nacional = sum(m.base_logit * m.validos_base
+                                  for m in self.municipios) / peso
+        self.nivel_uf = {}
+        for uf, muns in self.por_uf.items():
+            p = sum(m.validos_base for m in muns) or 1.0
+            self.nivel_uf[uf] = sum(m.base_logit * m.validos_base
+                                    for m in muns) / p
 
     # ------------------------------------------------------------------
     def swing_das_pesquisas(self, pct_pl_pesquisas: float) -> float:
@@ -239,10 +278,23 @@ class Modelo:
             bruto = soma / peso if peso > 0 else swing_nacional
             swing_regiao[r] = _encolher(bruto, peso, swing_nacional, K_REGIAO)
 
+        # Quanto o swing varia com o nível do lugar, estimado a partir dos
+        # estados que já apuraram. É isso que permite inferir um estado ainda
+        # não apurado em vez de copiar nele o swing de outro muito diferente.
+        b_nivel = (self._coef_nivel(swing_uf, peso_uf, swing_nacional)
+                   if USAR_REGRESSAO_NIVEL else 0.0)
+
         swing_final = {}
         for uf in self.por_uf:
             r = tse.REGIAO.get(uf, "outros")
             prior = swing_regiao.get(r, swing_nacional)
+            # O prior é corrigido para o nível DESTE estado: um estado onde o
+            # candidato era fraco não deve herdar inteiro o swing de uma
+            # região onde ele era forte.
+            if b_nivel:
+                ajuste = b_nivel * (self.nivel_uf[uf] - self.nivel_nacional)
+                prior += max(-LIMITE_AJUSTE_NIVEL,
+                             min(LIMITE_AJUSTE_NIVEL, ajuste))
             if uf in swing_uf:
                 swing_final[uf] = _encolher(swing_uf[uf], peso_uf[uf], prior, K_UF)
             else:
@@ -296,6 +348,47 @@ class Modelo:
             "swing_regiao": swing_regiao,
             "estados": estados,
         }
+
+    # ------------------------------------------------------------------
+    def _coef_nivel(self, swing_uf: dict, peso_uf: dict,
+                    swing_nacional: float) -> float:
+        """
+        Inclinação da reta swing × nível, estimada entre os estados apurados.
+
+        Positiva significa "onde o candidato era forte, ele cresceu mais";
+        negativa, "onde era forte, caiu mais" — o caso de 2018. Perto de zero
+        significa que o país se moveu junto, e aí a correção some sozinha,
+        que foi o caso de 2022.
+
+        A regularização (LAMBDA_NIVEL) é deliberadamente pesada: com poucos
+        estados apurados, uma reta ajustada sem freio persegue ruído. Ela só
+        deixa o coeficiente crescer quando o padrão aparece com volume.
+        """
+        if len(swing_uf) < 5:
+            return 0.0
+        pontos = []
+        for uf, sw in swing_uf.items():
+            nivel = self.nivel_uf.get(uf)
+            if nivel is None:
+                continue
+            pontos.append((nivel, sw, peso_uf[uf]))
+        if len(pontos) < 5:
+            return 0.0
+
+        # Exige alguma variedade de níveis entre os estados apurados: se só
+        # apurou o Sul, não há como enxergar a inclinação.
+        niveis = [p[0] for p in pontos]
+        if max(niveis) - min(niveis) < 0.35:
+            return 0.0
+
+        peso_total = sum(p[2] for p in pontos)
+        if peso_total <= 0:
+            return 0.0
+        x_medio = sum(p[0] * p[2] for p in pontos) / peso_total
+        y_medio = sum(p[1] * p[2] for p in pontos) / peso_total
+        num = sum(p[2] * (p[0] - x_medio) * (p[1] - y_medio) for p in pontos)
+        den = sum(p[2] * (p[0] - x_medio) ** 2 for p in pontos)
+        return num / (den + LAMBDA_NIVEL * peso_total)
 
     # ------------------------------------------------------------------
     def _coef_perfil(self, swing_uf: dict, peso_uf: dict) -> float:
