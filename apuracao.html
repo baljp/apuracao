@@ -364,6 +364,15 @@ summary:focus-visible{outline:2px solid var(--pl);outline-offset:3px}
 details p{margin:11px 0}
 details b{color:var(--texto)}
 
+/* ---------- crédito ---------- */
+.creditos{
+  text-align:center;font-size:12.5px;color:var(--fraco);
+  padding:26px 8px 4px;line-height:1.7;
+}
+.creditos a{color:var(--fraco);text-decoration:none;border-bottom:1px solid var(--linha-forte)}
+.creditos a:hover{color:var(--texto)}
+.creditos .sep{opacity:.5;margin:0 6px}
+
 /* ---------- instalação ---------- */
 .instalar{display:none;align-items:center;gap:12px;flex-wrap:nowrap}
 .instalar .txt{flex:1;min-width:0;font-size:13px;color:var(--fraco)}
@@ -634,6 +643,18 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
     resultado final, significa que o modelo errou — modelos erram, e é para isso
     que serve a margem mostrada acima. Diferença entre projeção e apuração não é
     evidência de problema na apuração.
+  </div>
+
+  <!-- Crédito. Deliberadamente discreto e sem nada pessoal: nome de autor,
+       endereço de repositório ou perfil de quem fez não têm por que estar
+       numa página que as pessoas vão abrir para ver um resultado. -->
+  <div class="creditos">
+    uma parceria com
+    <a href="https://www.instagram.com/oxe_eraassim/" target="_blank"
+       rel="noopener noreferrer">Oxe, era assim?</a>
+    <span class="sep">·</span>
+    dados oficiais do <a href="https://resultados.tse.jus.br"
+       target="_blank" rel="noopener noreferrer">TSE</a>
   </div>
 </div>
 
