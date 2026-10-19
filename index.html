@@ -49,103 +49,328 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <style>
+/*
+ * Direção visual.
+ *
+ * O assunto é uma noite de apuração: números que mudam a cada minuto, lidos
+ * de relance, quase sempre no celular e quase sempre com a pessoa fazendo
+ * outra coisa ao mesmo tempo. Então a página é construída como um PLACAR, e
+ * não como um relatório.
+ *
+ * O herói é um painel escuro no topo, com os dois números em corpo enorme. É
+ * a única peça escura da página, e é o que se vê antes de qualquer outra
+ * coisa. Em volta, tudo fica claro e quieto: superfícies brancas, divisores
+ * finos, sem sombra em todo canto.
+ *
+ * As cores dos candidatos são o sistema inteiro — não existe um terceiro
+ * acento decorativo, porque numa página eleitoral qualquer cor extra vira
+ * sinal. Verde aparece só para "ao vivo" e para progresso de apuração, que
+ * são estado e não opinião.
+ *
+ * Números saem em dígitos de largura fixa em toda parte: quando o número se
+ * atualiza sozinho, dígito de largura variável faz a linha inteira tremer.
+ */
+
+:root{
+  --fundo:#F4F6F9;
+  --superficie:#FFFFFF;
+  --painel:#111726;
+  --painel-2:#1A2133;
+  --linha:#E3E7EE;
+  --linha-forte:#CBD2DE;
+  --texto:#101522;
+  --fraco:#59637A;
+  --pl:#1F5FA8;
+  --pl-claro:#C4DAF0;
+  --pt:#B82E24;
+  --pt-claro:#F4CDC9;
+  --ok:#157F5B;
+  --alerta:#B4680F;
+  --raio:16px;
+}
+
+@media (prefers-color-scheme: dark){
   :root{
-    --fundo:#0f1117; --cartao:#171a23; --linha:#272b38;
-    --texto:#e9ebf2; --fraco:#949bb0;
-    --pl:#4a90d9; --pt:#d9544a; --ok:#49c98a; --alerta:#e0913a;
+    --fundo:#0A0D14;
+    --superficie:#141A26;
+    --painel:#070A11;
+    --painel-2:#141B2A;
+    --linha:#222A3A;
+    --linha-forte:#333D52;
+    --texto:#E8ECF4;
+    --fraco:#929BB0;
+    --pl:#5B9BE0;
+    --pl-claro:#1C2E45;
+    --pt:#E0695F;
+    --pt-claro:#3B2321;
+    --ok:#3FB389;
+    --alerta:#D9A03C;
   }
-  @media (prefers-color-scheme: light){
-    :root{ --fundo:#f5f6f9; --cartao:#fff; --linha:#e3e6ed;
-           --texto:#171a23; --fraco:#666d82; }
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--fundo);color:var(--texto);
-    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif;
-    padding:22px 16px 56px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:880px;margin:0 auto}
-  h1{font-size:19px;margin:0 0 3px;font-weight:600;letter-spacing:-.2px}
-  h2{font-size:14px;margin:0 0 12px;font-weight:600;color:var(--fraco);
-     text-transform:uppercase;letter-spacing:.5px}
-  .sub{color:var(--fraco);font-size:13px;margin-bottom:20px}
-  .cartao{background:var(--cartao);border:1px solid var(--linha);
-    border-radius:14px;padding:20px;margin-bottom:14px}
+}
 
-  .placar{display:flex;gap:16px;flex-wrap:wrap}
-  .lado{flex:1;min-width:190px}
-  .lado.dir{text-align:right}
-  .nome{font-size:12px;color:var(--fraco);text-transform:uppercase;
-    letter-spacing:.5px;margin-bottom:5px;font-weight:600}
-  .pct{font-size:clamp(38px,11vw,50px);font-weight:650;line-height:1;
-    font-variant-numeric:tabular-nums;letter-spacing:-1.5px}
-  .pl .pct{color:var(--pl)} .pt .pct{color:var(--pt)}
-  .faixa{font-size:12px;color:var(--fraco);margin-top:7px;
-    font-variant-numeric:tabular-nums}
+*{box-sizing:border-box}
 
-  .barra{height:11px;border-radius:6px;overflow:hidden;display:flex;
-    margin:20px 0 0;background:var(--linha);position:relative}
-  .barra i{display:block;height:100%;transition:width .6s ease}
-  .meio{position:relative;height:16px}
-  .meio:after{content:"";position:absolute;left:50%;top:-11px;width:2px;
-    height:21px;background:var(--texto);opacity:.5}
-  .meio span{position:absolute;left:50%;top:7px;transform:translateX(-50%);
-    font-size:10px;color:var(--fraco)}
-  #probabilidade{font-size:14px;margin-top:6px}
+body{
+  margin:0;
+  background:var(--fundo);
+  color:var(--texto);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+       "Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 64px;
+  font-variant-numeric:tabular-nums;
+}
 
-  .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:16px}
-  .item .r{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
-  .item .l{font-size:12px;color:var(--fraco);margin-top:2px}
+.wrap{max-width:880px;margin:0 auto;padding:0 16px}
 
-  table{width:100%;border-collapse:collapse;font-size:13px;
-    font-variant-numeric:tabular-nums}
-  th,td{padding:8px;text-align:right;border-bottom:1px solid var(--linha)}
-  th{color:var(--fraco);font-weight:600;font-size:10.5px;
-    text-transform:uppercase;letter-spacing:.4px}
-  th:first-child,td:first-child{text-align:left}
-  tr:last-child td{border-bottom:none}
-  td.uf{font-weight:650}
-  .reg{color:var(--fraco);font-size:10.5px;font-weight:400;margin-left:3px}
-  .mini{height:5px;background:var(--linha);border-radius:3px;overflow:hidden;
-    width:48px;display:inline-block;vertical-align:middle;margin-right:5px}
-  .mini i{display:block;height:100%;background:var(--ok)}
+/* ---------- cabeçalho ---------- */
+.topo{padding:26px 0 18px}
+h1{
+  font-size:clamp(21px,5.2vw,27px);
+  margin:0;
+  font-weight:680;
+  letter-spacing:-.025em;
+  line-height:1.15;
+}
+.sub{color:var(--fraco);font-size:13.5px;margin-top:5px}
 
-  .aviso{font-size:12.5px;color:var(--fraco);line-height:1.65}
-  .aviso strong{color:var(--texto)}
-  .pisca{display:inline-block;width:7px;height:7px;border-radius:50%;
-    background:var(--ok);margin-right:7px;animation:p 2s infinite;
-    vertical-align:middle}
-  @keyframes p{50%{opacity:.2}}
-  .erro{color:var(--alerta)}
-  svg.graf{display:block;width:100%;height:130px;overflow:visible}
-  details{font-size:13px;color:var(--fraco)}
-  summary{cursor:pointer;color:var(--texto);font-weight:600;font-size:13.5px;
-    padding:2px 0}
-  details p{margin:10px 0}
-  details b{color:var(--texto)}
-  a{color:var(--pl)}
-  .vazio{text-align:center;padding:26px 10px;color:var(--fraco);font-size:14px}
+.painel h2{color:rgba(255,255,255,.65)}
+h2{
+  font-size:13px;
+  margin:0 0 14px;
+  font-weight:640;
+  color:var(--fraco);
+  letter-spacing:.02em;
+}
 
-  .abas{display:flex;gap:4px;margin-bottom:14px;background:var(--cartao);
-    border:1px solid var(--linha);border-radius:11px;padding:4px}
-  .aba{flex:1;background:none;border:0;border-radius:8px;padding:9px 12px;
-    font:600 14px inherit;font-family:inherit;color:var(--fraco);cursor:pointer}
-  .aba.ativa{background:var(--linha);color:var(--texto)}
-  .aba:hover:not(.ativa){color:var(--texto)}
+/* ---------- superfícies ---------- */
+.cartao{
+  background:var(--superficie);
+  border:1px solid var(--linha);
+  border-radius:var(--raio);
+  padding:20px;
+  margin-bottom:12px;
+}
 
-  .instalar{display:none;align-items:center;gap:12px;flex-wrap:wrap}
-  .instalar .txt{flex:1;min-width:180px;font-size:13px;color:var(--fraco)}
-  .instalar .txt b{color:var(--texto)}
-  button.bt{background:var(--pl);color:#fff;border:0;border-radius:9px;
-    padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;
-    font-family:inherit}
-  button.bt:hover{filter:brightness(1.08)}
-  button.fechar{background:none;color:var(--fraco);border:0;cursor:pointer;
-    font-size:19px;line-height:1;padding:4px 6px;font-family:inherit}
+/* ---------- faixa de estado ---------- */
+.status{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:13px 16px;border-radius:12px;margin-bottom:12px;
+  font-size:13.5px;line-height:1.5;
+  border:1px solid var(--linha);background:var(--superficie);
+}
+.status b{display:block;font-size:14.5px;margin-bottom:2px;font-weight:650}
+.status.pesq{border-color:var(--pl);background:color-mix(in srgb,var(--pl) 7%,var(--superficie))}
+.status.vivo{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--superficie))}
+.ponto{width:9px;height:9px;border-radius:50%;flex:0 0 auto;margin-top:5px}
+.status.vivo .ponto{background:var(--ok);box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent);animation:pulso 1.8s infinite}
+.status.pesq .ponto{background:var(--pl)}
+.status.fim .ponto{background:var(--fraco)}
+@keyframes pulso{
+  70%{box-shadow:0 0 0 9px transparent}
+  100%{box-shadow:0 0 0 0 transparent}
+}
+
+/* ---------- abas ---------- */
+.abas{
+  display:flex;gap:3px;margin-bottom:12px;
+  background:var(--superficie);border:1px solid var(--linha);
+  border-radius:12px;padding:4px;
+}
+.aba{
+  flex:1;background:none;border:0;border-radius:9px;padding:10px 12px;
+  font:inherit;font-size:14.5px;font-weight:600;color:var(--fraco);
+  cursor:pointer;transition:background .15s,color .15s;
+}
+.aba.ativa{background:var(--texto);color:var(--superficie)}
+.aba:not(.ativa):hover{color:var(--texto)}
+.aba:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
+
+/* ---------- o placar, herói da página ---------- */
+#cartaoPlacar,.painel{
+  background:var(--painel);
+  border:0;
+  color:#fff;
+  padding:24px 22px 20px;
+  position:relative;
+  overflow:hidden;
+}
+#cartaoPlacar::before,.painel::before{
+  /* brilho discreto atrás dos números, no tom do candidato à frente */
+  content:"";position:absolute;inset:-40% -10% auto;height:70%;
+  background:radial-gradient(ellipse at 50% 0%,
+    color-mix(in srgb,var(--pl) 26%,transparent),transparent 70%);
+  pointer-events:none;
+}
+#cartaoPlacar>*,.painel>*{position:relative}
+
+.placar{display:flex;gap:14px;align-items:flex-start}
+.lado{flex:1;min-width:0}
+.lado.dir{text-align:right}
+.nome{
+  font-size:12.5px;color:rgba(255,255,255,.72);
+  margin-bottom:4px;font-weight:600;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pct{
+  font-size:clamp(40px,13vw,62px);
+  font-weight:700;line-height:.95;letter-spacing:-.04em;
+}
+.pl .pct{color:#7FB3EA}
+.pt .pct{color:#F08E84}
+#cartaoPlacar .faixa,.painel .faixa{font-size:12px;color:rgba(255,255,255,.6);margin-top:7px}
+
+.barra{
+  height:12px;border-radius:7px;overflow:hidden;display:flex;
+  margin:20px 0 0;background:rgba(255,255,255,.12);
+}
+.barra i{display:block;height:100%;transition:width .7s cubic-bezier(.22,1,.36,1)}
+.meio{position:relative;height:17px}
+.meio:after{
+  content:"";position:absolute;left:50%;top:-12px;width:2px;height:22px;
+  background:#fff;opacity:.85;border-radius:1px;
+}
+.meio span{
+  position:absolute;left:50%;top:9px;transform:translateX(-50%);
+  font-size:10px;color:rgba(255,255,255,.65);letter-spacing:.03em;
+}
+#probabilidade{font-size:14px;margin-top:7px;color:rgba(255,255,255,.92)}
+
+/* ---------- tira de números, deslizável no celular ---------- */
+.grade{
+  display:flex;gap:10px;overflow-x:auto;padding:16px 16px 16px;
+  /* sombra na borda direita enquanto houver conteúdo escondido, para a
+     pessoa perceber que a tira desliza */
+  background:
+    linear-gradient(to right,var(--superficie),var(--superficie)) left/22px 100% no-repeat,
+    linear-gradient(to right,rgba(0,0,0,.09),transparent) right/18px 100% no-repeat,
+    var(--superficie);
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.grade::-webkit-scrollbar{display:none}
+.grade .item{
+  flex:0 0 auto;min-width:132px;scroll-snap-align:start;
+  padding:2px 14px 2px 0;border-right:1px solid var(--linha);
+}
+.grade .item:last-child{border-right:0}
+.item .r{font-size:25px;font-weight:680;letter-spacing:-.025em;line-height:1.1}
+.item .l{font-size:12px;color:var(--fraco);margin-top:3px;line-height:1.35}
+@media (min-width:700px){
+  .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));overflow:visible}
+  .grade .item{min-width:0}
+}
+
+/* ---------- lista de estados ---------- */
+.estados{display:flex;flex-direction:column}
+.uf-linha{
+  display:grid;
+  grid-template-columns:52px 1fr 64px;
+  gap:12px;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--linha);
+}
+.uf-linha:last-child{border-bottom:0}
+.uf-sigla{font-weight:700;font-size:15px;letter-spacing:.01em}
+.uf-reg{font-size:10.5px;color:var(--fraco);font-weight:500;margin-top:1px}
+.uf-disputa{
+  height:9px;border-radius:5px;overflow:hidden;display:flex;
+  background:var(--linha);
+}
+.uf-disputa i{display:block;height:100%}
+.uf-disputa.sem-dado{opacity:.3}
+.uf-disputa.sem-dado i{background-image:repeating-linear-gradient(
+  45deg,transparent,transparent 3px,rgba(255,255,255,.6) 3px,rgba(255,255,255,.6) 6px)}
+.uf-meta{display:flex;justify-content:space-between;font-size:11px;
+  color:var(--fraco);margin-top:5px}
+.uf-proj{text-align:right;font-weight:680;font-size:15px}
+.uf-apur{
+  height:3px;border-radius:2px;background:var(--linha);overflow:hidden;margin-top:6px;
+}
+.uf-apur i{display:block;height:100%;background:var(--ok)}
+
+/* ---------- tabelas (pesquisas) ---------- */
+.rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:420px}
+th,td{padding:10px 8px;text-align:right;border-bottom:1px solid var(--linha)}
+th{
+  color:var(--fraco);font-weight:600;font-size:11.5px;
+  position:sticky;top:0;background:var(--superficie);
+}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+tr:last-child td{border-bottom:0}
+td.uf{font-weight:650}
+.reg{color:var(--fraco);font-size:11px;font-weight:400;margin-left:5px}
+
+/* ---------- barra de erro dos institutos ---------- */
+.erro-barra{
+  position:relative;height:8px;background:var(--linha);border-radius:4px;
+  min-width:90px;
+}
+.erro-barra::before{
+  content:"";position:absolute;left:50%;top:-3px;width:1px;height:14px;
+  background:var(--linha-forte);
+}
+.erro-barra span{position:absolute;top:0;height:8px;border-radius:4px}
+.erro-num{font-size:12px;margin-top:5px;font-weight:600;text-align:right}
+
+/* ---------- gráficos ---------- */
+svg.graf{display:block;width:100%;height:150px;overflow:visible}
+#mapa{width:100%;max-width:600px;margin:0 auto;display:block;height:auto}
+@media (max-width:620px){
+  /* No celular o mapa precisa de toda a largura do cartão, inclusive o
+     espaço do padding, senão os nomes dos estados ficam ilegíveis. */
+  #cartaoMapa{padding-left:6px;padding-right:6px}
+  #cartaoMapa h2,#legendaMapa{padding-left:14px;padding-right:14px}
+}
+
+/* ---------- textos auxiliares ---------- */
+.faixa{font-size:12.5px;color:var(--fraco);line-height:1.55}
+.aviso{font-size:13px;color:var(--fraco);line-height:1.65}
+.aviso strong{color:var(--texto);font-weight:650}
+.vazio{text-align:center;padding:26px 8px;color:var(--fraco);font-size:14px}
+.erro{color:var(--alerta)}
+a{color:var(--pl)}
+
+details{font-size:13.5px;color:var(--fraco);line-height:1.6}
+summary{cursor:pointer;color:var(--texto);font-weight:650;font-size:14px;padding:3px 0}
+summary:focus-visible{outline:2px solid var(--pl);outline-offset:3px}
+details p{margin:11px 0}
+details b{color:var(--texto)}
+
+/* ---------- instalação ---------- */
+.instalar{display:none;align-items:center;gap:12px;flex-wrap:nowrap}
+.instalar .txt{flex:1;min-width:0;font-size:13px;color:var(--fraco)}
+.instalar .txt b{color:var(--texto)}
+button.bt{
+  background:var(--pl);color:#fff;border:0;border-radius:10px;
+  padding:11px 18px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;
+}
+button.bt:hover{filter:brightness(1.07)}
+button.fechar{
+  background:none;color:var(--fraco);border:0;cursor:pointer;
+  font-size:20px;line-height:1;padding:4px 7px;font-family:inherit;
+}
+button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Projeção da apuração — Presidente</h1>
-  <div class="sub" id="status"><span class="pisca"></span>carregando a base…</div>
+  <header class="topo">
+    <h1>Presidente · apuração ao vivo</h1>
+    <div class="sub" id="status">carregando…</div>
+  </header>
+
+  <div class="status pesq" id="faixaStatus">
+    <span class="ponto"></span>
+    <div><b id="statusTitulo">Carregando…</b>
+      <span class="faixa" id="statusTexto"></span></div>
+  </div>
 
   <div class="cartao" id="avisoTeste" style="display:none;
        border-color:var(--alerta);background:rgba(224,145,58,.1)">
@@ -245,11 +470,7 @@
 
   <div class="cartao">
     <h2>Por estado</h2>
-    <table>
-      <thead><tr><th>Estado</th><th>Apurado</th><th>Na urna</th>
-        <th>Projeção</th><th>Dif.</th></tr></thead>
-      <tbody id="estados"><tr><td colspan="5" class="vazio">—</td></tr></tbody>
-    </table>
+    <div class="estados" id="estados"><div class="vazio">—</div></div>
   </div>
 
   <div class="cartao">
@@ -282,7 +503,7 @@
   </div><!-- fim painelApuracao -->
 
   <div id="painelPesquisas" hidden>
-    <div class="cartao" id="cartaoMedia">
+    <div class="cartao painel" id="cartaoMedia">
       <h2>Média das pesquisas</h2>
       <div id="mediaVazio" class="vazio">Carregando as pesquisas…</div>
       <div id="mediaCorpo" style="display:none">
@@ -330,11 +551,11 @@
     <div class="cartao">
       <h2>Como cada instituto se saiu no 1º turno</h2>
       <div id="acertoVazio" class="vazio">Calculando…</div>
-      <table id="tabAcerto" style="display:none">
-        <thead><tr><th>Instituto</th><th>Última pesquisa</th>
-          <th>Erro no 1º turno</th></tr></thead>
+      <div class="rolagem"><table id="tabAcerto" style="display:none">
+        <thead><tr><th>Instituto</th><th>Diz agora</th>
+          <th>Errou no 1º turno por</th></tr></thead>
         <tbody id="corpoAcerto"></tbody>
-      </table>
+      </table></div>
       <div class="faixa" style="margin-top:10px">
         No 1º turno, Flávio venceu Lula por <strong>1,87 ponto</strong> (47,03%
         a 45,16%). O erro acima é a diferença entre a vantagem que cada
@@ -346,11 +567,11 @@
 
     <div class="cartao">
       <h2>Pesquisas do 2º turno</h2>
-      <table>
+      <div class="rolagem"><table>
         <thead><tr><th>Instituto</th><th>Campo</th><th>Amostra</th>
           <th id="thPT">PT</th><th id="thPL">PL</th><th>TSE</th></tr></thead>
         <tbody id="listaPesquisas"><tr><td colspan="6" class="vazio">—</td></tr></tbody>
-      </table>
+      </table></div>
       <div style="text-align:center;margin-top:14px">
         <button class="bt" id="btMais" style="display:none">Ver mais antigas</button>
       </div>
@@ -573,8 +794,11 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   $("faixaPL").textContent = "entre " + n1(r.faixaPl[0]) + "% e " + n1(r.faixaPl[1]) + "%";
   $("faixaPT").textContent = "entre " + n1(100 - r.faixaPl[1]) + "% e "
                            + n1(100 - r.faixaPl[0]) + "%";
-  $("barraPL").style.cssText = "width:" + r.projecaoPl + "%;background:var(--pl)";
-  $("barraPT").style.cssText = "width:" + r.projecaoPt + "%;background:var(--pt)";
+  $("barraPL").style.cssText = "width:" + r.projecaoPl + "%;background:#7FB3EA";
+  $("barraPT").style.cssText = "width:" + r.projecaoPt + "%;background:#F08E84";
+  // O brilho atrás dos números acompanha quem está à frente.
+  $("cartaoPlacar").style.setProperty("--pl",
+    r.projecaoPl > 50 ? "#2E7BD6" : "#CF4034");
 
   const p = r.probPl;
   let txt;
@@ -607,7 +831,7 @@ function pinta(r, falhas, totais, horaTSE, observado) {
     let vpl = 0, vpt = 0;
     for (const uf of Object.values(observado)) { vpl += uf.pl; vpt += uf.pt; }
     if (vpl + vpt > 0) {
-      $("cartaoVotos").style.display = "grid";
+      $("cartaoVotos").style.display = "";
       $("votosPL").textContent = mil(vpl);
       $("votosPT").textContent = mil(vpt);
       $("lblVotosPL").textContent = "votos de " + esc(nomes.pl.split(" ")[0]);
@@ -623,7 +847,7 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   // Comparecimento, abstenção, brancos e nulos — que o TSE publica e muita
   // gente procura numa noite de apuração.
   if (totais && totais.eleitorado > 0) {
-    $("cartaoEleitorado").style.display = "grid";
+    $("cartaoEleitorado").style.display = "";
     $("comparecimento").textContent = pct(totais.comparecimento, totais.eleitorado);
     $("abstencao").textContent = pct(totais.abstencao, totais.eleitorado);
     const bn = totais.brancos + totais.nulos;
@@ -635,15 +859,35 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   $("correcao").textContent = dif == null ? "—"
     : (dif >= 0 ? "+" : "−") + n1(Math.abs(dif)) + " pp";
 
+  // Cada estado vira uma linha com a disputa desenhada: a barra mostra a
+  // divisão projetada, o fio verde abaixo mostra o quanto já apurou. Ler
+  // quem está ganhando onde vira questão de olhar, não de comparar números.
   $("estados").innerHTML = r.estados.map((e) => {
-    const d = e.obsPl == null ? null : e.projPl - e.obsPl;
-    return "<tr><td class='uf'>" + esc(e.uf)
-      + "<span class='reg'>" + esc(e.regiao) + "</span></td>"
-      + "<td><span class='mini'><i style='width:" + Math.min(e.pctApurado, 100)
-      + "%'></i></span>" + n1(e.pctApurado) + "%</td>"
-      + "<td>" + (e.obsPl == null ? "—" : n1(e.obsPl) + "%") + "</td>"
-      + "<td><strong>" + n1(e.projPl) + "%</strong></td>"
-      + "<td>" + (d == null ? "—" : (d >= 0 ? "+" : "−") + n1(Math.abs(d))) + "</td></tr>";
+    const temDado = e.obsPl != null;
+    const pl = Math.max(0, Math.min(e.projPl, 100));
+    const cor = pl > 50 ? "var(--pl)" : "var(--pt)";
+    return "<div class='uf-linha'>"
+      + "<div><div class='uf-sigla'>"
+      + (e.uf === "ZZ" ? "EXT" : esc(e.uf)) + "</div>"
+      + "<div class='uf-reg'>"
+      + (e.uf === "ZZ" ? "exterior" : esc(e.regiao)) + "</div></div>"
+      + "<div>"
+      // Sem urna contada, a barra fica apagada: o número ali é estimativa
+      // a partir do padrão da região, e não pode ter a mesma aparência de
+      // um estado que já contou voto.
+      +   "<div class='uf-disputa" + (temDado ? "" : " sem-dado") + "'>"
+      +     "<i style='width:" + pl.toFixed(1) + "%;background:var(--pl)'></i>"
+      +     "<i style='width:" + (100 - pl).toFixed(1) + "%;background:var(--pt)'></i>"
+      +   "</div>"
+      +   "<div class='uf-apur'><i style='width:"
+      +     Math.min(e.pctApurado, 100).toFixed(1) + "%'></i></div>"
+      +   "<div class='uf-meta'><span>" + n1(e.pctApurado) + "% apurado</span>"
+      +     "<span>" + (temDado ? "urna " + n1(e.obsPl) + "%" : "sem urna contada")
+      +     "</span></div>"
+      + "</div>"
+      + "<div class='uf-proj' style='color:" + (temDado ? cor : "var(--fraco)")
+      +   "'>" + n1(e.projPl) + "%</div>"
+      + "</div>";
   }).join("");
 
   if (!historico.length || r.pctApurado > historico[historico.length - 1].pct + 0.05) {
@@ -1033,11 +1277,21 @@ async function calcularAcerto() {
       const liderava = l.vantagem >= 0 ? curtoPL : curtoPT;
       const acertouLider = l.vantagem >= 0;
       const cor = acertouLider ? "var(--ok)" : "var(--alerta)";
-      return "<tr><td class='uf'>" + esc(l.nome) + "</td>"
+      // A barra mostra o tamanho do erro de uma vez: quem acertou o líder
+      // fica à direita do zero, quem errou fica à esquerda.
+      const larg = Math.min(Math.abs(l.erro) / 8, 1) * 50;
+      const lado = acertouLider
+        ? "left:50%;width:" + larg.toFixed(1) + "%"
+        : "right:50%;width:" + larg.toFixed(1) + "%";
+      return "<tr><td class='uf'>" + esc(l.nome)
+        + "<span class='reg'>dava " + liderava + "</span></td>"
         + "<td>" + (p ? n2(p.validosPl) + "% " + curtoPL : "—") + "</td>"
-        + "<td><span style='color:" + cor + "'>"
-        + (l.erro >= 0 ? "+" : "−") + n2(Math.abs(l.erro)) + " pp</span>"
-        + "<span class='reg'>dava " + liderava + "</span></td></tr>";
+        + "<td style='width:44%'>"
+        + "<div class='erro-barra'><span style='" + lado
+        + ";background:" + cor + "'></span></div>"
+        + "<div class='erro-num' style='color:" + cor + "'>"
+        + (l.erro >= 0 ? "+" : "−") + n2(Math.abs(l.erro)) + " pp</div>"
+        + "</td></tr>";
     }).join("");
   } catch {
     $("acertoVazio").textContent = "Não consegui calcular o erro do 1º turno.";
@@ -1050,7 +1304,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=7819e7bb91").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=9cf5c3768d").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
