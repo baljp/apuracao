@@ -702,6 +702,18 @@ function preverConclusao(r) {
  */
 let geoMapa = null;
 
+/* Cor do estado no mapa: o lado define o matiz, a distância até os 50%
+ * define o quanto ele é escuro. Um estado decidido fica forte, um
+ * dividido fica claro — e isso é independente de quanto já apurou. */
+function corMapa(pctPl) {
+  const pl = pctPl > 50;
+  const margem = Math.min(Math.abs(pctPl - 50) / 20, 1);
+  const claro = pl ? [0xC4, 0xDA, 0xF0] : [0xF4, 0xCD, 0xC9];
+  const forte = pl ? [0x1F, 0x5F, 0xA8] : [0xB8, 0x2E, 0x24];
+  const c = claro.map((v, i) => Math.round(v + (forte[i] - v) * margem));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
 async function desenhaMapa(r) {
   if (!r.estados || !r.estados.length) return;
   if (geoMapa === null) {
@@ -721,39 +733,51 @@ async function desenhaMapa(r) {
     const apu = e ? Math.max(0, Math.min(e.pctApurado, 100)) : 0;
     if (apu < 1) semDado++;
 
-    let fill = "var(--linha)", opac = 1;
-    if (e && apu >= 1) {
-      fill = e.projPl > 50 ? "var(--pl)" : "var(--pt)";
-      // A distância até os 50% também pesa: um estado dividido fica mais
-      // claro que um decidido, mesmo com a mesma apuração.
-      const margem = Math.min(Math.abs(e.projPl - 50) / 12, 1);
-      opac = 0.30 + 0.55 * margem * (0.45 + 0.55 * (apu / 100));
-    } else if (e) {
-      fill = e.projPl > 50 ? "var(--pl)" : "var(--pt)";
-      opac = 0.13;
-    }
-
+    // Sem urna contada: cinza e contorno tracejado. Antes esses estados
+    // apareciam numa cor fraca, e ficavam iguais a um estado totalmente
+    // apurado mas disputado — duas coisas completamente diferentes com a
+    // mesma aparência.
     const titulo = e
       ? `${uf} · ${n1(apu)}% apurado · projeção ${n1(e.projPl)}% para `
         + `${nomes.pl.split(" ")[0]}`
       : uf;
-    formas += `<path d="${d}" fill="${fill}" fill-opacity="${opac.toFixed(2)}"`
-      + ` stroke="var(--fundo)" stroke-width="2.5" stroke-linejoin="round"`
-      + ` vector-effect="non-scaling-stroke"><title>${esc(titulo)}</title></path>`;
+
+    if (!e || apu < 1) {
+      formas += `<path d="${d}" fill="var(--linha)" stroke="var(--fraco)"`
+        + ` stroke-width="2" stroke-dasharray="7 5" stroke-linejoin="round"`
+        + ` opacity="0.75" vector-effect="non-scaling-stroke">`
+        + `<title>${esc(uf)} — sem urna contada</title></path>`;
+    } else {
+      // A cor diz quem lidera e por quanto; a opacidade diz só o quanto já
+      // apurou. Uma informação por canal.
+      const op = 0.45 + 0.55 * (apu / 100);
+      formas += `<path d="${d}" fill="${corMapa(e.projPl)}"`
+        + ` fill-opacity="${op.toFixed(2)}" stroke="var(--fundo)"`
+        + ` stroke-width="2.5" stroke-linejoin="round"`
+        + ` vector-effect="non-scaling-stroke"><title>${esc(titulo)}</title></path>`;
+    }
 
     const pos = geoMapa.rotulos[uf];
     if (pos && e) {
       const pequeno = ["DF", "SE", "AL", "RJ", "ES", "PB", "RN", "PE"].includes(uf);
       const fs = pequeno ? 20 : 26;
-      textos += `<text x="${pos[0]}" y="${pos[1] - (pequeno ? 1 : 4)}"`
-        + ` text-anchor="middle" font-size="${fs}" font-weight="700"`
-        + ` fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="3"`
-        + ` paint-order="stroke" pointer-events="none">${esc(uf)}</text>`;
-      if (!pequeno && apu >= 1) {
-        textos += `<text x="${pos[0]}" y="${pos[1] + 20}" text-anchor="middle"`
-          + ` font-size="21" font-weight="600" fill="#fff"`
-          + ` stroke="rgba(0,0,0,.35)" stroke-width="3" paint-order="stroke"`
-          + ` pointer-events="none">${n1(e.projPl)}%</text>`;
+      // Sombra leve por baixo, não contorno grosso: o contorno engrossa
+      // tanto a letra que ela perde a cor de dentro e parece cinza.
+      const letra = (x, y, txt, tam, peso) =>
+        `<text x="${x + 1.2}" y="${y + 1.2}" text-anchor="middle"`
+        + ` font-size="${tam}" font-weight="${peso}" fill="rgba(0,0,0,.33)"`
+        + ` pointer-events="none">${txt}</text>`
+        + `<text x="${x}" y="${y}" text-anchor="middle" font-size="${tam}"`
+        + ` font-weight="${peso}" fill="#fff" pointer-events="none">${txt}</text>`;
+      if (apu < 1) {
+        textos += `<text x="${pos[0]}" y="${pos[1]}" text-anchor="middle"`
+          + ` font-size="${fs}" font-weight="700" fill="var(--fraco)"`
+          + ` pointer-events="none">${esc(uf)}</text>`;
+      } else {
+        textos += letra(pos[0], pos[1] - 4, esc(uf), fs, 700);
+        if (!pequeno) {
+          textos += letra(pos[0], pos[1] + 21, n1(e.projPl) + "%", 22, 600);
+        }
       }
     }
   }
@@ -764,9 +788,9 @@ async function desenhaMapa(r) {
     "Cor: quem lidera na <strong>projeção</strong> de cada estado — "
     + '<span style="color:var(--pl)">' + esc(nomes.pl.split(" ")[0]) + "</span> ou "
     + '<span style="color:var(--pt)">' + esc(nomes.pt.split(" ")[0]) + "</span>. "
-    + "Mais forte a cor, mais decidido e mais apurado o estado; estados "
-    + "pálidos ainda têm pouca ou nenhuma urna contada, e a projeção neles vem "
-    + "do padrão da região."
+    + "Quanto mais escura a cor, maior a vantagem; quanto mais sólida, mais "
+    + "apurado. Estados <strong>hachurados em cinza</strong> ainda não tiveram "
+    + "urna contada."
     + (semDado ? " <strong>" + semDado + " sem apuração.</strong>" : "")
     + ' <span style="opacity:.75">Contornos: malha territorial do IBGE.</span>';
 }
@@ -1026,7 +1050,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=1179349dd6").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=7819e7bb91").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
