@@ -42,7 +42,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta property="og:title" content="Projeção da apuração — Presidente 2026">
-<meta property="og:description" content="Com 5% apurado, o percentual bruto erra por 9 pontos. Este modelo erra por 0,2. Dados oficiais do TSE, ao vivo.">
+<meta property="og:description" content="No começo da apuração o número engana, porque nem todo lugar termina de contar na mesma hora. Projeção a partir dos dados oficiais do TSE.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <style>
@@ -1091,6 +1091,13 @@ function num(txt) {
     : parseFloat(s);
 }
 
+/* "19:32:07" -> segundos desde a meia-noite. */
+function _segundos(hhmmss) {
+  const m = String(hhmmss).match(/(\d{1,2}):(\d{2}):(\d{2})/);
+  if (!m) return 0;
+  return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+}
+
 async function buscar(url) {
   // "no-cache" e não "no-store": os dois vão SEMPRE perguntar ao servidor, e
   // nenhum dos dois serve número velho. A diferença é o que acontece quando
@@ -1135,7 +1142,17 @@ async function lerResultados(eleicao) {
     brancos: 0, nulos: 0, abstencao: 0, comparecimento: 0,
     eleitorado: 0, secoes: 0, secoesApuradas: 0, validos: 0,
   };
-  let horaTSE = "";
+  // Os 54 arquivos não são lidos no mesmo instante, e o TSE não publica todos
+  // os estados ao mesmo tempo: o conjunto é um mosaico de momentos.
+  //
+  // Mostrar o carimbo MAIS RECENTE seria otimista — anunciaria como "dados de
+  // 19h32" um conjunto em que algum estado ainda está em 19h28. O dado só é
+  // tão novo quanto o mais ANTIGO dos arquivos, então é esse que vai para a
+  // tela, e a dispersão entre o mais velho e o mais novo é devolvida para a
+  // página poder avisar quando for grande.
+  // (Apontado por uma auditoria externa do código.)
+  let horaMaisNova = "";
+  let horaMaisVelha = "";
 
   await emLotes(UFS, async (uf) => {
     try {
@@ -1180,13 +1197,21 @@ async function lerResultados(eleicao) {
       totais.secoesApuradas += num(s.st);
       // Horário em que o TSE gerou o arquivo — mais fiel que a hora local
       // de quem está olhando.
-      if (doc.ht && doc.ht > horaTSE) horaTSE = doc.ht;
+      if (doc.ht) {
+        if (!horaMaisNova || doc.ht > horaMaisNova) horaMaisNova = doc.ht;
+        if (!horaMaisVelha || doc.ht < horaMaisVelha) horaMaisVelha = doc.ht;
+      }
     } catch (err) {
       falhas.push(uf);
     }
   });
 
-  return { observado, nomes, falhas, totais, horaTSE };
+  // Segundos entre o arquivo mais velho e o mais novo do conjunto.
+  const dispersao = (horaMaisVelha && horaMaisNova)
+    ? Math.max(0, _segundos(horaMaisNova) - _segundos(horaMaisVelha)) : 0;
+
+  return { observado, nomes, falhas, totais,
+           horaTSE: horaMaisVelha || horaMaisNova, dispersao };
 }
 
 async function lerAndamento(eleicao) {
@@ -1219,6 +1244,7 @@ async function lerTudo(eleicao) {
     nomes: res.nomes,
     totais: res.totais,
     horaTSE: res.horaTSE,
+    dispersao: res.dispersao,
     falhas: [...new Set([...res.falhas, ...and.falhas])],
   };
 }
@@ -1420,15 +1446,15 @@ async function tick() {
   // Fora da janela da apuração, nem toca no TSE.
   if (TURNO === tse.ELEICAO_2T && Date.now() < ABERTURA) return tickEspera();
   try {
-    const { observado, fracoes, nomes: nms, falhas, totais, horaTSE } =
-      await tse.lerTudo(TURNO);
+    const { observado, fracoes, nomes: nms, falhas, totais, horaTSE,
+            dispersao } = await tse.lerTudo(TURNO);
     if (nms && nms.pl) {
       nomes = { pl: titulo(nms.pl), pt: titulo(nms.pt) };
       $("nomePL").textContent = nomes.pl;
       $("nomePT").textContent = nomes.pt;
     }
     const r = modelo.projetar(fracoes, observado, 240);
-    pinta(r, falhas, totais, horaTSE, observado);
+    pinta(r, falhas, totais, horaTSE, observado, dispersao);
     jaLeuTSE = true;
   } catch (e) {
     // Nos minutos entre a conexão e o primeiro boletim, o TSE ainda não
@@ -1457,7 +1483,7 @@ async function tick() {
 // conseguir ler é o estado normal do mundo, não um defeito.
 let jaLeuTSE = false;
 
-function pinta(r, falhas, totais, horaTSE, observado) {
+function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
   // A hora que o TSE carimbou no arquivo, não a hora do aparelho de quem
   // está olhando: é ela que diz de quando são os números.
   const hora = horaTSE || new Date().toLocaleTimeString("pt-BR");
@@ -1470,6 +1496,14 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   if (falhas && falhas.length) {
     st += ' · <span class="erro">' + falhas.length
         + " estado(s) sem resposta</span>";
+  }
+  // Os estados não são publicados no mesmo instante. A hora acima já é a do
+  // arquivo mais atrasado do conjunto, mas quando a diferença entre o mais
+  // velho e o mais novo passa de dois minutos vale dizer: parte do que está
+  // na tela é mais recente do que a hora mostrada.
+  if (dispersao > 120) {
+    st += ' · <span class="erro">estados defasados em até '
+        + Math.round(dispersao / 60) + " min entre si</span>";
   }
   $("status").innerHTML = st;
 

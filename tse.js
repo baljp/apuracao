@@ -36,6 +36,13 @@ function num(txt) {
     : parseFloat(s);
 }
 
+/* "19:32:07" -> segundos desde a meia-noite. */
+function _segundos(hhmmss) {
+  const m = String(hhmmss).match(/(\d{1,2}):(\d{2}):(\d{2})/);
+  if (!m) return 0;
+  return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+}
+
 async function buscar(url) {
   // "no-cache" e não "no-store": os dois vão SEMPRE perguntar ao servidor, e
   // nenhum dos dois serve número velho. A diferença é o que acontece quando
@@ -80,7 +87,17 @@ export async function lerResultados(eleicao) {
     brancos: 0, nulos: 0, abstencao: 0, comparecimento: 0,
     eleitorado: 0, secoes: 0, secoesApuradas: 0, validos: 0,
   };
-  let horaTSE = "";
+  // Os 54 arquivos não são lidos no mesmo instante, e o TSE não publica todos
+  // os estados ao mesmo tempo: o conjunto é um mosaico de momentos.
+  //
+  // Mostrar o carimbo MAIS RECENTE seria otimista — anunciaria como "dados de
+  // 19h32" um conjunto em que algum estado ainda está em 19h28. O dado só é
+  // tão novo quanto o mais ANTIGO dos arquivos, então é esse que vai para a
+  // tela, e a dispersão entre o mais velho e o mais novo é devolvida para a
+  // página poder avisar quando for grande.
+  // (Apontado por uma auditoria externa do código.)
+  let horaMaisNova = "";
+  let horaMaisVelha = "";
 
   await emLotes(UFS, async (uf) => {
     try {
@@ -125,13 +142,21 @@ export async function lerResultados(eleicao) {
       totais.secoesApuradas += num(s.st);
       // Horário em que o TSE gerou o arquivo — mais fiel que a hora local
       // de quem está olhando.
-      if (doc.ht && doc.ht > horaTSE) horaTSE = doc.ht;
+      if (doc.ht) {
+        if (!horaMaisNova || doc.ht > horaMaisNova) horaMaisNova = doc.ht;
+        if (!horaMaisVelha || doc.ht < horaMaisVelha) horaMaisVelha = doc.ht;
+      }
     } catch (err) {
       falhas.push(uf);
     }
   });
 
-  return { observado, nomes, falhas, totais, horaTSE };
+  // Segundos entre o arquivo mais velho e o mais novo do conjunto.
+  const dispersao = (horaMaisVelha && horaMaisNova)
+    ? Math.max(0, _segundos(horaMaisNova) - _segundos(horaMaisVelha)) : 0;
+
+  return { observado, nomes, falhas, totais,
+           horaTSE: horaMaisVelha || horaMaisNova, dispersao };
 }
 
 export async function lerAndamento(eleicao) {
@@ -164,6 +189,7 @@ export async function lerTudo(eleicao) {
     nomes: res.nomes,
     totais: res.totais,
     horaTSE: res.horaTSE,
+    dispersao: res.dispersao,
     falhas: [...new Set([...res.falhas, ...and.falhas])],
   };
 }

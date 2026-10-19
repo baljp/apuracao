@@ -45,7 +45,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta property="og:title" content="Projeção da apuração — Presidente 2026">
-<meta property="og:description" content="Com 5% apurado, o percentual bruto erra por 9 pontos. Este modelo erra por 0,2. Dados oficiais do TSE, ao vivo.">
+<meta property="og:description" content="No começo da apuração o número engana, porque nem todo lugar termina de contar na mesma hora. Projeção a partir dos dados oficiais do TSE.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <style>
@@ -706,7 +706,7 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 
 <script type="module">
 import { Modelo } from "./modelo.js?v=bad45c47ec";
-import * as tse from "./tse.js?v=bb091c76fd";
+import * as tse from "./tse.js?v=63d4fc33ef";
 import * as pq from "./pesquisas.js?v=de8b73e06e";
 
 /* Ritmo de atualização.
@@ -899,15 +899,15 @@ async function tick() {
   // Fora da janela da apuração, nem toca no TSE.
   if (TURNO === tse.ELEICAO_2T && Date.now() < ABERTURA) return tickEspera();
   try {
-    const { observado, fracoes, nomes: nms, falhas, totais, horaTSE } =
-      await tse.lerTudo(TURNO);
+    const { observado, fracoes, nomes: nms, falhas, totais, horaTSE,
+            dispersao } = await tse.lerTudo(TURNO);
     if (nms && nms.pl) {
       nomes = { pl: titulo(nms.pl), pt: titulo(nms.pt) };
       $("nomePL").textContent = nomes.pl;
       $("nomePT").textContent = nomes.pt;
     }
     const r = modelo.projetar(fracoes, observado, 240);
-    pinta(r, falhas, totais, horaTSE, observado);
+    pinta(r, falhas, totais, horaTSE, observado, dispersao);
     jaLeuTSE = true;
   } catch (e) {
     // Nos minutos entre a conexão e o primeiro boletim, o TSE ainda não
@@ -936,7 +936,7 @@ async function tick() {
 // conseguir ler é o estado normal do mundo, não um defeito.
 let jaLeuTSE = false;
 
-function pinta(r, falhas, totais, horaTSE, observado) {
+function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
   // A hora que o TSE carimbou no arquivo, não a hora do aparelho de quem
   // está olhando: é ela que diz de quando são os números.
   const hora = horaTSE || new Date().toLocaleTimeString("pt-BR");
@@ -949,6 +949,14 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   if (falhas && falhas.length) {
     st += ' · <span class="erro">' + falhas.length
         + " estado(s) sem resposta</span>";
+  }
+  // Os estados não são publicados no mesmo instante. A hora acima já é a do
+  // arquivo mais atrasado do conjunto, mas quando a diferença entre o mais
+  // velho e o mais novo passa de dois minutos vale dizer: parte do que está
+  // na tela é mais recente do que a hora mostrada.
+  if (dispersao > 120) {
+    st += ' · <span class="erro">estados defasados em até '
+        + Math.round(dispersao / 60) + " min entre si</span>";
   }
   $("status").innerHTML = st;
 
@@ -1732,7 +1740,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=cfdba07810").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=a91658c543").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

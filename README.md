@@ -3,7 +3,7 @@
 Projeta o resultado final da eleição presidencial enquanto a apuração acontece,
 a partir dos arquivos oficiais de divulgação do TSE.
 
-**Site ao vivo:** https://baljp.github.io/apuracao-2026/
+**Site ao vivo:** https://oxeeraassim.github.io/apuracao/
 
 No backtest contra o 2º turno de 2022, com **5% apurado** a projeção errou
 **0,24 ponto percentual**. O percentual bruto do TSE, no mesmo instante, estava
@@ -272,7 +272,7 @@ O erro médio da projeção nesses cenários apertados é de 0,41 pp, maior que 
 
 ## Três formas de usar
 
-**1. Site.** https://baljp.github.io/apuracao-2026/ — abre em qualquer
+**1. Site.** https://oxeeraassim.github.io/apuracao/ — abre em qualquer
 navegador, nada para instalar.
 
 **2. Como aplicativo no celular.** Abra o site e toque em **Instalar** (no
