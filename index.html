@@ -176,7 +176,8 @@
 
   <div id="painelApuracao">
   <div class="cartao" id="cartaoPlacar">
-    <div id="vazio" class="vazio">Aguardando o início da apuração.</div>
+    <div id="vazio" class="vazio"><div id="previaPesquisas">
+      Aguardando o início da apuração.</div></div>
     <div id="placar" style="display:none">
       <div class="placar">
         <div class="lado pl">
@@ -545,6 +546,7 @@ function pinta(r, falhas, totais, horaTSE, observado) {
   $("status").innerHTML = st;
 
   const comecou = r.pctApurado > 0.05;
+  atualizarFaixa(r, comecou);
   $("vazio").style.display = comecou ? "none" : "block";
   $("placar").style.display = comecou ? "block" : "none";
   $("apurado").textContent = n1(r.pctApurado) + "%";
@@ -738,6 +740,79 @@ function desenhaMapa(r) {
     + "Quanto mais forte a cor, mais apurado. Blocos pálidos ainda têm pouca "
     + "ou nenhuma urna contada, e a projeção neles vem do padrão da região."
     + (semDado ? " <strong>" + semDado + " estado(s) sem apuração.</strong>" : "");
+}
+
+/* A faixa de estado diz, em todo momento, DE ONDE vem o número que está na
+ * tela. São três fases bem diferentes, e confundi-las é o erro mais fácil de
+ * cometer numa noite de apuração:
+ *
+ *   antes    não existe voto contado; o que há são pesquisas, que são
+ *            intenção declarada e podem errar — erraram no 1º turno de 2026
+ *   durante  dados oficiais do TSE, com a projeção corrigindo o viés da
+ *            ordem de apuração
+ *   fim      apuração encerrada; vale o resultado do TSE, não a projeção
+ */
+function atualizarFaixa(r, comecou) {
+  const faixa = $("faixaStatus");
+  const encerrada = r.pctApurado >= 99.95;
+
+  if (!comecou) {
+    faixa.className = "status pesq";
+    $("statusTitulo").textContent = "A apuração ainda não começou";
+    $("statusTexto").innerHTML =
+      "O número abaixo é a <strong>média das pesquisas</strong> — intenção de "
+      + "voto declarada, não resultado. Quando as urnas começarem a ser "
+      + "totalizadas, esta faixa muda e o painel passa a usar os "
+      + "<strong>dados oficiais do TSE</strong>.";
+    mostrarPreviaPesquisas();
+    return;
+  }
+
+  if (encerrada) {
+    faixa.className = "status fim";
+    $("statusTitulo").textContent = "Apuração encerrada";
+    $("statusTexto").innerHTML =
+      "Com tudo apurado, vale o <strong>resultado oficial do TSE</strong> — "
+      + "a projeção já não serve para nada, e os dois números coincidem.";
+    return;
+  }
+
+  faixa.className = "status vivo";
+  $("statusTitulo").textContent = "Ao vivo · apuração oficial do TSE";
+  $("statusTexto").innerHTML =
+    "<strong>" + n1(r.pctApurado) + "% do eleitorado já totalizado.</strong> "
+    + "Os votos são oficiais, lidos direto do TSE. A projeção corrige o viés "
+    + "da ordem em que os estados apuram — as pesquisas não entram mais nesta "
+    + "conta.";
+}
+
+/* Antes da apuração, o painel principal mostra a média das pesquisas, para
+ * não ficar uma tela vazia. Vem com rótulo próprio, para ninguém confundir
+ * com apuração. */
+async function mostrarPreviaPesquisas() {
+  if (pesquisas === null) {
+    try { await carregarPesquisas(); } catch { return; }
+  }
+  if (!pesquisas || !pesquisas.length) return;
+  const ag = pq.agregar(pesquisas);
+  if (!ag) return;
+  const alvo = $("previaPesquisas");
+  if (!alvo) return;
+  alvo.innerHTML =
+    '<div class="faixa" style="margin-bottom:10px">MÉDIA DAS PESQUISAS '
+    + "· ainda não há votos apurados</div>"
+    + '<div class="placar"><div class="lado pl">'
+    + '<div class="nome">' + esc(nomes.pl) + "</div>"
+    + '<div class="pct">' + n2(ag.pl) + "%</div>"
+    + '<div class="faixa">entre ' + n2(ag.faixa[0]) + "% e "
+    + n2(ag.faixa[1]) + "%</div></div>"
+    + '<div class="lado pt dir"><div class="nome">' + esc(nomes.pt) + "</div>"
+    + '<div class="pct">' + n2(ag.pt) + "%</div>"
+    + '<div class="faixa">entre ' + n2(100 - ag.faixa[1]) + "% e "
+    + n2(100 - ag.faixa[0]) + "%</div></div></div>"
+    + '<div class="faixa" style="margin-top:12px;text-align:left">'
+    + ag.nUsadas + " pesquisas dos últimos 21 dias. No 1º turno de 2026 as "
+    + "pesquisas erraram o líder da eleição — veja a aba Pesquisas.</div>";
 }
 
 function desenha() {
@@ -939,7 +1014,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=791bd0251c").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=2265309aa3").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
