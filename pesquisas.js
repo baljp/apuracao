@@ -287,6 +287,12 @@ export async function cruzarComTSE(pesquisas) {
     "ESTATISTICA", "ESTATIST", "SERVICOS", "PROJETOS", "INTELIGENCIA",
     "MARKETING", "ANALISES", "SOCIAIS", "POLITICAS", "ECONOMICAS", "DE",
     "DA", "DO", "DOS", "DAS", "E", "EM",
+    // "DATA" entrou aqui depois de causar um erro real: "Real Time Big Data"
+    // casou com "DATA CAPITAL PESQUISAS E CONSULTORIA", que tinha campo no
+    // mesmo período e a mesma amostra — a coluna mostrou o protocolo de uma
+    // empresa pela pesquisa de outra. "DATA", "TIME" e "BIG" sozinhos não
+    // identificam ninguém; quem identifica naquele nome é "REAL".
+    "DATA", "TIME", "BIG",
   ]);
 
   // A Wikipédia junta dois nomes — "CNT/MDA", "Nexus/BTG" — e o TSE registra
@@ -299,12 +305,17 @@ export async function cruzarComTSE(pesquisas) {
     .split(/[^A-Z0-9]+/)
     .filter((t) => t.length >= 3 && !VAZIAS.has(t));
 
+  // Devolve a FORÇA do casamento, não um sim ou não: 2 quando um nome contém
+  // o outro inteiro, 1 quando só uma palavra coincide, 0 quando nada. A
+  // diferença decide empates — um nome inteiro batendo vale mais que uma
+  // palavra solta, e sem isso a palavra solta de um candidato qualquer pode
+  // ganhar do nome exato do instituto certo.
   const bateNome = (instituto, nomeTse) => {
     const a = normal(instituto), n = normal(nomeTse);
-    if (!a || !n) return false;
-    if (n.includes(a) || a.includes(n)) return true;
+    if (!a || !n) return 0;
+    if (n.includes(a) || a.includes(n)) return 2;
     const doTse = new Set(palavras(nomeTse));
-    return palavras(instituto).some((t) => doTse.has(t));
+    return palavras(instituto).some((t) => doTse.has(t)) ? 1 : 0;
   };
 
   // O nome que a imprensa usa nem sempre é o da empresa que registrou. A
@@ -316,7 +327,8 @@ export async function cruzarComTSE(pesquisas) {
   // Vale também para "CNT/MDA" e "BTG/Nexus", em que o primeiro nome é de
   // quem encomendou e o segundo de quem executou.
   const mesmoInstituto = (instituto, r) =>
-    bateNome(instituto, r.empresa) || bateNome(instituto, r.contratante);
+    Math.max(bateNome(instituto, r.empresa),
+             bateNome(instituto, r.contratante));
 
   // O instituto registra a amostra que PRETENDE ouvir e divulga a que
   // conseguiu; elas diferem por algumas entrevistas. A AtlasIntel registra
@@ -330,8 +342,11 @@ export async function cruzarComTSE(pesquisas) {
   const DIA = 86400000;
 
   for (const p of pesquisas) {
-    const candidatos = registro.pesquisas.filter(
-      (r) => mesmoInstituto(p.instituto, r));
+    const candidatos = [];
+    for (const r of registro.pesquisas) {
+      const forca = mesmoInstituto(p.instituto, r);
+      if (forca) candidatos.push({ r, forca });
+    }
     if (!candidatos.length) continue;
 
     // Um instituto registra várias pesquisas no mesmo período, então nome e
@@ -339,14 +354,19 @@ export async function cruzarComTSE(pesquisas) {
     // mostrar o protocolo errado seria pior do que não mostrar nenhum. A data
     // de fim de campo é o que desempata: ela vem do registro e da tabela.
     let melhor = null, melhorNota = -1;
-    for (const r of candidatos) {
+    for (const { r, forca } of candidatos) {
       const fimR = r.fim ? Date.parse(r.fim + "T00:00:00Z") : NaN;
       const dias = (isFinite(fimR) && p.fim)
         ? Math.abs(fimR - (+p.fim)) / DIA : null;
       const amostraBate = mesmaAmostra(p.amostra, r.amostra);
       // Sem data nem amostra conferindo, não é confirmação de nada.
       if (!(dias !== null && dias <= 1) && !amostraBate) continue;
-      const nota = (dias !== null ? Math.max(0, 3 - dias) : 0)
+      // A força do nome pesa mais que data e amostra somadas, porque duas
+      // empresas diferentes podem ouvir 2.000 pessoas no mesmo período — e
+      // foi exatamente isso que aconteceu entre "Real Time Big Data" e
+      // "Data Capital". O nome é o que distingue; o resto confirma.
+      const nota = forca * 10
+                 + (dias !== null ? Math.max(0, 3 - dias) : 0)
                  + (amostraBate ? 2 : 0);
       if (nota > melhorNota) { melhorNota = nota; melhor = r; }
     }
