@@ -299,13 +299,24 @@ export async function cruzarComTSE(pesquisas) {
     .split(/[^A-Z0-9]+/)
     .filter((t) => t.length >= 3 && !VAZIAS.has(t));
 
-  const mesmaEmpresa = (instituto, empresa) => {
-    const a = normal(instituto), n = normal(empresa);
+  const bateNome = (instituto, nomeTse) => {
+    const a = normal(instituto), n = normal(nomeTse);
     if (!a || !n) return false;
     if (n.includes(a) || a.includes(n)) return true;
-    const doTse = new Set(palavras(empresa));
+    const doTse = new Set(palavras(nomeTse));
     return palavras(instituto).some((t) => doTse.has(t));
   };
+
+  // O nome que a imprensa usa nem sempre é o da empresa que registrou. A
+  // Futura aparece no TSE como "100% CIDADES PARTICIPACOES LTDA" — nenhum
+  // algoritmo ligaria isso a "Futura" pelo nome. Mas o contratante daquele
+  // mesmo registro é "FUTURA CONSULTORIA E ASSESSORIA LTDA / FUTURA": o elo
+  // estava no dado o tempo todo, num campo que não era consultado.
+  //
+  // Vale também para "CNT/MDA" e "BTG/Nexus", em que o primeiro nome é de
+  // quem encomendou e o segundo de quem executou.
+  const mesmoInstituto = (instituto, r) =>
+    bateNome(instituto, r.empresa) || bateNome(instituto, r.contratante);
 
   // O instituto registra a amostra que PRETENDE ouvir e divulga a que
   // conseguiu; elas diferem por algumas entrevistas. A AtlasIntel registra
@@ -320,7 +331,7 @@ export async function cruzarComTSE(pesquisas) {
 
   for (const p of pesquisas) {
     const candidatos = registro.pesquisas.filter(
-      (r) => mesmaEmpresa(p.instituto, r.empresa));
+      (r) => mesmoInstituto(p.instituto, r));
     if (!candidatos.length) continue;
 
     // Um instituto registra várias pesquisas no mesmo período, então nome e
