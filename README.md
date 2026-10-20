@@ -57,9 +57,12 @@ perturba o swing, com a escala encolhendo conforme menos resta apurar.
 A base é o **1º turno de 2026** — mesmos eleitores, mesmas seções, três semanas
 antes. É uma referência bem melhor do que usar 2022.
 
-O método é uma reconstrução independente da abordagem publicada por
-[Rodrigo Mahlmeister](https://github.com/rodrigomahlmeister/apuracao-2026),
-cujo modelo acertou o 1º turno de 2026.
+O método é uma reconstrução independente da abordagem do pesquisador Rodrigo
+Mahlmeister, cujo modelo acertou o 1º turno de 2026 — com 2,2% das urnas
+apuradas projetou Flávio 47,01% e Lula 45,50%; o resultado foi 47,03% e 45,16%
+([NeoFeed, 10/10/2026](https://neofeed.com.br/finde/como-um-pesquisador-brasileiro-criou-um-algoritmo-que-simulou-e-acertou-o-resultado-do-1o-turno/)).
+O código dele, que estava em `github.com/rodrigomahlmeister/apuracao-2026`,
+não está mais público.
 
 ---
 
