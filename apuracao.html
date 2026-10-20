@@ -1567,7 +1567,11 @@ function agregar(pesquisas, { meiaVidaDias = 4, agora = new Date() } = {}) {
 async function cruzarComTSE(pesquisas) {
   let registro = null;
   try {
-    const r = await fetch("./registro-tse.json", { cache: "force-cache" });
+    // "default", e não "force-cache": este arquivo é regerado todo dia, com
+    // as pesquisas registradas na véspera. Com "force-cache" o navegador
+    // guardaria a primeira cópia e nunca mais perguntaria — quem visitasse
+    // hoje veria a coluna TSE congelada no estado de hoje até domingo.
+    const r = await fetch("./registro-tse.json", { cache: "default" });
     if (r.ok) registro = await r.json();
   } catch { /* o site funciona sem isso */ }
   if (!registro || !registro.pesquisas) return pesquisas;
@@ -1576,19 +1580,70 @@ async function cruzarComTSE(pesquisas) {
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/[^A-Z0-9]/g, "");
 
+  // Palavras que aparecem em quase toda razão social e não identificam
+  // ninguém. Sem esta lista, "INSTITUTO" casaria metade do registro.
+  const VAZIAS = new Set([
+    "INSTITUTO", "INST", "PESQUISA", "PESQUISAS", "CONSULTORIA", "CONSULT",
+    "LTDA", "EPP", "ME", "SA", "EIRELI", "OPINIAO", "PUBLICA", "BRASIL",
+    "DADOS", "TECNOLOGIA", "COMUNICACAO", "MERCADO", "MERCADOLOGIA",
+    "ESTATISTICA", "ESTATIST", "SERVICOS", "PROJETOS", "INTELIGENCIA",
+    "MARKETING", "ANALISES", "SOCIAIS", "POLITICAS", "ECONOMICAS", "DE",
+    "DA", "DO", "DOS", "DAS", "E", "EM",
+  ]);
+
+  // A Wikipédia junta dois nomes — "CNT/MDA", "Nexus/BTG" — e o TSE registra
+  // só um deles, dentro da razão social: "MDA-PESQUISA DE OPINIAO PUBLICA".
+  // Nenhum dos dois textos contém o outro inteiro, então a comparação é
+  // palavra a palavra. Palavra inteira, e não pedaço solto: "CNT" dentro de
+  // outra palavra qualquer não quer dizer nada.
+  const palavras = (s) => (s || "").toUpperCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .split(/[^A-Z0-9]+/)
+    .filter((t) => t.length >= 3 && !VAZIAS.has(t));
+
+  const mesmaEmpresa = (instituto, empresa) => {
+    const a = normal(instituto), n = normal(empresa);
+    if (!a || !n) return false;
+    if (n.includes(a) || a.includes(n)) return true;
+    const doTse = new Set(palavras(empresa));
+    return palavras(instituto).some((t) => doTse.has(t));
+  };
+
+  // O instituto registra a amostra que PRETENDE ouvir e divulga a que
+  // conseguiu; elas diferem por algumas entrevistas. A AtlasIntel registra
+  // 5.000 e publica 4.998 numa rodada, 5.026 na outra — é a mesma pesquisa.
+  // A exigência anterior de bater em menos de 2 entrevistas derrubava esses
+  // casos, e a coluna marcava como "sem registro" institutos perfeitamente
+  // registrados, que é o pior erro possível aqui.
+  const mesmaAmostra = (a, b) =>
+    !a || !b || Math.abs(a - b) <= Math.max(60, b * 0.02);
+
+  const DIA = 86400000;
+
   for (const p of pesquisas) {
-    const alvo = normal(p.instituto);
-    const achado = registro.pesquisas.find((r) => {
-      const nome = normal(r.empresa);
-      if (!nome || !alvo) return false;
-      const bate = nome.includes(alvo) || alvo.includes(nome);
-      if (!bate) return false;
-      // Mesma amostra é uma confirmação forte.
-      return !p.amostra || !r.amostra || Math.abs(p.amostra - r.amostra) < 2;
-    });
-    if (achado) {
-      p.tse = { protocolo: achado.protocolo, contratante: achado.contratante,
-                amostra: achado.amostra };
+    const candidatos = registro.pesquisas.filter(
+      (r) => mesmaEmpresa(p.instituto, r.empresa));
+    if (!candidatos.length) continue;
+
+    // Um instituto registra várias pesquisas no mesmo período, então nome e
+    // amostra parecidos não bastam para dizer QUAL registro é este — e
+    // mostrar o protocolo errado seria pior do que não mostrar nenhum. A data
+    // de fim de campo é o que desempata: ela vem do registro e da tabela.
+    let melhor = null, melhorNota = -1;
+    for (const r of candidatos) {
+      const fimR = r.fim ? Date.parse(r.fim + "T00:00:00Z") : NaN;
+      const dias = (isFinite(fimR) && p.fim)
+        ? Math.abs(fimR - (+p.fim)) / DIA : null;
+      const amostraBate = mesmaAmostra(p.amostra, r.amostra);
+      // Sem data nem amostra conferindo, não é confirmação de nada.
+      if (!(dias !== null && dias <= 1) && !amostraBate) continue;
+      const nota = (dias !== null ? Math.max(0, 3 - dias) : 0)
+                 + (amostraBate ? 2 : 0);
+      if (nota > melhorNota) { melhorNota = nota; melhor = r; }
+    }
+    if (melhor) {
+      p.tse = { protocolo: melhor.protocolo, contratante: melhor.contratante,
+                amostra: melhor.amostra };
     }
   }
   return pesquisas;
