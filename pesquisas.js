@@ -275,7 +275,7 @@ export async function cruzarComTSE(pesquisas) {
   if (!registro || !registro.pesquisas) return pesquisas;
 
   const normal = (s) => (s || "").toUpperCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^A-Z0-9]/g, "");
 
   // Palavras que aparecem em quase toda razão social e não identificam
@@ -295,7 +295,7 @@ export async function cruzarComTSE(pesquisas) {
   // palavra a palavra. Palavra inteira, e não pedaço solto: "CNT" dentro de
   // outra palavra qualquer não quer dizer nada.
   const palavras = (s) => (s || "").toUpperCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .split(/[^A-Z0-9]+/)
     .filter((t) => t.length >= 3 && !VAZIAS.has(t));
 
