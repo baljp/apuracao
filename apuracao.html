@@ -1612,7 +1612,13 @@ async function cruzarComTSE(pesquisas) {
   // diferença decide empates — um nome inteiro batendo vale mais que uma
   // palavra solta, e sem isso a palavra solta de um candidato qualquer pode
   // ganhar do nome exato do instituto certo.
+  // Siglas que a imprensa usa e o TSE nunca escreve: nenhum algoritmo liga
+  // "IFP" a "INSTITUTO FRANCA DE PESQUISAS". Conferido à mão contra o registro
+  // (BR-07896/2026: mesma amostra, 3.000, e mesmo campo, 16 a 20/10).
+  const SIGLAS = { IFP: "INSTITUTO FRANCA DE PESQUISAS" };
+
   const bateNome = (instituto, nomeTse) => {
+    instituto = SIGLAS[normal(instituto)] || instituto;
     const a = normal(instituto), n = normal(nomeTse);
     if (!a || !n) return 0;
     if (n.includes(a) || a.includes(n)) return 2;
