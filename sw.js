@@ -12,7 +12,7 @@
  *   não existir.
  */
 
-const VERSAO = "apuracao-c2a5d7322d";
+const VERSAO = "apuracao-5283e050f0";
 
 // Só estes dois destinos externos são buscados pela página. Qualquer outro é
 // recusado aqui, de modo que nem um script injetado conseguiria usar o
@@ -40,7 +40,9 @@ const CASCO = [
 self.addEventListener("install", (evento) => {
   evento.waitUntil(
     caches.open(VERSAO)
-      .then((cache) => cache.addAll(CASCO))
+      // cache: "reload" pula o cache HTTP do navegador (10 min no GitHub
+      // Pages): a versão nova guarda os arquivos novos, não os de antes.
+      .then((cache) => cache.addAll(CASCO.map((u) => new Request(u, { cache: "reload" }))))
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())  // falta de um arquivo não trava a instalação
   );

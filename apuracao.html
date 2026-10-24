@@ -692,11 +692,17 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 #palpite{width:100%;accent-color:var(--texto);margin-top:6px}
 .sel{flex:1;font:inherit;font-size:15px;font-weight:750;color:var(--texto);background:var(--superficie-2);
   border:1px solid var(--linha-forte);border-radius:12px;padding:10px 12px}
-.cardModal{position:fixed;inset:0;z-index:120;background:rgba(3,6,12,.88);display:flex;
-  align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(6px)}
-.cm-caixa{display:flex;gap:16px;align-items:center;max-height:100%;flex-wrap:wrap;justify-content:center}
-.cm-caixa img{height:min(68vh,calc((100vw - 28px) * 16 / 9));aspect-ratio:9/16;border-radius:16px;
-  box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+.cardModal{position:fixed;inset:0;z-index:120;background:rgba(3,6,12,.9);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 28px;backdrop-filter:blur(6px)}
+.cm-caixa{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;
+  min-height:100%;margin:0 auto}
+/* A imagem nunca empurra os botões para fora da tela: no celular ela ocupa
+ * no máximo metade da altura, e o modal rola se precisar. */
+.cm-caixa img{height:min(52vh,calc((100vw - 28px) * 16 / 9));aspect-ratio:9/16;border-radius:16px;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.8);-webkit-touch-callout:default;user-select:auto}
+@media (min-width:900px){ .cm-caixa img{height:min(80vh,820px)} }
+.cm-dica{color:rgba(255,255,255,.8);font-size:13px;font-weight:700;line-height:1.45;text-align:center}
+.cm-dica b{color:#FFC94D}
 .cm-acoes{display:flex;flex-direction:column;gap:8px;width:min(340px,100%)}
 .cm-acoes .bt-sec{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
 
@@ -742,6 +748,21 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 @keyframes sobe{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
 #previaPesquisas .pct,#mediaCorpo .pct{font-size:clamp(26px,9vw,62px)}
+.topo{position:relative}
+.btInstalarTopo{
+  position:absolute;right:2px;top:20px;display:inline-flex;align-items:center;gap:6px;
+  font:inherit;font-size:12.5px;font-weight:850;cursor:pointer;color:var(--texto);
+  background:var(--superficie);border:1px solid var(--linha-forte);border-radius:999px;
+  padding:6px 11px;box-shadow:0 1px 3px rgba(14,23,48,.08);
+}
+.btInstalarTopo:hover{border-color:var(--texto)}
+@media (max-width:420px){ .marcaOxe small{display:none} .btInstalarTopo{top:22px;padding:6px 10px} }
+.instalarCaixa{background:var(--superficie);color:var(--texto);border-radius:20px;padding:20px;
+  width:min(380px,100%);box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+.instalarCaixa h3{margin:0 0 12px;font-size:19px;font-weight:900}
+.instalarCaixa ol{margin:0;padding-left:20px;font-size:14.5px;font-weight:650;line-height:1.55}
+.instalarCaixa li{margin-bottom:6px}
+.instalarCaixa .bt-sec{background:var(--superficie-2);color:var(--texto)}
 </style>
 </head>
 <body>
@@ -761,6 +782,9 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
   </div>
 
   <header class="topo">
+    <button class="btInstalarTopo" id="btInstalarTopo" hidden aria-label="Instalar o app no celular">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Instalar app</span></button>
     <div class="marca">
       <span class="marcaOxe">Oxe, era <b>assim?</b> <small>apresenta</small></span>
       <h1>Apuração <span class="pl">ao</span> <span class="pt">vivo</span></h1>
@@ -1131,16 +1155,29 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
     </div>
   </div>
 
+  <div class="cardModal" id="instalarModal" hidden>
+    <div class="cm-caixa" style="flex-direction:column;justify-content:center">
+      <div class="instalarCaixa">
+        <h3>Instale a apuração no celular</h3>
+        <div id="instalarPassos"></div>
+        <button class="bt-sec" id="instalarFechar" style="width:100%;margin-top:14px">Entendi</button>
+      </div>
+    </div>
+  </div>
+
   <div class="cardModal" id="cardModal" hidden>
     <div class="cm-caixa">
       <img id="cardImg" alt="Card para stories">
       <div class="cm-acoes">
-        <button class="bt-ouro" id="cardCompartilhar">Compartilhar (stories, WhatsApp…)</button>
+        <button class="bt-ouro" id="cardCompartilhar">Compartilhar no Instagram / WhatsApp</button>
         <div style="display:flex;gap:8px">
           <button class="bt-sec" id="cardBaixar" style="flex:1">Baixar imagem</button>
           <button class="bt-sec" id="cardWhats" style="flex:1">Link no WhatsApp</button>
         </div>
         <button class="bt-sec" id="cardFechar">Fechar</button>
+        <div class="cm-dica" id="cardDica">No compartilhar, escolha <b>Instagram → Stories</b>
+          ou <b>WhatsApp → Meu status</b>. Se não abrir, toque e segure a imagem
+          para salvar e poste da galeria.</div>
       </div>
     </div>
   </div>
@@ -3207,7 +3244,7 @@ function marca(ctx, sobre) {
 }
 
 function rodape(ctx, chamada, nota) {
-  const y = CH - 236;
+  const y = CH - 262;
   // ficha marfim com régua vermelha: a cara do portal do Oxe
   rr(ctx, 60, y, CW - 120, 168, 30);
   ctx.fillStyle = MARFIM; ctx.fill();
@@ -3220,8 +3257,16 @@ function rodape(ctx, chamada, nota) {
   ctx.beginPath(); ctx.arc(CW - 130, y + 84, 44, 0, 7);
   ctx.fillStyle = TINTA; ctx.fill();
   tx(ctx, "→", CW - 130, y + 102, 52, 900, OURO, "center");
-  tx(ctx, nota || "Resultado oficial: TSE · esta é uma projeção estatística", CW / 2, CH - 44, 24, 750,
-    "rgba(251,248,241,.5)", "center");
+  // Selo de origem: deixa claro de onde o card saiu, mesmo quando circula
+  // sem legenda. Discreto, em versalete dourado, com o endereço do projeto.
+  const selo = "CARD GERADO NO PROJETO APURAÇÃO 2026 · OXE, ERA ASSIM?";
+  const ws = largura(ctx, selo, 21, 900) + selo.length * 2.2;
+  ctx.fillStyle = "rgba(242,181,68,.55)";
+  ctx.fillRect(CW / 2 - ws / 2 - 46, CH - 77, 30, 2);
+  ctx.fillRect(CW / 2 + ws / 2 + 16, CH - 77, 30, 2);
+  tx(ctx, selo, CW / 2, CH - 70, 21, 900, "rgba(242,181,68,.9)", "center", 2.2);
+  tx(ctx, (nota || "Resultado oficial: TSE · esta é uma projeção estatística")
+, CW / 2, CH - 40, 19, 750, "rgba(251,248,241,.5)", "center");
 }
 
 function blocoDuelo(ctx, y, h, titulo, pPl, destaque, rodapeTxt) {
@@ -3301,14 +3346,14 @@ function cardMarco(ctx, c) {
   blocoDuelo(ctx, 916, 370, "PROJEÇÃO DO RESULTADO FINAL", c.pr, true,
     c.lo != null ? `margem ${n1(c.lo)}–${n1(c.hi)}%${ch}` : "");
   // regiões
-  let y = 1346;
+  let y = 1332;
   tx(ctx, "POR REGIÃO", 100, y, 28, 900, OURO, "left", 5);
   tx(ctx, "apurado", 570, y, 24, 800, "rgba(251,248,241,.55)", "center", 2);
   tx(ctx, "projeção", CW - 100, y, 24, 800, "rgba(251,248,241,.55)", "right", 2);
   y += 8;
   for (const [nome, apu, p] of c.reg || []) {
-    y += 61;
-    tx(ctx, nome, 100, y, 36, 900, MARFIM);
+    y += 57;
+    tx(ctx, nome, 100, y, 34, 900, MARFIM);
     rr(ctx, 440, y - 22, 200, 14, 7); ctx.fillStyle = "rgba(251,248,241,.12)"; ctx.fill();
     rr(ctx, 440, y - 22, Math.max(14, 200 * Math.min(apu, 100) / 100), 14, 7);
     ctx.fillStyle = "#34D399"; ctx.fill();
@@ -3489,12 +3534,46 @@ $("cardsLista").addEventListener("click", (ev) => {
 });
 
 let cardAberto = null;
+/* Abrir o Instagram ou o WhatsApp pela janela de compartilhar do celular tem
+ * três exigências que derrubavam o botão antes:
+ *   1. a chamada precisa sair DIRETO do toque — qualquer espera antes dela
+ *      (gerar a imagem, copiar texto) faz o navegador recusar;
+ *   2. o Instagram e o status do WhatsApp só aparecem na lista quando vai
+ *      SÓ a imagem, sem texto junto;
+ *   3. a imagem precisa estar pronta antes do toque.
+ * Então a imagem é preparada quando o card abre, o botão só acende quando
+ * ela está pronta, e o toque chama navigator.share com o arquivo e nada mais.
+ * O texto com o link vai para a área de transferência depois. */
+const navInterno = /Instagram|FBAN|FBAV|FB_IAB|Line\/|MicroMessenger|TikTok|Snapchat/i
+  .test(navigator.userAgent);
+
 async function abrirCard(def) {
   cardAberto = def;
+  const bt = $("cardCompartilhar");
+  bt.disabled = true; bt.textContent = "Preparando a imagem…";
+  $("cardModal").hidden = false;
+  $("cardModal").scrollTop = 0;
   const cv = await desenharCard(def);
   $("cardImg").src = cv.toDataURL("image/png");
-  $("cardModal").hidden = false;
-  cardAberto.blob = await new Promise((res) => cv.toBlob(res, "image/png"));
+  // JPEG de alta qualidade: metade do tamanho do PNG, e o WhatsApp aceita
+  // melhor no status.
+  const blob = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.93));
+  if (cardAberto !== def) return;
+  def.blob = blob;
+  def.arquivo = new File([blob], "oxe-apuracao-" + (def.k != null ? def.k + "pct" : def.tipo) + ".jpg",
+    { type: "image/jpeg", lastModified: Date.now() });
+  const podeArquivo = !!(navigator.canShare && navigator.canShare({ files: [def.arquivo] }));
+  bt.disabled = false;
+  bt.textContent = podeArquivo ? "Compartilhar no Instagram / WhatsApp" : "Salvar imagem";
+  $("cardDica").innerHTML = navInterno
+    ? "Você abriu pelo navegador do Instagram, que não deixa compartilhar imagem. "
+      + "Toque em <b>⋯</b> e escolha <b>Abrir no navegador</b> — ou toque e segure "
+      + "a imagem para salvar e poste da galeria."
+    : podeArquivo
+      ? "No compartilhar, escolha <b>Instagram → Stories</b> ou <b>WhatsApp → Meu status</b>. "
+        + "O texto com o link fica copiado para você colar."
+      : "Este navegador não compartilha imagem direto: salve a imagem e poste "
+        + "da galeria. Toque e segure a imagem também funciona.";
 }
 
 function textoCard(def) {
@@ -3511,12 +3590,18 @@ function textoCard(def) {
   return `Apuração 2026 ao vivo, com projeção: https://${SITE}/ · ${PERFIL}`;
 }
 
-$("cardCompartilhar").addEventListener("click", async () => {
-  if (!cardAberto) return;
-  const blob = cardAberto.blob;
-  const arq = blob && new File([blob], "oxe-apuracao.png", { type: "image/png" });
-  if (arq && navigator.canShare && navigator.canShare({ files: [arq] })) {
-    try { await navigator.share({ files: [arq], text: textoCard(cardAberto) }); } catch {}
+$("cardCompartilhar").addEventListener("click", () => {
+  const def = cardAberto;
+  if (!def || !def.arquivo) return;
+  const dados = { files: [def.arquivo] };
+  if (navigator.canShare && navigator.canShare(dados)) {
+    // Nada de await antes desta linha.
+    navigator.share(dados).then(() => {
+      if (navigator.clipboard) navigator.clipboard.writeText(textoCard(def)).catch(() => {});
+    }).catch((e) => {
+      if (e && e.name === "AbortError") return;   // a pessoa fechou a janela
+      baixarCard();
+    });
     return;
   }
   baixarCard();
@@ -3524,16 +3609,19 @@ $("cardCompartilhar").addEventListener("click", async () => {
 
 function baixarCard() {
   if (!cardAberto || !cardAberto.blob) return;
+  const url = URL.createObjectURL(cardAberto.blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(cardAberto.blob);
-  a.download = "oxe-apuracao-" + (cardAberto.k != null ? cardAberto.k + "pct" : cardAberto.tipo) + ".png";
+  a.href = url;
+  a.download = cardAberto.arquivo ? cardAberto.arquivo.name : "oxe-apuracao.jpg";
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  $("cardDica").innerHTML = "Imagem salva. Agora é só postar da galeria no "
+    + "<b>stories</b> ou no <b>status</b>. Se não salvou, toque e segure a imagem.";
 }
 $("cardBaixar").addEventListener("click", baixarCard);
 $("cardWhats").addEventListener("click", () => {
   if (!cardAberto) return;
-  window.open("https://wa.me/?text=" + encodeURIComponent(textoCard(cardAberto)), "_blank", "noopener");
+  location.href = "https://wa.me/?text=" + encodeURIComponent(textoCard(cardAberto));
 });
 $("cardFechar").addEventListener("click", () => { $("cardModal").hidden = true; });
 $("cardModal").addEventListener("click", (ev) => {
@@ -4819,30 +4907,76 @@ const dispensado = (() => {
 const dispensar = () => {
   try { localStorage.setItem("instalar-dispensado", "1"); } catch {}
 };
+const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const ehAndroid = /android/i.test(navigator.userAgent);
 
-// Android e desktop: o navegador avisa quando a instalação é possível.
+// O botão discreto do topo fica sempre lá — só some quando o app já está
+// instalado e aberto como app.
+if (!jaInstalado) $("btInstalarTopo").hidden = false;
+
+// Android e computador: o navegador avisa quando a instalação é possível.
 let promptInstalar = null;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   promptInstalar = e;
   if (!jaInstalado && !dispensado) $("cartaoInstalar").style.display = "flex";
 });
-
-$("btInstalar").addEventListener("click", async () => {
-  if (!promptInstalar) return;
+window.addEventListener("appinstalled", () => {
   $("cartaoInstalar").style.display = "none";
-  promptInstalar.prompt();
-  await promptInstalar.userChoice;
+  $("btInstalarTopo").hidden = true;
   promptInstalar = null;
 });
 
+async function pedirInstalacao() {
+  if (promptInstalar) {
+    const p = promptInstalar;
+    promptInstalar = null;
+    $("cartaoInstalar").style.display = "none";
+    p.prompt();
+    try { await p.userChoice; } catch {}
+    return true;
+  }
+  return false;
+}
+
+/* Quando o navegador não oferece a instalação direta (iPhone, navegador do
+ * Instagram, Android sem o aviso), explica o caminho em três passos. */
+function mostrarComoInstalar() {
+  let passos;
+  if (navInterno) {
+    passos = ["Toque em <b>⋯</b> (canto da tela).",
+      "Escolha <b>Abrir no navegador</b> (Chrome ou Safari).",
+      "Lá, toque em <b>Instalar app</b> no alto da página."];
+  } else if (ehIOS) {
+    passos = ["Toque em <b>Compartilhar</b> (o quadrado com a seta, na barra do Safari).",
+      "Role e escolha <b>Adicionar à Tela de Início</b>.",
+      "Toque em <b>Adicionar</b>. O app aparece com o ícone da apuração."];
+  } else if (ehAndroid) {
+    passos = ["Toque no menu <b>⋮</b> do Chrome (canto de cima).",
+      "Escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.",
+      "Confirme em <b>Instalar</b>."];
+  } else {
+    passos = ["No Chrome ou Edge, clique no ícone de instalar na barra de endereço "
+      + "(ou no menu ⋮ → <b>Instalar</b>).", "Confirme em <b>Instalar</b>."];
+  }
+  $("instalarPassos").innerHTML = "<ol>" + passos.map((p) => "<li>" + p + "</li>").join("") + "</ol>";
+  $("instalarModal").hidden = false;
+}
+$("instalarFechar").addEventListener("click", () => { $("instalarModal").hidden = true; });
+
+$("btInstalarTopo").addEventListener("click", async () => {
+  if (!(await pedirInstalacao())) mostrarComoInstalar();
+});
+$("btInstalar").addEventListener("click", async () => {
+  if (!(await pedirInstalacao())) mostrarComoInstalar();
+});
 $("btFechar").addEventListener("click", () => {
   $("cartaoInstalar").style.display = "none";
   dispensar();
 });
 
 // iPhone e iPad: o Safari não oferece o aviso, então explicamos o caminho.
-const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 if (ehIOS && !jaInstalado && !dispensado) {
   $("cartaoIOS").style.display = "flex";
 }
@@ -4850,6 +4984,22 @@ $("btFecharIOS").addEventListener("click", () => {
   $("cartaoIOS").style.display = "none";
   dispensar();
 });
+
+/* Pedido automático: no primeiro toque da pessoa na página, se o navegador
+ * permite instalar, a janela de instalação abre sozinha. Uma vez só por
+ * aparelho — insistir a cada visita viraria incômodo. (O navegador não deixa
+ * abrir essa janela sem um toque; o primeiro toque é o mais cedo possível.) */
+const jaPerguntou = (() => { try { return localStorage.getItem("instalar-perguntado") === "1"; } catch { return true; } })();
+if (!jaInstalado && !jaPerguntou) {
+  const primeiroToque = async (ev) => {
+    if (!promptInstalar) return;          // ainda não dá para instalar: espera o próximo
+    if (ev.target.closest && ev.target.closest("a,button,input,select,summary,.thumb,path.m")) return;
+    document.removeEventListener("pointerup", primeiroToque, true);
+    try { localStorage.setItem("instalar-perguntado", "1"); } catch {}
+    pedirInstalacao();
+  };
+  document.addEventListener("pointerup", primeiroToque, true);
+}
 
 </script>
 </body>
