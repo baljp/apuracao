@@ -79,7 +79,7 @@ for (const marco of PARADAS) {
       faixaLo: faixa ? faixa[1] : null, faixaHi: faixa ? faixa[2] : null,
       prob: t("probabilidade"),
       estados: document.querySelectorAll(".uf-linha").length,
-      mapa: document.querySelectorAll("#mapa path").length,
+      mapa: document.querySelectorAll("#mapa path.m").length,
       placarVisivel: getComputedStyle(document.getElementById("placar")).display !== "none",
       traj,
       chaves: Object.keys(localStorage),
@@ -120,8 +120,10 @@ for (const marco of PARADAS) {
     if (pl < 49.5 && dizPl && !dizPt) ruim.push("probabilidade aponta o candidato errado");
   }
   // 6. Nada pode sumir da tela no meio da noite.
-  if (d.mapa !== 27) ruim.push(`mapa com ${d.mapa} estados`);
-  if (apurado > 1 && d.estados < 27) ruim.push(`lista com ${d.estados} estados`);
+  // O mapa agora é por município (5,5 mil), e a lista de estados mostra 10
+  // de cara, com um botão para os demais.
+  if (d.mapa < 5500) ruim.push(`mapa com ${d.mapa} municípios`);
+  if (apurado > 1 && d.estados < 10) ruim.push(`lista com ${d.estados} estados`);
   if (apurado > 1 && !d.placarVisivel) ruim.push("placar sumiu");
 
   problemas.push(...ruim.map((x) => `${marco}%: ${x}`));

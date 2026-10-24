@@ -327,6 +327,36 @@ node conferir.mjs
 
 ---
 
+## O site, versão 2 (24/10/2026)
+
+- **Mapa por município.** Os 5,6 mil municípios, com a malha do IBGE
+  (`mapa-mun.json`, gerado por `programa/gerar_mapa_municipios.py`). A
+  intensidade da cor é quanto da cidade já foi apurado; a cor é quem lidera ali
+  pela estimativa do modelo (`Modelo.estimarMunicipios()`, a mesma conta que o
+  modelo usa para o que falta). Tocar num município busca o resultado oficial
+  dele no TSE — um arquivo pequeno, uma vez por toque.
+- **Oficial × projeção a cada 1%.** Quando a apuração cruza cada ponto
+  percentual, a página grava o número do TSE e o que a projeção dizia. Mostra
+  os 5 últimos, abre os 20, baixa tudo em planilha e, no fim, faz a auditoria
+  contra o resultado final.
+- **Cards de stories** (aba Cards). A cada 5% (e no 1%), um card 1080×1920 é
+  gerado sozinho com o oficial, a projeção e as regiões, pronto para
+  compartilhar no Instagram e no WhatsApp; também há card de virada, do
+  palpite, da cidade, do estado, das pesquisas (só antes da apuração) e da
+  auditoria final. Os números de cada card ficam no aparelho; a imagem é
+  redesenhada na hora.
+- **Mais dados:** quanto falta contar e quanto quem está atrás precisa para
+  virar, ritmo da apuração, regiões, saldo de votos por estado, busca de
+  município, ordenação dos estados.
+- Letra Nunito e a Zilla Slab da marca, embutidas (`fonte.css`) — a CSP
+  continua sem nenhum servidor de terceiros.
+
+Conferências feitas antes de publicar: `paridade.mjs` (JS = Python em toda a
+noite), `programa/_conferir_novos.mjs` (os números novos batem com a
+projeção), backtests de 2006 a 2022 e 400 eleições simuladas (vencedor certo
+com 5% apurado em 387 de 400), além dos testes de ponta a ponta, resiliência,
+segurança e de layout de 320 px a 1440 px.
+
 ## O programa em Python (`programa/`)
 
 Mesma lógica, para rodar na sua máquina com painel próprio:

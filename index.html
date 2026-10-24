@@ -6,7 +6,7 @@
 <title>Projeção da apuração — Presidente 2026</title>
 <meta name="description" content="Projeção do resultado final da eleição presidencial a partir dos arquivos oficiais de divulgação do TSE, corrigindo o viés da ordem de apuração.">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#0B1324">
 
 <!--
   Política de segurança de conteúdo.
@@ -24,7 +24,7 @@
   script-src 'self' 'unsafe-inline';
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: https://oxeapuracao.goatcounter.com;
-  font-src 'self';
+  font-src 'self' data:;
   connect-src 'self' https://resultados.tse.jus.br https://pt.wikipedia.org;
   manifest-src 'self';
   worker-src 'self';
@@ -48,99 +48,146 @@
 <meta property="og:description" content="No começo da apuração o número engana, porque nem todo lugar termina de contar na mesma hora. Projeção a partir dos dados oficiais do TSE.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="./fonte.css">
 <style>
 /*
- * Direção visual.
+ * Direção visual (versão 2).
  *
- * O assunto é uma noite de apuração: números que mudam a cada minuto, lidos
- * de relance, quase sempre no celular e quase sempre com a pessoa fazendo
- * outra coisa ao mesmo tempo. Então a página é construída como um PLACAR, e
- * não como um relatório.
+ * Uma noite de apuração é lida de relance, quase sempre no celular. A página
+ * é um PLACAR: o número grande no topo, o resto organizado em cartões
+ * quietos abaixo dele. A letra é a Nunito — redonda, cheia, legível em
+ * tamanho pequeno e bonita em tamanho grande —, embutida no próprio site.
  *
- * O herói é um painel escuro no topo, com os dois números em corpo enorme. É
- * a única peça escura da página, e é o que se vê antes de qualquer outra
- * coisa. Em volta, tudo fica claro e quieto: superfícies brancas, divisores
- * finos, sem sombra em todo canto.
- *
- * As cores dos candidatos são o sistema inteiro — não existe um terceiro
- * acento decorativo, porque numa página eleitoral qualquer cor extra vira
- * sinal. Verde aparece só para "ao vivo" e para progresso de apuração, que
- * são estado e não opinião.
- *
- * Números saem em dígitos de largura fixa em toda parte: quando o número se
- * atualiza sozinho, dígito de largura variável faz a linha inteira tremer.
+ * As cores dos candidatos são o sistema inteiro: azul para Flávio, vermelho
+ * para Lula. Verde só aparece para "ao vivo" e progresso de apuração, que
+ * são estado e não opinião. Números sempre em dígitos de largura fixa, para
+ * a linha não tremer quando atualiza sozinha.
  */
 
 :root{
-  --fundo:#F4F6F9;
+  --fundo:#EEF2F8;
+  --fundo-2:#E6ECF5;
   --superficie:#FFFFFF;
-  --painel:#111726;
-  --painel-2:#1A2133;
-  --linha:#E3E7EE;
-  --linha-forte:#CBD2DE;
-  --texto:#101522;
-  --fraco:#59637A;
-  --pl:#1F5FA8;
-  --pl-claro:#C4DAF0;
-  --pt:#B82E24;
-  --pt-claro:#F4CDC9;
-  --ok:#157F5B;
-  --alerta:#B4680F;
-  --raio:16px;
+  --superficie-2:#F6F8FC;
+  --painel:#0B1324;
+  --painel-2:#14203A;
+  --linha:#E2E8F1;
+  --linha-forte:#C9D3E2;
+  --texto:#0E1730;
+  --fraco:#5B6680;
+  --pl:#2563EB;
+  --pl-forte:#1D4ED8;
+  --pl-claro:#DBE7FE;
+  --pl-vivo:#7DB2FF;
+  --pt:#DC2626;
+  --pt-forte:#B91C1C;
+  --pt-claro:#FDE0E0;
+  --pt-vivo:#FF8A80;
+  --ok:#0E9F6E;
+  --alerta:#C2700C;
+  --mapa-vazio:#D7DEE9;
+  --raio:22px;
+  --sombra:0 1px 2px rgba(14,23,48,.05),0 10px 30px -12px rgba(14,23,48,.14);
 }
 
 @media (prefers-color-scheme: dark){
   :root{
-    --fundo:#0A0D14;
-    --superficie:#141A26;
-    --painel:#070A11;
-    --painel-2:#141B2A;
-    --linha:#222A3A;
-    --linha-forte:#333D52;
-    --texto:#E8ECF4;
-    --fraco:#929BB0;
-    --pl:#5B9BE0;
-    --pl-claro:#1C2E45;
-    --pt:#E0695F;
-    --pt-claro:#3B2321;
-    --ok:#3FB389;
-    --alerta:#D9A03C;
+    --fundo:#070B14;
+    --fundo-2:#0B1120;
+    --superficie:#111A2B;
+    --superficie-2:#16213A;
+    --painel:#050912;
+    --painel-2:#101A30;
+    --linha:#1F2A40;
+    --linha-forte:#2F3D58;
+    --texto:#EAF0FA;
+    --fraco:#97A3BC;
+    --pl:#4F8DFF;
+    --pl-forte:#3B7BF5;
+    --pl-claro:#18294A;
+    --pt:#F05252;
+    --pt-forte:#E53E3E;
+    --pt-claro:#3F1D22;
+    --ok:#34C38F;
+    --alerta:#E3A23F;
+    --mapa-vazio:#24304A;
+    --sombra:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
   }
 }
 
 *{box-sizing:border-box}
 
+html{-webkit-text-size-adjust:100%}
 body{
   margin:0;
-  background:var(--fundo);
+  background:
+    radial-gradient(1200px 500px at 50% -200px,var(--fundo-2),transparent),
+    var(--fundo);
   color:var(--texto);
-  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
-       "Helvetica Neue",Arial,sans-serif;
+  font:500 16px/1.55 "Nunito",ui-rounded,"SF Pro Rounded",-apple-system,
+       BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
-  padding:0 0 64px;
+  padding:0 0 72px;
   font-variant-numeric:tabular-nums;
 }
 
-.wrap{max-width:880px;margin:0 auto;padding:0 16px}
+.wrap{max-width:920px;margin:0 auto;padding:0 16px}
+
+/* ---------- faixa do TSE, no topo ---------- */
+.oficialTopo{
+  display:flex;align-items:center;gap:12px;
+  margin:14px 0 0;padding:11px 12px 11px 14px;
+  border-radius:16px;
+  background:linear-gradient(100deg,#0F5132,#0E7A50);
+  color:#fff;box-shadow:var(--sombra);
+}
+.oficialTopo svg{flex:0 0 auto}
+.oficialTopo .t{flex:1;min-width:0;font-size:13.5px;line-height:1.3}
+.oficialTopo .t b{display:block;font-size:15px;font-weight:850;letter-spacing:-.005em}
+.oficialTopo .t span{opacity:.85}
+.oficialTopo a{
+  flex:0 0 auto;background:#fff;color:#0B5C3B;text-decoration:none;
+  font-weight:850;font-size:14px;border-radius:12px;padding:9px 14px;
+  white-space:nowrap;
+}
+.oficialTopo a:hover{filter:brightness(.96)}
 
 /* ---------- cabeçalho ---------- */
-.topo{padding:26px 0 18px}
-h1{
-  font-size:clamp(21px,5.2vw,27px);
-  margin:0;
-  font-weight:680;
-  letter-spacing:-.025em;
-  line-height:1.15;
-}
-.sub{color:var(--fraco);font-size:13.5px;margin-top:5px}
-
-.painel h2{color:rgba(255,255,255,.65)}
-h2{
-  font-size:13px;
-  margin:0 0 14px;
-  font-weight:640;
+.topo{padding:22px 2px 14px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.topo .marca{flex:1;min-width:220px}
+.sobretitulo{
+  font-size:12px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;
   color:var(--fraco);
-  letter-spacing:.02em;
+}
+h1{
+  font-size:clamp(25px,6.4vw,36px);
+  margin:2px 0 0;
+  font-weight:900;
+  letter-spacing:-.02em;
+  line-height:1.08;
+}
+h1 .pl{color:var(--pl)} h1 .pt{color:var(--pt)}
+.sub{color:var(--fraco);font-size:13.5px;margin-top:6px;font-weight:600}
+.pisca{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--ok);margin-right:7px;vertical-align:1px;
+  animation:pulso 1.8s infinite;
+  box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent);
+}
+
+h2{
+  font-size:20px;margin:0;font-weight:900;letter-spacing:-.01em;line-height:1.2;
+}
+.rotulo{
+  display:block;font-size:11.5px;font-weight:850;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--fraco);margin-bottom:3px;
+}
+.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  margin-bottom:16px;flex-wrap:wrap}
+.pilula{
+  font-size:12.5px;font-weight:800;color:var(--fraco);
+  background:var(--superficie-2);border:1px solid var(--linha);
+  padding:4px 10px;border-radius:999px;white-space:nowrap;
 }
 
 /* ---------- superfícies ---------- */
@@ -148,275 +195,576 @@ h2{
   background:var(--superficie);
   border:1px solid var(--linha);
   border-radius:var(--raio);
-  padding:20px;
-  margin-bottom:12px;
+  padding:22px;
+  margin-bottom:14px;
+  box-shadow:var(--sombra);
 }
+@media (max-width:480px){ .cartao{padding:18px 16px} }
 
 /* ---------- faixa de estado ---------- */
 .status{
-  display:flex;align-items:flex-start;gap:11px;
-  padding:13px 16px;border-radius:12px;margin-bottom:12px;
-  font-size:13.5px;line-height:1.5;
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 16px;border-radius:16px;margin-bottom:14px;
+  font-size:14px;line-height:1.45;
   border:1px solid var(--linha);background:var(--superficie);
+  box-shadow:var(--sombra);
 }
-.status b{display:block;font-size:14.5px;margin-bottom:2px;font-weight:650}
-.status.pesq{border-color:var(--pl);background:color-mix(in srgb,var(--pl) 7%,var(--superficie))}
-.status.vivo{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--superficie))}
-.ponto{width:9px;height:9px;border-radius:50%;flex:0 0 auto;margin-top:5px}
+.status b{display:block;font-size:15px;margin-bottom:1px;font-weight:850}
+.status .faixa{font-size:13.5px}
+.status.pesq{border-color:color-mix(in srgb,var(--pl) 40%,var(--linha));
+  background:color-mix(in srgb,var(--pl) 6%,var(--superficie))}
+.status.vivo{border-color:color-mix(in srgb,var(--ok) 45%,var(--linha));
+  background:color-mix(in srgb,var(--ok) 7%,var(--superficie))}
+.ponto{width:10px;height:10px;border-radius:50%;flex:0 0 auto;margin-top:6px}
 .status.vivo .ponto{background:var(--ok);box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent);animation:pulso 1.8s infinite}
 .status.pesq .ponto{background:var(--pl)}
 .status.fim .ponto{background:var(--fraco)}
 @keyframes pulso{
-  70%{box-shadow:0 0 0 9px transparent}
+  70%{box-shadow:0 0 0 10px transparent}
   100%{box-shadow:0 0 0 0 transparent}
 }
 
 /* ---------- abas ---------- */
 .abas{
-  display:flex;gap:3px;margin-bottom:12px;
+  display:flex;gap:4px;margin-bottom:14px;
   background:var(--superficie);border:1px solid var(--linha);
-  border-radius:12px;padding:4px;
+  border-radius:16px;padding:5px;box-shadow:var(--sombra);
 }
 .aba{
-  flex:1;background:none;border:0;border-radius:9px;padding:10px 12px;
-  font:inherit;font-size:14.5px;font-weight:600;color:var(--fraco);
+  flex:1;background:none;border:0;border-radius:12px;padding:11px 12px;
+  font:inherit;font-size:15px;font-weight:850;color:var(--fraco);
   cursor:pointer;transition:background .15s,color .15s;
 }
 .aba.ativa{background:var(--texto);color:var(--superficie)}
-.aba:not(.ativa):hover{color:var(--texto)}
+.aba:not(.ativa):hover{color:var(--texto);background:var(--superficie-2)}
 .aba:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 
-/* ---------- o placar, herói da página ---------- */
+/* ---------- o placar ---------- */
 #cartaoPlacar,.painel{
-  background:var(--painel);
+  background:
+    radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--pl) 22%,transparent),transparent 55%),
+    radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--pt) 22%,transparent),transparent 55%),
+    linear-gradient(180deg,var(--painel-2),var(--painel));
   border:0;
   color:#fff;
-  padding:24px 22px 20px;
+  padding:26px 24px 22px;
   position:relative;
   overflow:hidden;
-}
-#cartaoPlacar::before,.painel::before{
-  /* brilho discreto atrás dos números, no tom do candidato à frente */
-  content:"";position:absolute;inset:-40% -10% auto;height:70%;
-  background:radial-gradient(ellipse at 50% 0%,
-    color-mix(in srgb,var(--pl) 26%,transparent),transparent 70%);
-  pointer-events:none;
+  box-shadow:0 20px 50px -20px rgba(8,15,35,.55);
 }
 #cartaoPlacar>*,.painel>*{position:relative}
+.painel h2{color:#fff}
+.painel .rotulo{color:rgba(255,255,255,.6)}
 
 .placar{display:flex;gap:14px;align-items:flex-start}
 .lado{flex:1;min-width:0}
 .lado.dir{text-align:right}
+.quem{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.lado.dir .quem{flex-direction:row-reverse}
+.avatar{
+  width:34px;height:34px;border-radius:50%;flex:0 0 auto;
+  display:grid;place-items:center;font-weight:900;font-size:13.5px;color:#fff;
+  letter-spacing:-.02em;
+}
+.pl .avatar{background:linear-gradient(140deg,#3B82F6,#1D4ED8);box-shadow:0 0 0 3px rgba(125,178,255,.25)}
+.pt .avatar{background:linear-gradient(140deg,#F05252,#B91C1C);box-shadow:0 0 0 3px rgba(255,138,128,.25)}
 .nome{
-  font-size:12.5px;color:rgba(255,255,255,.72);
-  margin-bottom:4px;font-weight:600;letter-spacing:.01em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:15px;color:rgba(255,255,255,.92);
+  font-weight:800;letter-spacing:.005em;line-height:1.15;
+  min-width:0;overflow-wrap:anywhere;
 }
+@media (max-width:420px){ .nome{font-size:13.5px} .avatar{width:30px;height:30px;font-size:12px} }
+.nome small{display:block;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.04em}
 .pct{
-  /* 11,5vw e não 13vw: a 13 o "51,0%" precisa de 126px numa tela de 320
-     (iPhone SE e afins) onde o lado do placar tem 115, e o número saía
-     cortado na borda. O teto de 62px mantém o tamanho no desktop. */
-  font-size:clamp(36px,11.5vw,62px);
-  font-weight:700;line-height:.95;letter-spacing:-.04em;
+  /* 11,5vw: a 13 o "51,0%" saía cortado numa tela de 320 px. */
+  font-size:clamp(34px,11.6vw,70px);
+  font-weight:900;line-height:.95;letter-spacing:-.035em;
 }
-.pl .pct{color:#7FB3EA}
-.pt .pct{color:#F08E84}
-#cartaoPlacar .faixa,.painel .faixa{font-size:12px;color:rgba(255,255,255,.6);margin-top:7px}
+#cartaoPlacar .faixa,.painel .faixa{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:8px;font-weight:600}
 
 .barra{
-  height:12px;border-radius:7px;overflow:hidden;display:flex;
-  margin:20px 0 0;background:rgba(255,255,255,.12);
+  height:16px;border-radius:999px;overflow:hidden;display:flex;
+  margin:22px 0 0;background:rgba(255,255,255,.12);gap:3px;
 }
-.barra i{display:block;height:100%;transition:width .7s cubic-bezier(.22,1,.36,1)}
-.meio{position:relative;height:17px}
+.barra i{display:block;height:100%;transition:width .8s cubic-bezier(.22,1,.36,1)}
+.barra i:first-child{border-radius:999px 0 0 999px}
+.barra i:last-child{border-radius:0 999px 999px 0}
+.meio{position:relative;height:20px}
 .meio:after{
-  content:"";position:absolute;left:50%;top:-12px;width:2px;height:22px;
-  background:#fff;opacity:.85;border-radius:1px;
+  content:"";position:absolute;left:50%;top:-16px;width:3px;height:22px;
+  background:#fff;opacity:.95;border-radius:2px;transform:translateX(-50%);
 }
 .meio span{
-  position:absolute;left:50%;top:9px;transform:translateX(-50%);
-  font-size:10px;color:rgba(255,255,255,.65);letter-spacing:.03em;
+  position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  font-size:10.5px;color:rgba(255,255,255,.65);letter-spacing:.06em;font-weight:800;
 }
-#probabilidade{font-size:14px;margin-top:7px;color:rgba(255,255,255,.92)}
+#probabilidade{
+  font-size:14.5px;margin-top:10px;color:#fff;font-weight:750;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;padding:9px 12px;text-align:center;
+}
 
-/* ---------- contagem regressiva ----------
-   Fica no lugar do placar enquanto não há voto: é a única coisa que de fato
-   está acontecendo antes do domingo, então merece o corpo grande. Os dígitos
-   são de largura fixa e cada campo tem largura mínima própria — sem isso, a
-   linha inteira dança a cada segundo quando o número troca de 9 para 10. */
+/* comparação oficial × projeção, dentro do placar */
+.compara{margin-top:16px;display:grid;gap:9px}
+.compara .linha{display:grid;grid-template-columns:96px 1fr 112px;gap:10px;align-items:center}
+.compara .tag{font-size:11.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.compara .mini{height:8px;border-radius:999px;overflow:hidden;display:flex;background:rgba(255,255,255,.12);gap:2px}
+.compara .mini i{display:block;height:100%}
+.compara .v{font-size:13px;font-weight:800;text-align:right;color:rgba(255,255,255,.9)}
+.oqueE{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:12px;line-height:1.5;font-weight:600}
+.oqueE b{color:rgba(255,255,255,.9)}
+
+/* ---------- contagem regressiva ---------- */
 .contagem{margin-bottom:22px}
 .rotuloContagem{
-  font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;
-  color:rgba(255,255,255,.62);margin-bottom:12px;font-weight:600;
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.65);margin-bottom:12px;font-weight:850;
 }
-.relogio{display:flex;align-items:flex-start;justify-content:center;gap:4px}
-.relogio .bloco{display:flex;flex-direction:column;align-items:center;min-width:62px}
+.relogio{display:flex;align-items:flex-start;justify-content:center;gap:6px}
+.relogio .bloco{
+  display:flex;flex-direction:column;align-items:center;min-width:66px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:10px 6px 8px;
+}
 .relogio b{
-  font-size:clamp(30px,9vw,44px);font-weight:700;line-height:1;
-  letter-spacing:-.03em;color:#fff;font-variant-numeric:tabular-nums;
+  font-size:clamp(28px,8.5vw,42px);font-weight:900;line-height:1;
+  letter-spacing:-.02em;color:#fff;
 }
 .relogio span{
   font-size:10.5px;color:rgba(255,255,255,.55);margin-top:6px;
-  letter-spacing:.05em;text-transform:uppercase;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;font-weight:800;
 }
-.relogio .sep{
-  font-size:clamp(24px,7vw,34px);font-weight:600;line-height:1.1;
-  color:rgba(255,255,255,.3);padding-top:1px;
-}
-.dataUrnas{font-size:12px;color:rgba(255,255,255,.5);margin-top:16px}
+.relogio .sep{display:none}
+.dataUrnas{font-size:12.5px;color:rgba(255,255,255,.55);margin-top:14px;font-weight:700}
+.vazio{text-align:center;padding:24px 8px;color:var(--fraco);font-size:14.5px;font-weight:600}
+#cartaoPlacar .vazio{color:rgba(255,255,255,.75)}
 
-/* ---------- tira de números, deslizável no celular ---------- */
-.grade{
-  display:flex;gap:10px;overflow-x:auto;padding:16px 16px 16px;
-  /* sombra na borda direita enquanto houver conteúdo escondido, para a
-     pessoa perceber que a tira desliza */
-  background:
-    linear-gradient(to right,var(--superficie),var(--superficie)) left/22px 100% no-repeat,
-    linear-gradient(to right,rgba(0,0,0,.09),transparent) right/18px 100% no-repeat,
-    var(--superficie);
-  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+/* ---------- blocos de números ---------- */
+.blocos{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  margin-bottom:14px;
 }
-.grade::-webkit-scrollbar{display:none}
-.grade .item{
-  flex:0 0 auto;min-width:132px;scroll-snap-align:start;
-  padding:2px 14px 2px 0;border-right:1px solid var(--linha);
+@media (min-width:700px){ .blocos{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.bloco-num{
+  background:var(--superficie);border:1px solid var(--linha);
+  border-radius:18px;padding:14px 15px 13px;box-shadow:var(--sombra);
+  min-width:0;
 }
-.grade .item:last-child{border-right:0}
-.item .r{font-size:25px;font-weight:680;letter-spacing:-.025em;line-height:1.1}
-.item .l{font-size:12px;color:var(--fraco);margin-top:3px;line-height:1.35}
-@media (min-width:700px){
-  .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));overflow:visible}
-  .grade .item{min-width:0}
+.bloco-num .l{font-size:12px;color:var(--fraco);font-weight:750;line-height:1.3;margin-top:4px}
+.bloco-num .r{font-size:clamp(17px,5.4vw,28px);font-weight:900;letter-spacing:-.02em;line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bloco-num .k{font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:var(--fraco);display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.bloco-num .k i{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--linha-forte)}
+.bloco-num.pl .r{color:var(--pl)} .bloco-num.pl .k i{background:var(--pl)}
+.bloco-num.pt .r{color:var(--pt)} .bloco-num.pt .k i{background:var(--pt)}
+.bloco-num.ok .k i{background:var(--ok)}
+.progresso{height:6px;border-radius:999px;background:var(--linha);overflow:hidden;margin-top:9px}
+.progresso i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#34D399);border-radius:999px;transition:width .8s}
+
+/* ---------- linha do tempo (registro a cada 1%) ---------- */
+.linhaTempo{list-style:none;margin:0;padding:0;position:relative}
+.linhaTempo:before{
+  content:"";position:absolute;left:27px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(var(--linha-forte),transparent);border-radius:2px;
 }
+.marco{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:0 0 14px;position:relative;
+  animation:entra .5s cubic-bezier(.22,1,.36,1)}
+@keyframes entra{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.marco-pct{
+  width:56px;height:56px;border-radius:50%;display:grid;place-items:center;
+  background:var(--superficie);border:3px solid var(--linha-forte);
+  font-weight:900;font-size:16px;letter-spacing:-.03em;position:relative;z-index:1;
+}
+.marco-pct.pl{border-color:var(--pl);color:var(--pl)}
+.marco-pct.pt{border-color:var(--pt);color:var(--pt)}
+.marco-corpo{
+  background:var(--superficie-2);border:1px solid var(--linha);border-radius:16px;
+  padding:11px 13px 10px;min-width:0;
+}
+.marco-topo{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--fraco);font-weight:750;margin-bottom:7px}
+.marco-topo b{color:var(--texto);font-weight:900;font-size:14px}
+.duelo{display:grid;grid-template-columns:82px 1fr auto;gap:9px;align-items:center;margin-top:5px}
+.duelo .tag{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--fraco)}
+.duelo .tag.proj{color:var(--texto)}
+.duelo .mini{height:9px;border-radius:999px;overflow:hidden;display:flex;gap:2px;background:var(--linha)}
+.duelo .mini i{display:block;height:100%}
+.duelo .v{font-size:13px;font-weight:850;white-space:nowrap}
+.duelo .v .a{color:var(--pl)} .duelo .v .b{color:var(--pt)}
+.dif{margin-top:7px;font-size:12px;color:var(--fraco);font-weight:700}
+.dif b{color:var(--texto)}
+@media (max-width:420px){
+  .marco{grid-template-columns:46px 1fr;gap:9px}
+  .marco-pct{width:46px;height:46px;font-size:14px}
+  .linhaTempo:before{left:22px}
+  .duelo{grid-template-columns:74px 1fr auto;gap:7px}
+  .duelo .tag{letter-spacing:.03em}
+}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.bt-sec{
+  font:inherit;font-size:14px;font-weight:850;cursor:pointer;
+  background:var(--superficie-2);color:var(--texto);
+  border:1px solid var(--linha-forte);border-radius:12px;padding:10px 14px;
+}
+.bt-sec:hover{background:var(--linha)}
+.bt-sec.forte{background:var(--texto);color:var(--superficie);border-color:var(--texto)}
+
+/* auditoria final */
+.auditoria{display:grid;gap:8px;margin-top:4px}
+.aud{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;
+  padding:10px 12px;border-radius:14px;background:var(--superficie-2);border:1px solid var(--linha)}
+.aud .p{font-weight:900;font-size:16px}
+.aud .s{font-size:12.5px;color:var(--fraco);font-weight:700}
+.aud .e{font-weight:900;font-size:14px;padding:4px 9px;border-radius:999px}
+.aud .e.bom{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.aud .e.ruim{background:color-mix(in srgb,var(--alerta) 15%,transparent);color:var(--alerta)}
+
+/* ---------- mapa ---------- */
+.seletor{display:inline-flex;background:var(--superficie-2);border:1px solid var(--linha);border-radius:12px;padding:3px;gap:2px}
+.seletor button{font:inherit;font-size:13px;font-weight:850;border:0;background:none;color:var(--fraco);padding:7px 12px;border-radius:9px;cursor:pointer}
+.seletor button.ativo{background:var(--superficie);color:var(--texto);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.mapaCaixa{position:relative}
+#mapa{width:100%;max-width:640px;margin:0 auto;display:block;height:auto;touch-action:manipulation}
+#mapa .m{cursor:pointer;transition:fill .6s,fill-opacity .6s}
+#mapa .m:hover{stroke:var(--texto);stroke-width:1.2px}
+#mapa .m.sel{stroke:var(--texto);stroke-width:2px}
+@media (max-width:620px){
+  #cartaoMapa{padding-left:8px;padding-right:8px}
+  #cartaoMapa .cab,#legendaMapa,#cartaoMapa .escala,#cartaoMapa .busca{padding-left:10px;padding-right:10px}
+}
+.escala{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12px;font-weight:800;color:var(--fraco);flex-wrap:wrap}
+.escala .g{display:flex;height:10px;border-radius:999px;overflow:hidden;flex:1;min-width:160px}
+.escala .g i{flex:1}
+.ficha{
+  position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+  width:min(340px,calc(100% - 16px));
+  background:var(--superficie);border:1px solid var(--linha-forte);border-radius:16px;
+  box-shadow:0 18px 40px -12px rgba(0,0,0,.35);padding:13px 14px;z-index:5;
+}
+.ficha[hidden]{display:none}
+.ficha .tt{font-weight:900;font-size:16px;line-height:1.2;padding-right:26px}
+.ficha .ss{font-size:12.5px;color:var(--fraco);font-weight:700;margin:2px 0 8px}
+.ficha .fx{position:absolute;right:8px;top:6px;border:0;background:none;font-size:22px;color:var(--fraco);cursor:pointer;line-height:1;padding:4px 6px}
+.ficha .ln{display:flex;justify-content:space-between;font-size:13.5px;font-weight:800;margin-top:4px}
+.ficha .mini{height:9px;border-radius:999px;overflow:hidden;display:flex;gap:2px;background:var(--linha);margin:6px 0 2px}
+.ficha .mini i{display:block;height:100%}
+.ficha .nota{font-size:11.5px;color:var(--fraco);font-weight:650;margin-top:7px;line-height:1.4}
+.ficha .bt-sec{margin-top:9px;width:100%;font-size:13.5px;padding:8px 10px}
+
+/* ---------- gráfico ---------- */
+svg.graf{display:block;width:100%;height:170px;overflow:visible}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--fraco);font-weight:750;margin-top:10px}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.legenda i{width:18px;height:3px;border-radius:2px;display:inline-block}
 
 /* ---------- lista de estados ---------- */
-.estados{display:flex;flex-direction:column}
+.estados{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:760px){ .estados{grid-template-columns:1fr 1fr} }
 .uf-linha{
-  display:grid;
-  grid-template-columns:52px 1fr 64px;
-  gap:12px;align-items:center;
-  padding:11px 0;border-bottom:1px solid var(--linha);
+  display:grid;grid-template-columns:46px 1fr 62px;gap:12px;align-items:center;
+  padding:10px 12px;border-radius:14px;background:var(--superficie-2);border:1px solid var(--linha);
 }
-.uf-linha:last-child{border-bottom:0}
-.uf-sigla{font-weight:700;font-size:15px;letter-spacing:.01em}
-.uf-reg{font-size:10.5px;color:var(--fraco);font-weight:500;margin-top:1px}
-.uf-disputa{
-  height:9px;border-radius:5px;overflow:hidden;display:flex;
-  background:var(--linha);
+.uf-sigla{
+  width:46px;height:46px;border-radius:12px;display:grid;place-items:center;
+  font-weight:900;font-size:15px;color:#fff;background:var(--linha-forte);
 }
+.uf-sigla.pl{background:linear-gradient(140deg,#3B82F6,#1D4ED8)}
+.uf-sigla.pt{background:linear-gradient(140deg,#F05252,#B91C1C)}
+.uf-sigla.sd{background:var(--mapa-vazio);color:var(--fraco)}
+.uf-disputa{height:10px;border-radius:999px;overflow:hidden;display:flex;gap:2px;background:var(--linha);position:relative}
 .uf-disputa i{display:block;height:100%}
-.uf-disputa.sem-dado{opacity:.3}
-.uf-disputa.sem-dado i{background-image:repeating-linear-gradient(
-  45deg,transparent,transparent 3px,rgba(255,255,255,.6) 3px,rgba(255,255,255,.6) 6px)}
-.uf-meta{display:flex;justify-content:space-between;font-size:11px;
-  color:var(--fraco);margin-top:5px}
-.uf-proj{text-align:right;font-weight:680;font-size:15px}
-.uf-apur{
-  height:3px;border-radius:2px;background:var(--linha);overflow:hidden;margin-top:6px;
-}
+.uf-disputa.sem-dado{opacity:.35}
+.uf-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--fraco);margin-top:6px;font-weight:750}
+.uf-proj{text-align:right;font-weight:900;font-size:17px;letter-spacing:-.02em}
+.uf-proj small{display:block;font-size:10.5px;color:var(--fraco);font-weight:750;letter-spacing:0}
+.uf-apur{height:4px;border-radius:999px;background:var(--linha);overflow:hidden;margin-top:6px}
 .uf-apur i{display:block;height:100%;background:var(--ok)}
 
-/* ---------- tabelas (pesquisas) ---------- */
-.rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:420px}
-th,td{padding:10px 8px;text-align:right;border-bottom:1px solid var(--linha)}
-th{
-  color:var(--fraco);font-weight:600;font-size:11.5px;
-  position:sticky;top:0;background:var(--superficie);
+/* ---------- pesquisas ---------- */
+.listaPesq{display:grid;gap:8px}
+.pesq{
+  display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;
+  padding:12px 14px;border-radius:14px;background:var(--superficie-2);border:1px solid var(--linha);
 }
-th:first-child,td:first-child{text-align:left;padding-left:0}
-th:last-child,td:last-child{padding-right:0}
-tr:last-child td{border-bottom:0}
-td.uf{font-weight:650}
-.reg{color:var(--fraco);font-size:11px;font-weight:400;margin-left:5px}
+.pesq .inst{font-weight:900;font-size:15px;line-height:1.2}
+.pesq .det{font-size:12px;color:var(--fraco);font-weight:700;margin-top:2px}
+.pesq .nums{text-align:right;font-weight:900;font-size:15px;white-space:nowrap}
+.pesq .nums .a{color:var(--pl)} .pesq .nums .b{color:var(--pt)}
+.pesq .mini{grid-column:1 / -1;height:7px;border-radius:999px;overflow:hidden;display:flex;gap:2px;background:var(--linha)}
+.pesq .mini i{display:block;height:100%}
+.selo{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:850;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.selo.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.selo.nao{background:var(--linha);color:var(--fraco)}
 
-/* ---------- barra de erro dos institutos ---------- */
-.erro-barra{
-  position:relative;height:8px;background:var(--linha);border-radius:4px;
-  min-width:90px;
-}
-.erro-barra::before{
-  content:"";position:absolute;left:50%;top:-3px;width:1px;height:14px;
-  background:var(--linha-forte);
-}
-.erro-barra span{position:absolute;top:0;height:8px;border-radius:4px}
-.erro-num{font-size:12px;margin-top:5px;font-weight:600;text-align:right}
-
-/* ---------- gráficos ---------- */
-svg.graf{display:block;width:100%;height:150px;overflow:visible}
-#mapa{width:100%;max-width:600px;margin:0 auto;display:block;height:auto}
-@media (max-width:620px){
-  /* No celular o mapa precisa de toda a largura do cartão, inclusive o
-     espaço do padding, senão os nomes dos estados ficam ilegíveis. */
-  #cartaoMapa{padding-left:6px;padding-right:6px}
-  #cartaoMapa h2,#legendaMapa{padding-left:14px;padding-right:14px}
-}
+.acerto{display:grid;gap:8px}
+.ac{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;padding:11px 13px;border-radius:14px;background:var(--superficie-2);border:1px solid var(--linha)}
+.ac .n{font-weight:900;font-size:14.5px}
+.ac .d{font-size:12px;color:var(--fraco);font-weight:700}
+.erro-barra{position:relative;height:9px;background:var(--linha);border-radius:999px}
+.erro-barra::before{content:"";position:absolute;left:50%;top:-3px;width:2px;height:15px;background:var(--linha-forte);transform:translateX(-50%)}
+.erro-barra span{position:absolute;top:0;height:9px;border-radius:999px}
+.erro-num{font-size:12.5px;margin-top:5px;font-weight:900;text-align:right}
 
 /* ---------- textos auxiliares ---------- */
-.faixa{font-size:12.5px;color:var(--fraco);line-height:1.55}
-.aviso{font-size:13px;color:var(--fraco);line-height:1.65}
-.aviso strong{color:var(--texto);font-weight:650}
-.vazio{text-align:center;padding:26px 8px;color:var(--fraco);font-size:14px}
+.faixa{font-size:13px;color:var(--fraco);line-height:1.55;font-weight:600}
+.aviso{font-size:13.5px;color:var(--fraco);line-height:1.6;font-weight:600}
+.aviso strong{color:var(--texto);font-weight:850}
 .erro{color:var(--alerta)}
 a{color:var(--pl)}
+.resumo{font-size:15px;line-height:1.6;font-weight:600;margin:0}
+.resumo b{font-weight:900}
+.passos{display:grid;gap:10px;margin:14px 0 4px;padding:0;list-style:none;counter-reset:p}
+.passos li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-size:14.5px;font-weight:650;line-height:1.45}
+.passos li:before{counter-increment:p;content:counter(p);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:14px;background:var(--superficie-2);border:1px solid var(--linha-forte)}
 
-details{font-size:13.5px;color:var(--fraco);line-height:1.6}
-summary{cursor:pointer;color:var(--texto);font-weight:650;font-size:14px;padding:3px 0}
+details{font-size:14px;color:var(--fraco);line-height:1.65;font-weight:600}
+details+details{margin-top:6px}
+summary{
+  cursor:pointer;color:var(--texto);font-weight:850;font-size:14.5px;padding:10px 12px;
+  list-style:none;border-radius:12px;background:var(--superficie-2);border:1px solid var(--linha);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";font-size:20px;font-weight:700;color:var(--fraco);line-height:1}
+details[open] summary:after{content:"−"}
 summary:focus-visible{outline:2px solid var(--pl);outline-offset:3px}
-details p{margin:11px 0}
+details p{margin:12px 4px}
 details b{color:var(--texto)}
-
-/* ---------- caminho para o oficial ---------- */
-.oficial{
-  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
-  border-color:var(--linha-forte);
-}
-.oficial > div{flex:1;min-width:210px}
-.oficial b{display:block;font-size:14.5px;font-weight:650;margin-bottom:3px}
-.oficial .faixa{display:block}
-.btOficial{
-  background:var(--texto);color:var(--superficie);text-decoration:none;
-  border-radius:10px;padding:11px 18px;font-size:14px;font-weight:650;
-  white-space:nowrap;
-}
-.btOficial:hover{filter:brightness(1.25)}
 
 /* ---------- crédito ---------- */
 .creditos{
-  text-align:center;font-size:12.5px;color:var(--fraco);
-  padding:26px 8px 4px;line-height:1.7;
+  text-align:center;font-size:13.5px;color:var(--fraco);
+  padding:26px 8px 4px;line-height:1.7;font-weight:700;
 }
-.creditos a{color:var(--fraco);text-decoration:none;border-bottom:1px solid var(--linha-forte)}
-.creditos a:hover{color:var(--texto)}
+.creditos a{color:var(--texto);text-decoration:none;font-weight:900}
+.creditos a:hover{color:var(--pl)}
 .creditos .sep{opacity:.5;margin:0 6px}
 
 /* ---------- instalação ---------- */
 .instalar{display:none;align-items:center;gap:12px;flex-wrap:nowrap}
-.instalar .txt{flex:1;min-width:0;font-size:13px;color:var(--fraco)}
+.instalar .txt{flex:1;min-width:0;font-size:13.5px;color:var(--fraco)}
 .instalar .txt b{color:var(--texto)}
 button.bt{
-  background:var(--pl);color:#fff;border:0;border-radius:10px;
-  padding:11px 18px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;
+  background:var(--pl);color:#fff;border:0;border-radius:12px;
+  padding:11px 18px;font:inherit;font-size:14.5px;font-weight:850;cursor:pointer;
 }
 button.bt:hover{filter:brightness(1.07)}
 button.fechar{
   background:none;color:var(--fraco);border:0;cursor:pointer;
-  font-size:20px;line-height:1;padding:4px 7px;font-family:inherit;
+  font-size:22px;line-height:1;padding:4px 7px;font-family:inherit;
 }
 button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
+[hidden]{display:none!important}
 
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
 
+/* ---------- atalhos ---------- */
+.atalhos{
+  position:sticky;top:0;z-index:20;display:flex;gap:6px;overflow-x:auto;
+  padding:8px 2px 10px;margin:-4px 0 6px;scrollbar-width:none;
+  background:linear-gradient(var(--fundo) 75%,transparent);
+}
+.atalhos::-webkit-scrollbar{display:none}
+.atalhos a{
+  flex:0 0 auto;text-decoration:none;color:var(--texto);font-weight:850;font-size:13px;
+  background:var(--superficie);border:1px solid var(--linha);border-radius:999px;
+  padding:7px 13px;box-shadow:0 1px 2px rgba(14,23,48,.06);
+}
+.atalhos a:hover{border-color:var(--linha-forte)}
+[id^="cartao"]{scroll-margin-top:60px}
+.bt-compartilhar{
+  margin-top:14px;width:100%;font:inherit;font-size:14px;font-weight:850;cursor:pointer;
+  background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;padding:10px 14px;
+}
+.bt-compartilhar:hover{background:rgba(255,255,255,.16)}
+
+/* ---------- quanto falta ---------- */
+.falta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){ .falta{grid-template-columns:1fr} }
+.falta-num{background:var(--superficie-2);border:1px solid var(--linha);border-radius:16px;padding:14px 15px}
+.falta-num b{display:block;font-size:clamp(24px,6.5vw,32px);font-weight:900;letter-spacing:-.02em;line-height:1.1}
+.falta-num span{display:block;font-size:12.5px;color:var(--fraco);font-weight:750;margin-top:4px;line-height:1.35}
+
+/* ---------- regiões ---------- */
+.regioes{display:grid;gap:10px}
+.reg{display:grid;grid-template-columns:120px 1fr 92px;gap:12px;align-items:center}
+@media (max-width:480px){ .reg{grid-template-columns:92px 1fr 80px;gap:9px} }
+.reg .n{font-weight:900;font-size:15px}
+.reg .n small{display:block;font-size:11.5px;color:var(--fraco);font-weight:750}
+.reg .mini{height:14px;border-radius:999px;overflow:hidden;display:flex;gap:2px;background:var(--linha)}
+.reg .mini i{display:block;height:100%}
+.reg .v{text-align:right;font-weight:900;font-size:14px;line-height:1.2}
+.reg .v small{display:block;font-size:11px;color:var(--fraco);font-weight:750}
+
+/* ---------- saldo ---------- */
+.saldo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){ .saldo{grid-template-columns:1fr} }
+.saldo-tit{font-weight:900;font-size:14px;margin-bottom:8px}
+.sd{display:grid;grid-template-columns:38px 1fr 64px;gap:9px;align-items:center;margin-bottom:7px}
+.sd .u{font-weight:900;font-size:13px}
+.sd .b{height:10px;border-radius:999px;background:var(--linha);overflow:hidden}
+.sd .b i{display:block;height:100%;border-radius:999px}
+.sd .q{font-weight:850;font-size:13px;white-space:nowrap;text-align:right}
+
+/* ---------- busca ---------- */
+.busca{margin:0 0 10px}
+.busca input{
+  width:100%;font:inherit;font-size:15px;font-weight:700;color:var(--texto);
+  background:var(--superficie-2);border:1px solid var(--linha-forte);border-radius:12px;
+  padding:10px 13px;
+}
+.busca input:focus{outline:2px solid var(--pl);outline-offset:1px}
+.marco .virada{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:900;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--alerta) 16%,transparent);color:var(--alerta)}
+
+/* ---------- formato stories ---------- */
+.stories{position:fixed;inset:0;z-index:100;background:#03060C;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:10px}
+.st-caixa{
+  height:min(calc(100vh - 56px),calc((100vw - 20px) * 16 / 9));aspect-ratio:9/16;
+  border-radius:18px;overflow:hidden;color:#fff;position:relative;
+  background:
+    radial-gradient(90% 50% at 0% 0%,rgba(37,99,235,.35),transparent 60%),
+    radial-gradient(90% 50% at 100% 0%,rgba(220,38,38,.35),transparent 60%),
+    linear-gradient(180deg,#14203A,#070B14);
+  container-type:size;
+}
+/* Tudo medido pela altura da tela 9:16 (cqh), para os 20 pontos caberem
+ * sempre, do celular pequeno ao monitor. */
+.st-in{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding:5.5cqh 6cqw 3.5cqh;font-size:1.38cqh}
+.st-cab .a{font-size:.8em;letter-spacing:.14em;text-transform:uppercase;font-weight:900;color:rgba(255,255,255,.65)}
+.st-cab h3{margin:.25em 0 .1em;font-size:2.3em;font-weight:900;line-height:1.02;letter-spacing:-.02em}
+.st-cab h3 .x{color:#7DB2FF} .st-cab h3 .y{color:#FF8A80}
+.st-cab .b{font-size:.95em;color:rgba(255,255,255,.7);font-weight:700}
+.st-leg{display:flex;gap:1.2em;margin:1em 0 .6em;font-size:.82em;font-weight:800;color:rgba(255,255,255,.7)}
+.st-leg i{display:inline-block;width:1.6em;height:.5em;border-radius:1em;margin-right:.4em;vertical-align:.1em}
+.st-lista{flex:1;display:flex;flex-direction:column;justify-content:space-between;min-height:0;gap:.25em}
+.st-l{display:grid;grid-template-columns:3.4em 1fr 1fr;gap:.9em;align-items:center;flex:1;min-height:0}
+.st-l .k{font-weight:900;font-size:1.15em;line-height:1.02}
+.st-l .k small{display:block;font-size:.66em;color:rgba(255,255,255,.55);font-weight:800}
+.st-l .c{font-size:.82em;font-weight:850;white-space:nowrap}
+.st-l .c .mini{height:.55em;border-radius:1em;overflow:hidden;display:flex;gap:1px;background:rgba(255,255,255,.12);margin-top:.2em}
+.st-l .c .mini i{display:block;height:100%}
+.st-l .c.of{opacity:.75}
+.st-rod{margin-top:1em;display:flex;justify-content:space-between;align-items:flex-end;font-size:.8em;font-weight:800;color:rgba(255,255,255,.65)}
+.st-rod b{color:#fff;font-weight:900;font-size:1.15em}
+.st-dica{color:rgba(255,255,255,.7);font-size:13px;font-weight:700;margin-top:10px}
+.st-dica button{font:inherit;font-weight:900;color:#fff;background:rgba(255,255,255,.12);border:0;border-radius:8px;padding:5px 10px;cursor:pointer;margin-left:6px}
+
+/* ---------- cards ---------- */
+.aba .novo{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+  background:linear-gradient(90deg,#FFC94D,#FF8A3D);color:#0B1324;border-radius:999px;padding:2px 6px;margin-left:4px;vertical-align:2px}
+.avisoCard{
+  display:flex;align-items:center;gap:10px;width:100%;margin:0 0 14px;cursor:pointer;
+  font:inherit;font-weight:850;font-size:14.5px;color:#0B1324;text-align:left;
+  background:linear-gradient(90deg,#FFC94D,#FF8A3D);border:0;border-radius:16px;padding:13px 16px;
+  box-shadow:0 10px 26px -12px rgba(255,138,61,.7);animation:entra .5s;
+}
+.avisoCard .ic{font-size:18px}
+.avisoCard .vai{margin-left:auto;font-weight:900;white-space:nowrap}
+.bt-ouro{
+  font:inherit;font-size:15px;font-weight:900;cursor:pointer;color:#0B1324;width:100%;
+  background:linear-gradient(90deg,#FFC94D,#FF8A3D);border:0;border-radius:14px;padding:13px 16px;
+  box-shadow:0 10px 26px -12px rgba(255,138,61,.7);
+}
+.bt-ouro:hover{filter:brightness(1.05)}
+.bt-ouro:disabled,.bt-sec:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.6)}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.thumb{font:inherit;border:0;padding:0;background:none;cursor:pointer;text-align:left;color:var(--texto)}
+.thumb img{width:100%;aspect-ratio:9/16;border-radius:14px;display:block;background:#0B1324;
+  box-shadow:0 10px 24px -12px rgba(0,0,0,.5);transition:transform .15s}
+.thumb:hover img{transform:translateY(-3px)}
+.thumb span{display:block;font-weight:900;font-size:13.5px;margin-top:7px}
+.thumb small{display:block;font-size:11.5px;color:var(--fraco);font-weight:750}
+.palpite{display:flex;justify-content:space-between;align-items:flex-end}
+.pp span{display:block;font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.pp b{font-size:clamp(34px,10vw,48px);font-weight:900;letter-spacing:-.03em;line-height:1}
+.pp.dir{text-align:right}
+.palpiteBarra{display:flex;height:14px;border-radius:999px;overflow:hidden;gap:3px;margin:12px 0 4px;background:var(--linha)}
+.palpiteBarra i{display:block;height:100%}
+#palpiteBarraPl{background:linear-gradient(90deg,#1D4ED8,#60A5FA)}
+#palpiteBarraPt{background:linear-gradient(90deg,#F87171,#B91C1C)}
+#palpite{width:100%;accent-color:var(--texto);margin-top:6px}
+.sel{flex:1;font:inherit;font-size:15px;font-weight:750;color:var(--texto);background:var(--superficie-2);
+  border:1px solid var(--linha-forte);border-radius:12px;padding:10px 12px}
+.cardModal{position:fixed;inset:0;z-index:120;background:rgba(3,6,12,.88);display:flex;
+  align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(6px)}
+.cm-caixa{display:flex;gap:16px;align-items:center;max-height:100%;flex-wrap:wrap;justify-content:center}
+.cm-caixa img{height:min(68vh,calc((100vw - 28px) * 16 / 9));aspect-ratio:9/16;border-radius:16px;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+.cm-acoes{display:flex;flex-direction:column;gap:8px;width:min(340px,100%)}
+.cm-acoes .bt-sec{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
+
+/* ---------- identidade Oxe e fator UAU ---------- */
+.cordel{
+  height:10px;
+  background:
+    linear-gradient(135deg,#D49B35 25%,transparent 25%) 0 0/14px 10px,
+    linear-gradient(225deg,#D49B35 25%,transparent 25%) 0 0/14px 10px,
+    #C8433A;
+}
+.marcaOxe{display:inline-block;font:700 21px/1.1 "Zilla Slab",Georgia,serif;color:var(--texto);
+  letter-spacing:-.005em;margin-bottom:6px;padding-bottom:4px;
+  background:linear-gradient(#C8433A,#C8433A) left bottom/46px 3px no-repeat}
+.marcaOxe b{color:#B9831F;font-weight:700}
+@media (prefers-color-scheme: dark){ .marcaOxe b{color:#F2B544} }
+.marcaOxe small{font:800 11px/1 "Nunito",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--fraco);margin-left:4px;vertical-align:3px}
+.topo .sobretitulo{display:block;margin-top:6px}
+#cartaoPlacar::before,.painel::before{
+  content:"";position:absolute;left:50%;top:-60%;width:180%;aspect-ratio:1;transform:translateX(-50%);
+  background:repeating-conic-gradient(from 0deg,rgba(242,181,68,.07) 0deg 5deg,transparent 5deg 10deg);
+  -webkit-mask:radial-gradient(closest-side,#000 20%,transparent 75%);
+          mask:radial-gradient(closest-side,#000 20%,transparent 75%);
+  animation:girar 140s linear infinite;pointer-events:none;
+}
+#cartaoPlacar::after,.painel::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:6px;
+  background:
+    linear-gradient(135deg,#D49B35 25%,transparent 25%) 0 0/12px 6px,
+    linear-gradient(225deg,#D49B35 25%,transparent 25%) 0 0/12px 6px,#C8433A;
+  opacity:.85;
+}
+@keyframes girar{to{transform:translateX(-50%) rotate(360deg)}}
+.pct{background-clip:text;-webkit-background-clip:text;color:transparent!important}
+.pl .pct{background-image:linear-gradient(180deg,#BBD6FF,#5B9BFF)}
+.pt .pct{background-image:linear-gradient(180deg,#FFC2BC,#FF6B60)}
+.wrap>*,#painelApuracao>*,#painelCards>*,#painelPesquisas>*{animation:sobe .7s cubic-bezier(.22,1,.36,1) both}
+#painelApuracao>*:nth-child(2),#painelCards>*:nth-child(2){animation-delay:.06s}
+#painelApuracao>*:nth-child(3),#painelCards>*:nth-child(3){animation-delay:.12s}
+#painelApuracao>*:nth-child(4),#painelCards>*:nth-child(4){animation-delay:.18s}
+#painelApuracao>*:nth-child(5){animation-delay:.24s}
+#painelApuracao>*:nth-child(n+6){animation-delay:.3s}
+@keyframes sobe{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+#previaPesquisas .pct,#mediaCorpo .pct{font-size:clamp(26px,9vw,62px)}
 </style>
 </head>
 <body>
+<div class="cordel" aria-hidden="true"></div>
 <div class="wrap">
+
+  <!-- O caminho para o oficial, no alto e à vista: quem chega aqui precisa
+       saber de cara onde fica o número que vale. -->
+  <div class="oficialTopo">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="m8.5 12 2.4 2.4L15.8 9.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="t"><b>Resultado oficial: TSE</b>
+      <span>Aqui é projeção. O que vale é a totalização do TSE.</span></div>
+    <a href="https://resultados.tse.jus.br" target="_blank" rel="noopener noreferrer">Ver no TSE ↗</a>
+  </div>
+
   <header class="topo">
-    <h1>Presidente · apuração ao vivo</h1>
-    <div class="sub" id="status">carregando…</div>
+    <div class="marca">
+      <span class="marcaOxe">Oxe, era <b>assim?</b> <small>apresenta</small></span>
+      <h1>Apuração <span class="pl">ao</span> <span class="pt">vivo</span></h1>
+      <span class="sobretitulo">2º turno · Presidente 2026</span>
+      <div class="sub" id="status">carregando…</div>
+    </div>
   </header>
 
   <div class="status pesq" id="faixaStatus">
@@ -426,33 +774,43 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
   </div>
 
   <div class="cartao" id="avisoTeste" style="display:none;
-       border-color:var(--alerta);background:rgba(224,145,58,.1)">
+       border-color:var(--alerta);background:color-mix(in srgb,var(--alerta) 10%,var(--superficie))">
     <strong style="color:var(--alerta)">Modo de teste — 1º turno</strong><br>
     <span class="faixa">Estes são os votos reais do 1º turno, de 4 de outubro,
     já 100% apurados. <strong>Não é o 2º turno.</strong>
-    <a href="./" style="color:var(--pl)">Ver o 2º turno</a></span>
+    <a href="./">Ver o 2º turno</a></span>
   </div>
 
   <nav class="abas" id="abas">
     <button class="aba ativa" data-aba="apuracao">Apuração</button>
+    <button class="aba" data-aba="cards">Cards <span class="novo">stories</span></button>
     <button class="aba" data-aba="pesquisas">Pesquisas</button>
   </nav>
 
   <div class="cartao instalar" id="cartaoInstalar">
     <div class="txt"><b>Instale na tela de início</b><br>
-      Abre como aplicativo, em tela cheia e sem barra de navegador.</div>
+      Abre como aplicativo, em tela cheia.</div>
     <button class="bt" id="btInstalar">Instalar</button>
     <button class="fechar" id="btFechar" title="Agora não">&times;</button>
   </div>
 
   <div class="cartao instalar" id="cartaoIOS">
     <div class="txt"><b>Deixe na tela de início</b><br>
-      Toque em <b>Compartilhar</b> na barra do Safari e escolha
-      <b>Adicionar à Tela de Início</b>.</div>
+      Toque em <b>Compartilhar</b> e escolha <b>Adicionar à Tela de Início</b>.</div>
     <button class="fechar" id="btFecharIOS" title="Agora não">&times;</button>
   </div>
 
   <div id="painelApuracao">
+  <nav class="atalhos" id="atalhos" aria-label="Ir para">
+    <a href="#cartaoPlacar">Placar</a><a href="#cartaoFalta">Quanto falta</a>
+    <a href="#cartaoRegistro">A cada 1%</a><a href="#cartaoMapa">Mapa</a>
+    <a href="#cartaoRegioes">Regiões</a><a href="#cartaoEstadosC">Estados</a>
+  </nav>
+
+  <button class="avisoCard" id="avisoCard" hidden>
+    <span class="ic">✦</span><span id="avisoCardTxt">Card de stories pronto</span>
+    <span class="vai">→</span></button>
+
   <div class="cartao" id="cartaoPlacar">
     <div id="vazio" class="vazio">
       <div id="contagem" class="contagem" hidden>
@@ -470,78 +828,186 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
       </div>
       <div id="previaPesquisas">Aguardando o início da apuração.</div></div>
     <div id="placar" style="display:none">
-      <div class="placar">
+      <span class="rotulo">Projeção do resultado final</span>
+      <div class="placar" style="margin-top:10px">
         <div class="lado pl">
-          <div class="nome" id="nomePL">—</div>
+          <div class="quem"><span class="avatar">FB</span>
+            <div class="nome" id="nomePL">—</div></div>
           <div class="pct" id="pctPL">—</div>
           <div class="faixa" id="faixaPL"></div>
         </div>
         <div class="lado pt dir">
-          <div class="nome" id="nomePT">—</div>
+          <div class="quem"><span class="avatar">L</span>
+            <div class="nome" id="nomePT">—</div></div>
           <div class="pct" id="pctPT">—</div>
           <div class="faixa" id="faixaPT"></div>
         </div>
       </div>
       <div class="barra"><i id="barraPL"></i><i id="barraPT"></i></div>
       <div class="meio"><span>50%</span></div>
-      <div class="faixa" id="probabilidade"></div>
+      <div id="probabilidade"></div>
+      <div class="compara">
+        <div class="linha"><span class="tag">Oficial TSE</span>
+          <div class="mini"><i id="cmpOfPL"></i><i id="cmpOfPT"></i></div>
+          <span class="v" id="cmpOfV">—</span></div>
+        <div class="linha"><span class="tag">Projeção</span>
+          <div class="mini"><i id="cmpPrPL"></i><i id="cmpPrPT"></i></div>
+          <span class="v" id="cmpPrV">—</span></div>
+      </div>
+      <div class="oqueE"><b>Oficial TSE</b> é o que já foi contado.
+        <b>Projeção</b> é onde a conta deve terminar, porque cada região
+        apura num ritmo diferente.</div>
+      <button class="bt-compartilhar" id="btCompartilhar">Compartilhar o placar</button>
     </div>
   </div>
 
-  <div class="cartao grade">
-    <div class="item"><div class="r" id="apurado">—</div>
-      <div class="l">do eleitorado apurado</div></div>
-    <div class="item"><div class="r" id="secoes">—</div>
+  <div class="blocos">
+    <div class="bloco-num ok"><div class="k"><i></i>Apurado</div>
+      <div class="r" id="apurado">—</div>
+      <div class="progresso"><i id="barraApurado" style="width:0%"></i></div>
+      <div class="l">das urnas do país</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Seções</div>
+      <div class="r" id="secoes">—</div>
       <div class="l">seções totalizadas</div></div>
-    <div class="item"><div class="r" id="bruto">—</div>
-      <div class="l">percentual bruto do TSE</div></div>
-    <div class="item"><div class="r" id="correcao">—</div>
-      <div class="l">correção do viés de apuração</div></div>
-    <div class="item"><div class="r" id="conclusao">—</div>
-      <div class="l">previsão de 99% apurado</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Oficial agora</div>
+      <div class="r" id="bruto">—</div>
+      <div class="l">de Flávio no TSE</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Fim previsto</div>
+      <div class="r" id="conclusao">—</div>
+      <div class="l">99% apurado, no ritmo atual</div></div>
   </div>
 
-  <div class="cartao grade" id="cartaoVotos" style="display:none">
-    <div class="item"><div class="r" id="votosPL">—</div>
-      <div class="l" id="lblVotosPL">votos apurados</div></div>
-    <div class="item"><div class="r" id="votosPT">—</div>
-      <div class="l" id="lblVotosPT">votos apurados</div></div>
-    <div class="item"><div class="r" id="diferenca">—</div>
-      <div class="l">de diferença até agora</div></div>
+  <div class="blocos" id="cartaoVotos" style="display:none">
+    <div class="bloco-num pl"><div class="k"><i></i><span id="lblVotosPL">Flávio</span></div>
+      <div class="r" id="votosPL">—</div><div class="l">votos contados</div></div>
+    <div class="bloco-num pt"><div class="k"><i></i><span id="lblVotosPT">Lula</span></div>
+      <div class="r" id="votosPT">—</div><div class="l">votos contados</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Diferença</div>
+      <div class="r" id="diferenca">—</div><div class="l">votos à frente</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Correção</div>
+      <div class="r" id="correcao">—</div><div class="l">projeção − oficial</div></div>
   </div>
 
-  <div class="cartao grade" id="cartaoEleitorado" style="display:none">
-    <div class="item"><div class="r" id="comparecimento">—</div>
-      <div class="l">de comparecimento</div></div>
-    <div class="item"><div class="r" id="abstencao">—</div>
-      <div class="l">de abstenção</div></div>
-    <div class="item"><div class="r" id="brancosNulos">—</div>
-      <div class="l">de brancos e nulos</div></div>
+  <div class="cartao" id="cartaoFalta" style="display:none">
+    <div class="cab"><div><span class="rotulo">O que ainda pode mudar</span>
+      <h2>Quanto falta contar</h2></div>
+      <span class="pilula" id="ritmo" hidden></span></div>
+    <div class="falta">
+      <div class="falta-num"><b id="faltaVotos">—</b><span>votos válidos ainda por contar (estimativa)</span></div>
+      <div class="falta-num"><b id="faltaPrecisa">—</b><span id="faltaPrecisaTxt">—</span></div>
+    </div>
+    <div class="faixa" id="faltaNota" style="margin-top:10px"></div>
+  </div>
+
+  <div class="blocos" id="cartaoEleitorado" style="display:none">
+    <div class="bloco-num"><div class="k"><i></i>Comparecimento</div>
+      <div class="r" id="comparecimento">—</div><div class="l">dos eleitores votaram</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Abstenção</div>
+      <div class="r" id="abstencao">—</div><div class="l">não foram votar</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Brancos e nulos</div>
+      <div class="r" id="brancosNulos">—</div><div class="l">de quem votou</div></div>
+    <div class="bloco-num"><div class="k"><i></i>Votos válidos</div>
+      <div class="r" id="validosTot">—</div><div class="l">contados até agora</div></div>
+  </div>
+
+  <div class="cartao" id="cartaoRegistro" style="display:none">
+    <div class="cab">
+      <div><span class="rotulo">A cada 1% apurado</span>
+        <h2>Oficial × projeção</h2></div>
+      <span class="pilula" id="registroConta">—</span>
+    </div>
+    <div id="auditoriaCaixa" hidden>
+      <span class="rotulo" style="margin-bottom:8px">Auditoria: a projeção acertou?</span>
+      <div class="auditoria" id="auditoria"></div>
+      <div class="faixa" id="auditoriaResumo" style="margin:10px 0 18px"></div>
+    </div>
+    <ol class="linhaTempo" id="registroLista"></ol>
+    <div class="acoes">
+      <button class="bt-sec" id="btRegistroMais" hidden>Ver as últimas 20</button>
+      <button class="bt-sec" id="btRegistroCSV">Baixar registro completo</button>
+      <button class="bt-sec" id="btRegistroCopiar">Copiar resumo</button>
+      <button class="bt-sec forte" id="btStories">Formato stories</button>
+    </div>
+    <div class="faixa" style="margin-top:10px" id="registroNota">Cada ponto guarda,
+      no momento em que a apuração cruzou aquele percentual, o número oficial do
+      TSE e o que a projeção dizia. Fica gravado neste aparelho.</div>
   </div>
 
   <div class="cartao" id="cartaoMapa" style="display:none">
-    <h2>Mapa da apuração</h2>
-    <svg id="mapa" viewBox="0 0 1000 1005" style="width:100%;
-      max-width:560px;margin:0 auto;display:block;height:auto"></svg>
+    <div class="cab">
+      <div><span class="rotulo">Mapa da apuração</span><h2 id="tituloMapa">Município a município</h2></div>
+      <div class="seletor" role="tablist">
+        <button class="ativo" data-modo="mun">Municípios</button>
+        <button data-modo="uf">Estados</button>
+      </div>
+    </div>
+    <div class="busca" id="buscaCaixa">
+      <input id="buscaMun" type="search" placeholder="Procurar município…" autocomplete="off"
+             aria-label="Procurar município" list="listaMun">
+      <datalist id="listaMun"></datalist>
+    </div>
+    <div class="mapaCaixa">
+      <svg id="mapa" viewBox="0 0 1000 935" role="img" aria-label="Mapa do Brasil"></svg>
+      <div class="ficha" id="ficha" hidden></div>
+    </div>
+    <div class="escala" id="escalaMapa"></div>
     <div class="faixa" id="legendaMapa" style="margin-top:10px"></div>
   </div>
 
   <div class="cartao" id="cartaoGrafico" style="display:none">
-    <h2>Trajetória</h2>
-    <svg class="graf" id="grafico" viewBox="0 0 600 130" preserveAspectRatio="none"></svg>
-    <div class="faixa" style="margin-top:8px">
-      Linha cheia: projeção do modelo. Pontilhada: percentual bruto do TSE.
+    <div class="cab"><div><span class="rotulo">Evolução</span><h2>Trajetória da noite</h2></div></div>
+    <svg class="graf" id="grafico" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+    <div class="legenda">
+      <span><i style="background:var(--pl)"></i>Projeção (Flávio)</span>
+      <span><i style="background:var(--fraco);opacity:.6"></i>Oficial TSE (Flávio)</span>
+      <span><i style="background:var(--linha-forte)"></i>50%</span>
+      <span><i style="background:var(--alerta);opacity:.7"></i>Bolsonaro em 2022 (49,1%)</span>
     </div>
   </div>
 
-  <div class="cartao">
-    <h2>Por estado</h2>
+  <div class="cartao" id="cartaoRegioes" style="display:none">
+    <div class="cab"><div><span class="rotulo">Brasil em cinco partes</span><h2>Por região</h2></div>
+      <span class="pilula">projeção · votos válidos</span></div>
+    <div class="regioes" id="regioes"></div>
+  </div>
+
+  <div class="cartao" id="cartaoSaldo" style="display:none">
+    <div class="cab"><div><span class="rotulo">Onde a eleição se decide</span><h2>Saldo de votos por estado</h2></div>
+      <span class="pilula">projeção</span></div>
+    <div class="saldo">
+      <div><div class="saldo-tit" id="saldoTitPl">—</div><div id="saldoPl"></div></div>
+      <div><div class="saldo-tit" id="saldoTitPt">—</div><div id="saldoPt"></div></div>
+    </div>
+    <div class="faixa" style="margin-top:10px">Diferença de votos que cada estado deve dar
+      ao fim da apuração. É a soma desses saldos que decide a eleição.</div>
+  </div>
+
+  <div class="cartao" id="cartaoEstadosC">
+    <div class="cab"><div><span class="rotulo">Estado por estado</span><h2>Por estado</h2></div>
+      <div class="seletor" id="ordemEstados">
+        <button class="ativo" data-o="apurado">Mais apurados</button>
+        <button data-o="vantagem">Maior vantagem</button>
+        <button data-o="az">A–Z</button>
+      </div></div>
     <div class="estados" id="estados"><div class="vazio">—</div></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="bt-sec" id="btEstadosTodos" hidden>Ver todos os estados</button></div>
   </div>
 
   <div class="cartao">
+    <span class="rotulo">Em poucas palavras</span>
+    <h2 style="margin-bottom:12px">Por que a projeção é diferente do TSE?</h2>
+    <p class="resumo">Cada parte do país termina de contar numa hora. No começo
+      da noite, o número do TSE mostra <b>só quem já contou</b> — e não o país
+      inteiro. A projeção completa a conta com o que falta.</p>
+    <ol class="passos">
+      <li>Lê os votos oficiais do TSE a cada 25 segundos.</li>
+      <li>Compara cada cidade com como ela votou no 1º turno.</li>
+      <li>Aplica essa mudança ao que ainda falta contar.</li>
+    </ol>
+    <div style="margin-top:14px">
     <details>
-      <summary>Como isso funciona, e por que o número bruto engana</summary>
+      <summary>Explicação completa</summary>
       <p>A totalização não termina na mesma hora em todo o país. Municípios
       pequenos fecham a contagem em minutos; os grandes levam horas, e cada
       estado tem uma mistura diferente dos dois. Então o percentual dos
@@ -556,57 +1022,141 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
       já apurada deveria ter dado se o eleitorado repetisse o 1º turno</b>. A
       diferença contra o que de fato saiu da urna é o <b>swing</b> — e é só isso
       que precisa ser estimado, uma quantidade pequena e estável.</p>
-      <p>Entre um turno e outro muda também <b>quanta gente vota e quantos
-      votos são válidos</b> — abstenção, branco e nulo não se repetem iguais, e
-      não mudam igual em todo estado. Então o modelo não assume que o que falta
-      vai render o mesmo volume de votos do 1º turno: ele mede essa diferença
-      estado por estado e corrige o volume projetado. O que ele não faz é
-      prever branco e nulo município a município — esses números aparecem na
-      tela como o TSE os publica, e entram na conta pelo volume de voto válido
-      que sobra.</p>
       <p>Com pouca apuração, o swing de um estado isolado é ruído. Então ele é
       puxado para o da sua região, e o da região para o nacional, com força
       inversa à informação disponível. No início da noite o modelo é quase
       nacional; conforme os votos entram, vira estadual.</p>
-      <p><b>O que os testes mostram.</b> O modelo foi rodado contra os segundos
-      turnos de 2006, 2010, 2014, 2018 e 2022 — usando em cada caso o 1º turno
-      daquele ano como base, o resultado real como alvo e a ordem de chegada
-      observada em 2026. Com 5% apurado, o erro médio da projeção foi de
-      <b>0,96 ponto percentual</b>, contra cerca de 9 pontos do percentual
-      bruto; o pior caso foi 1,83, em 2014. Com 20% apurado o erro médio cai
-      para 0,73; com 50%, para 0,30.</p>
-      <p>Também foi testado contra mil eleições simuladas sobre o eleitorado
-      real, com resultados inventados de propósito para fugir do que o modelo
-      espera. Com 5% apurado ele apontou o vencedor certo em <b>96 de cada
-      100</b>. Separando pelo aperto da disputa: quando a diferença final
-      passou de 2 pontos, acertou em todos os casos; abaixo de 1 ponto,
-      em 70%. É por isso que a página mostra a margem junto do número e avisa
-      quando a diferença ainda cabe nela — num resultado apertado o modelo não
-      tem como saber, e dizer o contrário seria enganar quem está lendo.</p>
-      <p>O modelo, os testes e esta página são abertos e podem ser conferidos
-      em <a href="https://github.com/oxeeraassim/apuracao" target="_blank"
-      rel="noopener noreferrer">github.com/oxeeraassim/apuracao</a>.</p>
-      <p>Os dados vêm direto do <a href="https://resultados.tse.jus.br"
-      target="_blank" rel="noopener">TSE</a>, no seu navegador. Esta página não
-      tem servidor e não guarda nada.</p>
+      <p>Entre um turno e outro muda também <b>quanta gente vota e quantos
+      votos são válidos</b>. O modelo mede essa diferença estado por estado e
+      corrige o volume projetado. Branco e nulo aparecem como o TSE publica.</p>
     </details>
+    <details>
+      <summary>O modelo já foi testado?</summary>
+      <p>Sim. Foi rodado contra os segundos turnos de 2006, 2010, 2014, 2018 e
+      2022, com o 1º turno de cada ano como base e a ordem de chegada observada
+      em 2026. Com 5% apurado, o erro médio da projeção foi de <b>0,96 ponto</b>,
+      contra cerca de 9 pontos do número bruto; o pior caso foi 1,83, em 2014.
+      Com 20% apurado o erro médio cai para 0,73; com 50%, para 0,30.</p>
+      <p>Também foi testado contra milhares de eleições simuladas sobre o
+      eleitorado real. Com 10% apurado, quando a projeção marca 50,5% ou mais
+      para um lado, esse lado venceu em 99% dos casos. Abaixo de 1 ponto de
+      diferença, o modelo não tem como saber — e a página diz isso em vez de
+      fingir certeza.</p>
+    </details>
+    <details>
+      <summary>O mapa por município</summary>
+      <p>A <b>intensidade</b> da cor mostra quanto de cada município já foi
+      apurado: cinza é nada, cor cheia é tudo. A <b>cor</b> mostra quem lidera
+      ali pela estimativa do modelo — o resultado da cidade no 1º turno mais a
+      mudança já medida no seu estado. O TSE publica o voto de cada município
+      num arquivo separado, e baixar os 5,6 mil a cada 25 segundos pesaria
+      demais no celular de quem acompanha. Por isso, ao <b>tocar num
+      município</b>, a página busca o resultado oficial daquela cidade.</p>
+    </details>
+    <details>
+      <summary>De onde vêm os dados</summary>
+      <p>Direto dos arquivos públicos do <a href="https://resultados.tse.jus.br"
+      target="_blank" rel="noopener">TSE</a>, lidos pelo seu navegador. Esta
+      página não tem servidor e não guarda nada fora do seu aparelho. O código
+      e os testes são abertos em <a href="https://github.com/oxeeraassim/apuracao"
+      target="_blank" rel="noopener noreferrer">github.com/oxeeraassim/apuracao</a>.</p>
+      <p>Isto é uma <b>estimativa estatística</b>, não um resultado oficial.
+      Diferença entre projeção e apuração não é evidência de problema na
+      apuração: significa que o modelo errou, e é para isso que serve a margem.</p>
+    </details>
+    </div>
   </div>
 
   </div><!-- fim painelApuracao -->
 
+
+  <div id="painelCards" hidden>
+    <div class="cartao painel">
+      <span class="rotulo">Para Instagram e WhatsApp</span>
+      <h2 style="margin-bottom:8px">Cards de stories</h2>
+      <p class="faixa" style="color:rgba(255,255,255,.75);margin:0 0 16px">A cada 5% da
+        apuração, um card novo aparece aqui sozinho, com o oficial do TSE, a projeção e
+        as regiões. Toque, compartilhe, marque <b style="color:#fff">@oxe_eraassim</b>.</p>
+      <button class="bt-ouro" id="btCardAgora">Criar card de agora</button>
+    </div>
+
+    <div class="cartao">
+      <div class="cab"><div><span class="rotulo">Feitos automaticamente</span>
+        <h2>Cards da apuração</h2></div><span class="pilula" id="cardsConta">0 cards</span></div>
+      <div class="vazio" id="cardsVazio">Os cards aparecem aqui quando a apuração passar de
+        <b>1%</b>, <b>5%</b>, <b>10%</b>, <b>15%</b>… — e um especial se houver
+        <b>virada</b> no placar do TSE. Deixe esta página aberta.</div>
+      <div class="thumbs" id="cardsLista"></div>
+      <button class="bt-sec forte" id="btCardAuditoria" hidden style="margin-top:12px">
+        Card final: o algoritmo acertou?</button>
+    </div>
+
+    <div class="cartao">
+      <span class="rotulo">Antes da urna</span>
+      <h2 style="margin-bottom:6px">Card das pesquisas</h2>
+      <p class="faixa" style="margin:0 0 12px">A média e as pesquisas mais recentes num card.
+        Fica disponível só até a apuração começar.</p>
+      <button class="bt-sec forte" id="btCardPesquisas" style="width:100%">Gerar card das pesquisas</button>
+      <div class="faixa" id="cardPesqMsg" style="margin-top:8px"></div>
+    </div>
+
+    <div class="cartao">
+      <span class="rotulo">Desafie os amigos</span>
+      <h2 style="margin-bottom:6px">Qual é o seu palpite?</h2>
+      <p class="faixa" style="margin:0 0 14px">Arraste, gere o card e desafie quem chega mais
+        perto. Depois da apuração, o card mostra por quanto você errou.</p>
+      <div class="palpite">
+        <div class="pp"><span style="color:var(--pl)">Flávio</span><b id="palpitePl" style="color:var(--pl)">50,0%</b></div>
+        <div class="pp dir"><span style="color:var(--pt)">Lula</span><b id="palpitePt" style="color:var(--pt)">50,0%</b></div>
+      </div>
+      <div class="palpiteBarra"><i id="palpiteBarraPl"></i><i id="palpiteBarraPt"></i></div>
+      <input type="range" id="palpite" min="40" max="60" step="0.1" value="50"
+             aria-label="Seu palpite para Flávio, em % dos votos válidos">
+      <button class="bt-sec forte" id="btPalpite" style="width:100%;margin-top:12px">Gerar card do meu palpite</button>
+    </div>
+
+    <div class="cartao">
+      <span class="rotulo">Orgulho local</span>
+      <h2 style="margin-bottom:12px">Card da sua cidade ou estado</h2>
+      <div class="busca"><input id="cardLugarBusca" type="search" placeholder="Digite sua cidade…"
+        autocomplete="off" aria-label="Sua cidade"></div>
+      <button class="bt-sec forte" id="btCardLugar" style="width:100%">Gerar card da cidade</button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <select id="cardEstadoSel" class="sel" aria-label="Estado"></select>
+        <button class="bt-sec" id="btCardEstado">Card do estado</button>
+      </div>
+      <div class="faixa" id="cardLugarMsg" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="cardModal" id="cardModal" hidden>
+    <div class="cm-caixa">
+      <img id="cardImg" alt="Card para stories">
+      <div class="cm-acoes">
+        <button class="bt-ouro" id="cardCompartilhar">Compartilhar (stories, WhatsApp…)</button>
+        <div style="display:flex;gap:8px">
+          <button class="bt-sec" id="cardBaixar" style="flex:1">Baixar imagem</button>
+          <button class="bt-sec" id="cardWhats" style="flex:1">Link no WhatsApp</button>
+        </div>
+        <button class="bt-sec" id="cardFechar">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="painelPesquisas" hidden>
     <div class="cartao painel" id="cartaoMedia">
-      <h2>Média das pesquisas</h2>
-      <div id="mediaVazio" class="vazio">Carregando as pesquisas…</div>
+      <span class="rotulo">Antes da urna</span>
+      <h2 style="margin-bottom:14px">Média das pesquisas</h2>
+      <div id="mediaVazio" class="vazio" style="color:rgba(255,255,255,.75)">Carregando as pesquisas…</div>
       <div id="mediaCorpo" style="display:none">
         <div class="placar">
           <div class="lado pl">
-            <div class="nome" id="pNomePL">—</div>
+            <div class="quem"><span class="avatar">FB</span><div class="nome" id="pNomePL">—</div></div>
             <div class="pct" id="pPctPL">—</div>
             <div class="faixa" id="pFaixaPL"></div>
           </div>
           <div class="lado pt dir">
-            <div class="nome" id="pNomePT">—</div>
+            <div class="quem"><span class="avatar">L</span><div class="nome" id="pNomePT">—</div></div>
             <div class="pct" id="pPctPT">—</div>
             <div class="faixa" id="pFaixaPT"></div>
           </div>
@@ -615,99 +1165,69 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
         <div class="meio"><span>50%</span></div>
         <div class="faixa" id="pResumo"></div>
         <div class="faixa" id="pAtualizado" style="margin-top:4px"></div>
+        <button class="bt-ouro" id="btPesqCompartilhar" style="margin-top:14px">Compartilhar no Instagram e WhatsApp</button>
+        <div class="faixa" id="pesqMsg" style="margin-top:6px"></div>
       </div>
     </div>
 
     <div class="cartao" id="cartaoAlerta">
-      <div class="aviso" style="border-left:2px solid var(--alerta);padding-left:12px">
-        <strong>Leia antes de confiar nos números acima.</strong> No 1º turno de
-        2026, as pesquisas erraram de forma sistemática: a maioria dos
-        institutos apontava Lula à frente, e Flávio venceu por
-        <strong>47,03% a 45,16%</strong>. O erro não foi aleatório — foi na
-        mesma direção em quase todos. A média abaixo pode estar errada do mesmo
-        jeito, e a margem mostrada já embute um piso de erro por causa disso.
+      <div class="aviso" style="border-left:4px solid var(--alerta);padding-left:14px">
+        <strong>Atenção:</strong> no 1º turno as pesquisas erraram o líder.
+        Davam Lula à frente, e Flávio venceu por <strong>47,03% a 45,16%</strong>.
       </div>
     </div>
 
     <div class="cartao" id="cartaoTendencia" style="display:none">
-      <h2>Tendência</h2>
-      <svg class="graf" id="grafPesquisas" viewBox="0 0 600 130"
+      <div class="cab"><div><span class="rotulo">Últimas 4 semanas</span><h2>Tendência</h2></div></div>
+      <svg class="graf" id="grafPesquisas" viewBox="0 0 600 150"
            preserveAspectRatio="none"></svg>
       <div class="faixa" style="margin-top:8px">
-        Cada ponto é uma pesquisa, posicionada pela data de término do campo.
-        A linha é a média ponderada. Acima de 50% favorece
-        <span id="legNomePL">o candidato do PL</span>.
+        Cada ponto é uma pesquisa (votos válidos de
+        <span id="legNomePL">Flávio</span>). A linha é a média.
       </div>
     </div>
 
     <div class="cartao">
-      <h2>Como cada instituto se saiu no 1º turno</h2>
-      <div id="acertoVazio" class="vazio">Calculando…</div>
-      <div class="rolagem"><table id="tabAcerto" style="display:none">
-        <thead><tr><th>Instituto</th><th>Diz agora</th>
-          <th>Errou no 1º turno por</th></tr></thead>
-        <tbody id="corpoAcerto"></tbody>
-      </table></div>
-      <div class="faixa" style="margin-top:10px">
-        No 1º turno, Flávio venceu Lula por <strong>1,87 ponto</strong> (47,03%
-        a 45,16%). O erro acima é a diferença entre a vantagem que cada
-        instituto projetou e essa vantagem real — em laranja, os que colocaram
-        o candidato errado na frente. A coluna do meio é o que o mesmo
-        instituto diz agora, para o 2º turno.
-      </div>
-    </div>
-
-    <div class="cartao">
-      <h2>Pesquisas do 2º turno</h2>
-      <div class="rolagem"><table>
-        <thead><tr><th>Instituto</th><th>Campo</th><th>Amostra</th>
-          <th id="thPT">PT</th><th id="thPL">PL</th><th>TSE</th></tr></thead>
-        <tbody id="listaPesquisas"><tr><td colspan="6" class="vazio">—</td></tr></tbody>
-      </table></div>
+      <div class="cab"><div><span class="rotulo">Placar das pesquisas</span><h2>Pesquisas do 2º turno</h2></div>
+        <span class="pilula"><span id="thPL">Flávio</span> × <span id="thPT">Lula</span></span></div>
+      <div class="listaPesq" id="listaPesquisas"><div class="vazio">—</div></div>
       <div style="text-align:center;margin-top:14px">
-        <button class="bt" id="btMais" style="display:none">Ver mais antigas</button>
+        <button class="bt-sec" id="btMais" style="display:none">Ver mais antigas</button>
       </div>
+      <details style="margin-top:14px">
+        <summary>De onde vêm estes números</summary>
+        <p>Os percentuais vêm da tabela da <a href="https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2026"
+        target="_blank" rel="noopener">Wikipédia</a>, lida a cada 10 minutos. O
+        selo <b>TSE ✓</b> confirma que a pesquisa está registrada no Tribunal —
+        o TSE registra empresa, protocolo e amostra, mas não publica os
+        percentuais.</p>
+      </details>
     </div>
 
-    <div class="cartao aviso">
-      <strong>De onde vêm estes dados.</strong> Os percentuais vêm da tabela
-      mantida na <a href="https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2026"
-      target="_blank" rel="noopener">Wikipédia</a> (licença livre), buscados
-      pelo seu navegador a cada hora. O TSE registra toda pesquisa divulgada —
-      empresa, protocolo, contratante, amostra e metodologia — mas
-      <strong>não publica os percentuais</strong>; por isso o registro oficial
-      entra aqui como validação, na coluna TSE, e não como fonte dos números.
-      A coluna confirma que a pesquisa existe e sob qual protocolo.
+    <div class="cartao">
+      <div class="cab"><div><span class="rotulo">Quem acertou</span><h2>Os institutos no 1º turno</h2></div></div>
+      <div id="acertoVazio" class="vazio">Calculando…</div>
+      <div class="acerto" id="corpoAcerto"></div>
+      <details style="margin-top:14px">
+        <summary>Como ler</summary>
+        <p>Flávio venceu o 1º turno por <b>1,87 ponto</b>. A barra mostra quanto a
+        vantagem prevista por cada instituto se afastou disso — em laranja, os
+        que colocaram o candidato errado na frente. Ao lado do nome, o que o
+        instituto diz agora para o 2º turno.</p>
+      </details>
     </div>
   </div>
 
-  <div class="cartao aviso">
-    Isto é uma <strong>estimativa estatística</strong>, não um resultado oficial.
-    O único resultado válido é a totalização do TSE. Se a projeção divergir do
-    resultado final, significa que o modelo errou — modelos erram, e é para isso
-    que serve a margem mostrada acima. Diferença entre projeção e apuração não é
-    evidência de problema na apuração.
+  <!-- Tela no formato de stories (9:16), para tirar print e postar. -->
+  <div class="stories" id="stories" hidden>
+    <div class="st-caixa" id="stCaixa"></div>
+    <div class="st-dica">Tire um print desta tela para postar ·
+      <button id="stFechar">fechar</button></div>
   </div>
 
-  <!-- Caminho para o oficial, à vista.
-       Uma página de projeção tem o dever de dizer, o tempo todo, onde fica o
-       número que vale — e não só avisar que ela não é ele. Quem bate o olho e
-       quer conferir precisa de um clique, não de uma busca. -->
-  <div class="cartao oficial">
-    <div>
-      <b>O resultado oficial é o do TSE</b>
-      <span class="faixa">Esta página é uma projeção. A totalização oficial,
-      que é a que vale, fica no site do Tribunal Superior Eleitoral.</span>
-    </div>
-    <a class="btOficial" href="https://resultados.tse.jus.br" target="_blank"
-       rel="noopener noreferrer">Ver no TSE</a>
-  </div>
-
-  <!-- Crédito. Deliberadamente discreto e sem nada pessoal: nome de autor,
-       endereço de repositório ou perfil de quem fez não têm por que estar
-       numa página que as pessoas vão abrir para ver um resultado. -->
+  <!-- Crédito. Discreto e sem nada pessoal. -->
   <div class="creditos">
-    uma parceria com
+    um produto
     <a href="https://www.instagram.com/oxe_eraassim/" target="_blank"
        rel="noopener noreferrer">Oxe, era assim?</a>
     <span class="sep">·</span>
@@ -717,8 +1237,8 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 </div>
 
 <script type="module">
-import { Modelo } from "./modelo.js?v=bad45c47ec";
-import * as tse from "./tse.js?v=c8cee68b39";
+import { Modelo } from "./modelo.js?v=f6c81420d6";
+import * as tse from "./tse.js?v=391c24cf0d";
 import * as pq from "./pesquisas.js?v=e2aab83783";
 
 /* Ritmo de atualização.
@@ -885,7 +1405,9 @@ const historico = lerHistorico();
 
 function titulo(s) {
   return s.replace(/\S+/g, (p) =>
-    p.length <= 2 ? p.toLowerCase() : p[0].toUpperCase() + p.slice(1).toLowerCase());
+    p.length <= 2 ? p.toLowerCase() : p[0].toUpperCase() + p.slice(1).toLowerCase())
+    // O TSE escreve os nomes sem acento ("FLAVIO").
+    .replace(/^Flavio\b/, "Flávio");
 }
 
 async function iniciar() {
@@ -897,6 +1419,7 @@ async function iniciar() {
     }
     $("nomePL").textContent = nomes.pl;
     $("nomePT").textContent = nomes.pt;
+    if (DEMO === null) pintaRegistro();
     // O modo de teste lê o 1º turno, que já está 100% apurado. Sem um aviso
     // bem visível, é fácil alguém abrir esse endereço no domingo e achar que
     // está vendo o 2º turno.
@@ -977,9 +1500,8 @@ async function tick() {
       $("faixaStatus").className = "status vivo";
       $("statusTitulo").textContent = "Conectado · aguardando o primeiro boletim";
       $("statusTexto").innerHTML =
-        "As urnas estão fechando. O site já está ligado ao "
-        + "<strong>sistema oficial do TSE</strong> e atualiza sozinho no "
-        + "instante em que o primeiro voto for totalizado.";
+        "Ligado ao <strong>TSE</strong>. Atualiza sozinho no instante em que o "
+        + "primeiro voto for totalizado.";
       mostrarPreviaPesquisas();
       ligarContagem();
       desenhaMapa(null).catch(() => {});
@@ -994,6 +1516,24 @@ async function tick() {
 // conseguir ler é o estado normal do mundo, não um defeito.
 let jaLeuTSE = false;
 
+/* Os números grandes do placar sobem/descem até o valor novo, em vez de
+ * trocar de uma vez: o olho percebe que mudou, e para onde. */
+function contar(el, alvo) {
+  const de = parseFloat(el.dataset.v);
+  el.dataset.v = alvo;
+  if (!isFinite(de) || Math.abs(de - alvo) < 0.05
+      || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = n1(alvo) + "%"; return;
+  }
+  const t0 = performance.now(), dur = 900;
+  const passo = (t) => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = n1(de + (alvo - de) * e) + "%";
+    if (k < 1 && el.dataset.v == alvo) requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
+
 function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
   // A hora que o TSE carimbou no arquivo, não a hora do aparelho de quem
   // está olhando: é ela que diz de quando são os números.
@@ -1002,6 +1542,7 @@ function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
   // que existe número ali. Existe conexão, que é outra coisa.
   let st = r.pctApurado > 0.05
     ? '<span class="pisca"></span>dados do TSE de ' + esc(hora)
+      + " · atualiza sozinho a cada 25 s"
     : '<span class="pisca"></span>conectado ao TSE · nenhum voto totalizado '
       + "ainda · " + esc(hora);
   if (falhas && falhas.length) {
@@ -1054,21 +1595,33 @@ function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
   $("vazio").style.display = comecou ? "none" : "block";
   $("placar").style.display = comecou ? "block" : "none";
   $("apurado").textContent = n1(r.pctApurado) + "%";
-  $("apurado").nextElementSibling.textContent = r.pctApurado >= 99.95
-    ? "do eleitorado apurado"
-    : "apurado · faltam " + n1(100 - r.pctApurado) + "%";
+  $("barraApurado").style.width = Math.min(r.pctApurado, 100) + "%";
+  $("barraApurado").parentElement.nextElementSibling.textContent =
+    r.pctApurado >= 99.95 ? "das urnas do país"
+      : "faltam " + n1(100 - r.pctApurado) + "%";
   if (!comecou) { desenhaMapa(null).catch(() => {}); return; }
 
-  $("pctPL").textContent = n1(r.projecaoPl) + "%";
-  $("pctPT").textContent = n1(r.projecaoPt) + "%";
+  contar($("pctPL"), r.projecaoPl);
+  contar($("pctPT"), r.projecaoPt);
   $("faixaPL").textContent = "entre " + n1(r.faixaPl[0]) + "% e " + n1(r.faixaPl[1]) + "%";
   $("faixaPT").textContent = "entre " + n1(100 - r.faixaPl[1]) + "% e "
                            + n1(100 - r.faixaPl[0]) + "%";
-  $("barraPL").style.cssText = "width:" + r.projecaoPl + "%;background:#7FB3EA";
-  $("barraPT").style.cssText = "width:" + r.projecaoPt + "%;background:#F08E84";
-  // O brilho atrás dos números acompanha quem está à frente.
-  $("cartaoPlacar").style.setProperty("--pl",
-    r.projecaoPl > 50 ? "#2E7BD6" : "#CF4034");
+  $("barraPL").style.cssText = "width:" + r.projecaoPl
+    + "%;background:linear-gradient(90deg,#1D4ED8,#60A5FA)";
+  $("barraPT").style.cssText = "width:" + r.projecaoPt
+    + "%;background:linear-gradient(90deg,#F87171,#B91C1C)";
+
+  // Oficial × projeção lado a lado, dentro do placar: a pergunta que todo
+  // mundo faz ("mas o TSE está mostrando outro número!") respondida ali mesmo.
+  const curtoPl = nomes.pl.split(" ")[0], curtoPt = nomes.pt.split(" ")[0];
+  const duelo = (idPl, idPt, idV, vPl) => {
+    if (vPl == null) { $(idV).textContent = "—"; return; }
+    $(idPl).style.cssText = "width:" + vPl + "%;background:var(--pl-vivo)";
+    $(idPt).style.cssText = "width:" + (100 - vPl) + "%;background:var(--pt-vivo)";
+    $(idV).textContent = n1(vPl) + " × " + n1(100 - vPl);
+  };
+  duelo("cmpOfPL", "cmpOfPT", "cmpOfV", r.brutoPl);
+  duelo("cmpPrPL", "cmpPrPT", "cmpPrV", r.projecaoPl);
 
   const p = r.probPl;
   let txt;
@@ -1117,8 +1670,8 @@ function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
       $("cartaoVotos").style.display = "";
       $("votosPL").textContent = mil(vpl);
       $("votosPT").textContent = mil(vpt);
-      $("lblVotosPL").textContent = "votos de " + esc(nomes.pl.split(" ")[0]);
-      $("lblVotosPT").textContent = "votos de " + esc(nomes.pt.split(" ")[0]);
+      $("lblVotosPL").textContent = nomes.pl.split(" ")[0];
+      $("lblVotosPT").textContent = nomes.pt.split(" ")[0];
       const d = Math.abs(vpl - vpt);
       $("diferenca").textContent = mil(d);
       $("diferenca").nextElementSibling.textContent =
@@ -1137,6 +1690,7 @@ function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
     $("brancosNulos").textContent = pct(bn, totais.comparecimento);
     $("brancosNulos").title = mil(totais.brancos) + " brancos e "
       + mil(totais.nulos) + " nulos";
+    $("validosTot").textContent = totais.validos > 0 ? mil(totais.validos) : "—";
   }
   const dif = r.brutoPl == null ? null : r.projecaoPl - r.brutoPl;
   $("correcao").textContent = dif == null ? "—"
@@ -1145,15 +1699,1036 @@ function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
   // Cada estado vira uma linha com a disputa desenhada: a barra mostra a
   // divisão projetada, o fio verde abaixo mostra o quanto já apurou. Ler
   // quem está ganhando onde vira questão de olhar, não de comparar números.
-  $("estados").innerHTML = r.estados.map((e) => {
+  renderEstados(r);
+  renderRegioes(r);
+  renderSaldo(r);
+  renderFalta(r, votosPl, votosPt);
+
+  if (!historico.length || r.pctApurado > historico[historico.length - 1].pct + 0.05) {
+    historico.push({ pct: r.pctApurado, proj: r.projecaoPl, bruto: r.brutoPl,
+                     t: Date.now() });
+    salvarHistorico();
+  }
+  desenha();
+  preverConclusao(r);
+  if (DEMO === null) {
+    registrar(r, horaTSE, votosPl, votosPt);
+    criarCardsAutomaticos(r, horaTSE, votosPl, votosPt);
+  }
+  desenhaMapa(r).catch(() => {});
+}
+
+/* ---- registro a cada 1% ------------------------------------------------
+ *
+ * Quando a apuração cruza cada ponto percentual (1%, 2%, 3%…), a página
+ * guarda o que estava na tela naquele instante: o número oficial do TSE e o
+ * que a projeção dizia. É o material da auditoria do fim da noite — dá para
+ * mostrar, ponto a ponto, se a projeção acertou antes da hora.
+ *
+ * Fica guardado neste aparelho (localStorage), sobrevive a recarregar a
+ * página, e pode ser baixado em planilha. Se a apuração pular de 3% para 5%
+ * entre duas leituras, o ponto gravado é o de 5% — nada é inventado para
+ * preencher o 4%.
+ */
+const CHAVE_REG = "registro-" + TURNO;
+let registro = (() => {
+  try {
+    const l = JSON.parse(localStorage.getItem(CHAVE_REG) || "[]");
+    return Array.isArray(l) ? l.filter((p) => p && typeof p.k === "number") : [];
+  } catch { return []; }
+})();
+let registroAberto = false;
+
+function salvarRegistro() {
+  try { localStorage.setItem(CHAVE_REG, JSON.stringify(registro)); } catch {}
+}
+
+function pontoRegistro(r, hora, vPl, vPt, k) {
+  return {
+    k, pct: +r.pctApurado.toFixed(3), hora: hora || "",
+    t: Date.now(),
+    of: r.brutoPl == null ? null : +r.brutoPl.toFixed(3),
+    vPl: Math.round(vPl), vPt: Math.round(vPt),
+    pr: +r.projecaoPl.toFixed(3),
+    lo: r.faixaPl ? +r.faixaPl[0].toFixed(3) : null,
+    hi: r.faixaPl ? +r.faixaPl[1].toFixed(3) : null,
+    ch: r.probPl == null ? null : +r.probPl.toFixed(4),
+  };
+}
+
+function registrar(r, hora, vPl, vPt) {
+  if (!(r.pctApurado >= 1) || r.brutoPl == null) return;
+  const k = r.pctApurado >= 99.95 ? 100 : Math.floor(r.pctApurado);
+  const ult = registro.length ? registro[registro.length - 1].k : 0;
+  if (k <= ult) return;
+  registro.push(pontoRegistro(r, hora, vPl, vPt, k));
+  salvarRegistro();
+  pintaRegistro();
+}
+
+const hm = (p) => p.hora ? p.hora.slice(0, 5).replace(":", "h")
+  : new Date(p.t).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }).replace(":", "h");
+
+function pintaRegistro() {
+  if (!registro.length) { $("cartaoRegistro").style.display = "none"; return; }
+  $("cartaoRegistro").style.display = "block";
+  $("registroConta").textContent = registro.length + (registro.length === 1 ? " registro" : " registros");
+  const curtoPl = esc(nomes.pl.split(" ")[0]), curtoPt = esc(nomes.pt.split(" ")[0]);
+  const mostrar = registroAberto ? 20 : 5;
+  const ultimos = registro.slice(-mostrar).reverse();
+  const mini = (v) => `<div class="mini"><i style="width:${v}%;background:var(--pl)"></i>`
+    + `<i style="width:${100 - v}%;background:var(--pt)"></i></div>`;
+  $("registroLista").innerHTML = ultimos.map((p) => {
+    const pos = registro.indexOf(p);
+    const ant = pos > 0 ? registro[pos - 1] : null;
+    // Virada: o líder do número oficial trocou desde o ponto anterior.
+    const virou = ant && ant.of != null && p.of != null && (ant.of > 50) !== (p.of > 50);
+    const lado = p.pr > 50 ? "pl" : "pt";
+    const dif = p.of == null ? null : p.pr - p.of;
+    return `<li class="marco"><div class="marco-pct ${lado}">${p.k}%</div>`
+      + `<div class="marco-corpo"><div class="marco-topo"><span><b>${n1(p.pct)}% apurado</b>`
+      + (virou ? `<span class="virada">virada no TSE</span>` : "") + `</span>`
+      + `<span>${hm(p)}</span></div>`
+      + `<div class="duelo"><span class="tag">Oficial</span>${p.of == null ? "<span></span>" : mini(p.of)}`
+      + `<span class="v"><span class="a">${n1(p.of)}</span> × <span class="b">${n1(p.of == null ? null : 100 - p.of)}</span></span></div>`
+      + `<div class="duelo"><span class="tag proj">Projeção</span>${mini(p.pr)}`
+      + `<span class="v"><span class="a">${n1(p.pr)}</span> × <span class="b">${n1(100 - p.pr)}</span></span></div>`
+      + (dif == null ? "" : `<div class="dif">A projeção corrige <b>${dif >= 0 ? "+" : "−"}${n1(Math.abs(dif))} pp</b>`
+        + ` para ${curtoPl}${p.lo != null ? ` · margem ${n1(p.lo)}–${n1(p.hi)}%` : ""}</div>`)
+      + `</div></li>`;
+  }).join("");
+  $("btRegistroMais").hidden = registro.length <= 5;
+  $("btRegistroMais").textContent = registroAberto ? "Mostrar só as últimas 5"
+    : "Ver as últimas " + Math.min(20, registro.length);
+  pintaAuditoria();
+}
+
+/* Auditoria: quando a apuração termina, cada ponto gravado é comparado com o
+ * resultado final oficial. É a resposta para "a projeção acertou?". */
+function pintaAuditoria() {
+  const fim = registro.find((p) => p.k === 100);
+  if (!fim || fim.of == null) { $("auditoriaCaixa").hidden = true; return; }
+  $("auditoriaCaixa").hidden = false;
+  const real = fim.of;
+  const marcos = [1, 2, 3, 5, 10, 15, 20, 30, 50, 75, 90];
+  const linhas = [];
+  for (const m of marcos) {
+    const p = registro.find((x) => x.k >= m && x.k < 100);
+    if (!p || linhas.some((l) => l.p === p)) continue;
+    linhas.push({ m, p });
+  }
+  const venc = real > 50 ? "pl" : "pt";
+  $("auditoria").innerHTML = linhas.map(({ p }) => {
+    const erro = p.pr - real;
+    const acertou = (p.pr > 50) === (real > 50);
+    const bom = Math.abs(erro) <= 1 && acertou;
+    return `<div class="aud"><span class="p">${p.k}%</span>`
+      + `<span class="s">às ${hm(p)} · projeção ${n1(p.pr)}% · oficial na hora ${n1(p.of)}%`
+      + `${acertou ? " · vencedor certo" : " · vencedor errado"}</span>`
+      + `<span class="e ${bom ? "bom" : "ruim"}">${erro >= 0 ? "+" : "−"}${n1(Math.abs(erro))}</span></div>`;
+  }).join("");
+  const primeiroCerto = registro.find((p, i) =>
+    p.k < 100 && registro.slice(i).every((q) => (q.pr > 50) === (real > 50)));
+  $("auditoriaResumo").innerHTML = "Resultado final oficial: <strong>"
+    + esc(nomes.pl.split(" ")[0]) + " " + n1(real) + "%</strong> × <strong>"
+    + esc(nomes.pt.split(" ")[0]) + " " + n1(100 - real) + "%</strong>."
+    + (primeiroCerto ? " A projeção apontou o vencedor certo a partir de <strong>"
+      + primeiroCerto.k + "% apurado</strong> (" + hm(primeiroCerto) + ") e não mudou mais." : "")
+    + " Números à direita: erro da projeção, em pontos, contra o resultado final.";
+  void venc;
+}
+
+$("btRegistroMais").addEventListener("click", () => {
+  registroAberto = !registroAberto; pintaRegistro();
+});
+
+$("btRegistroCSV").addEventListener("click", () => {
+  const nPl = nomes.pl.split(" ")[0], nPt = nomes.pt.split(" ")[0];
+  const v = (x) => x == null ? "" : String(x).replace(".", ",");
+  const linhas = [[
+    "marco_%", "apurado_%", "hora_TSE", "hora_local",
+    `oficial_${nPl}_%`, `oficial_${nPt}_%`, `votos_${nPl}`, `votos_${nPt}`,
+    `projecao_${nPl}_%`, `projecao_${nPt}_%`, "margem_min_%", "margem_max_%",
+    `chance_${nPl}_%`, "correcao_pp",
+  ].join(";")];
+  for (const p of registro) {
+    linhas.push([
+      p.k, v(p.pct), p.hora, new Date(p.t).toLocaleTimeString("pt-BR"),
+      v(p.of), v(p.of == null ? null : +(100 - p.of).toFixed(3)), p.vPl, p.vPt,
+      v(p.pr), v(+(100 - p.pr).toFixed(3)), v(p.lo), v(p.hi),
+      v(p.ch == null ? null : +(100 * p.ch).toFixed(2)),
+      v(p.of == null ? null : +(p.pr - p.of).toFixed(3)),
+    ].join(";"));
+  }
+  // BOM no começo para o Excel abrir os acentos certos.
+  const blob = new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "apuracao-2026-registro" + (DEMO !== null ? "-ensaio" : "") + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+
+async function copiarTexto(txt, botao) {
+  const antes = botao.textContent;
+  try {
+    await navigator.clipboard.writeText(txt);
+    botao.textContent = "Copiado!";
+  } catch {
+    botao.textContent = "Não deu para copiar";
+  }
+  setTimeout(() => { botao.textContent = antes; }, 1800);
+}
+
+$("btRegistroCopiar").addEventListener("click", () => {
+  const nPl = nomes.pl.split(" ")[0], nPt = nomes.pt.split(" ")[0];
+  const marcos = [1, 2, 5, 10, 20, 30, 50, 75, 90, 100];
+  const sel = [];
+  for (const m of marcos) {
+    const p = registro.find((x) => x.k >= m);
+    if (p && !sel.includes(p)) sel.push(p);
+  }
+  const txt = ["Apuração 2026 · oficial TSE × projeção (" + nPl + " × " + nPt + ")", ""]
+    .concat(sel.map((p) => `${p.k}% apurado (${hm(p)}): oficial ${n1(p.of)} × ${n1(100 - p.of)}`
+      + ` · projeção ${n1(p.pr)} × ${n1(100 - p.pr)}`))
+    .concat(["", "oxeeraassim.github.io/apuracao"]).join("\n");
+  copiarTexto(txt, $("btRegistroCopiar"));
+});
+
+/* Formato stories: os últimos 20 pontos numa tela 9:16, para print. */
+function abrirStories() {
+  if (!registro.length) return;
+  const nPl = esc(nomes.pl.split(" ")[0]), nPt = esc(nomes.pt.split(" ")[0]);
+  const pts = registro.slice(-20);
+  const mini = (v) => `<div class="mini"><i style="width:${v}%;background:#5B9BFF"></i>`
+    + `<i style="width:${100 - v}%;background:#FF6B6B"></i></div>`;
+  const ult = pts[pts.length - 1];
+  $("stCaixa").innerHTML = `<div class="st-in">`
+    + `<div class="st-cab"><div class="a">Apuração 2026 · 2º turno</div>`
+    + `<h3><span class="x">${nPl}</span> × <span class="y">${nPt}</span></h3>`
+    + `<div class="b">Oficial do TSE × projeção, a cada 1% apurado</div></div>`
+    + `<div class="st-leg"><span><i style="background:rgba(255,255,255,.5)"></i>Oficial TSE</span>`
+    + `<span><i style="background:linear-gradient(90deg,#5B9BFF,#FF6B6B)"></i>Projeção</span></div>`
+    + `<div class="st-lista">` + pts.map((p) =>
+      `<div class="st-l"><div class="k">${p.k}%<small>${hm(p)}</small></div>`
+      + `<div class="c of">${n1(p.of)} × ${n1(p.of == null ? null : 100 - p.of)}${p.of == null ? "" : mini(p.of)}</div>`
+      + `<div class="c">${n1(p.pr)} × ${n1(100 - p.pr)}${mini(p.pr)}</div></div>`).join("")
+    + `</div><div class="st-rod"><div>${ult.k}% apurado às ${hm(ult)}<br>`
+    + `<b>Projeção: ${nPl} ${n1(ult.pr)}%</b></div>`
+    + `<div style="text-align:right">um produto<br><b>Oxe, era assim?</b></div></div></div>`;
+  $("stories").hidden = false;
+}
+$("btStories").addEventListener("click", abrirStories);
+$("stFechar").addEventListener("click", () => { $("stories").hidden = true; });
+
+/* Compartilhar o placar: usa o compartilhamento do celular quando existe, e
+ * copia o texto quando não. */
+$("btCompartilhar").addEventListener("click", async () => {
+  const r = ultimoR;
+  if (!r || !(r.pctApurado > 0.05)) return;
+  const nPl = nomes.pl.split(" ")[0], nPt = nomes.pt.split(" ")[0];
+  const txt = `Apuração 2026 · ${n1(r.pctApurado)}% apurado\n`
+    + `Oficial TSE: ${nPl} ${n1(r.brutoPl)}% × ${nPt} ${n1(100 - r.brutoPl)}%\n`
+    + `Projeção: ${nPl} ${n1(r.projecaoPl)}% × ${nPt} ${n1(r.projecaoPt)}%\n`
+    + `(resultado oficial é o do TSE)`;
+  const url = "https://oxeeraassim.github.io/apuracao/";
+  if (navigator.share) {
+    try { await navigator.share({ text: txt, url }); return; } catch { return; }
+  }
+  copiarTexto(txt + "\n" + url, $("btCompartilhar"));
+});
+
+/* ---- cards para stories --------------------------------------------------
+ *
+ * A cada 5% da apuração (e no 1%), a página monta sozinha um card 1080×1920
+ * — o tamanho do stories — com o oficial do TSE, a projeção do algoritmo e a
+ * apuração por região. Os cards ficam na aba "Cards", prontos para tocar e
+ * compartilhar direto no Instagram ou no WhatsApp.
+ *
+ * O que fica guardado no aparelho são os NÚMEROS de cada momento (poucos
+ * bytes); a imagem é redesenhada na hora, sempre igual. Imagem pronta não
+ * caberia no armazenamento do navegador.
+ */
+const CW = 1080, CH = 1920;
+const MARCOS_CARD = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70,
+  75, 80, 85, 90, 95, 100];
+const CHAVE_CARDS = "cards-" + TURNO;
+const SITE = "oxeeraassim.github.io/apuracao";
+const PERFIL = "@oxe_eraassim";
+let cards = (() => {
+  try {
+    const l = JSON.parse(localStorage.getItem(CHAVE_CARDS) || "[]");
+    return Array.isArray(l) ? l.filter((c) => c && c.tipo) : [];
+  } catch { return []; }
+})();
+const salvarCards = () => {
+  try { localStorage.setItem(CHAVE_CARDS, JSON.stringify(cards)); } catch {}
+};
+
+function regioesDe(r) {
+  const acc = new Map();
+  for (const e of r.estados) {
+    if (e.regiao === "exterior") continue;
+    const a = acc.get(e.regiao) || { pl: 0, pt: 0, apu: 0, peso: 0 };
+    a.pl += e.vPl || 0; a.pt += e.vPt || 0;
+    const peso = (e.vPl || 0) + (e.vPt || 0);
+    a.apu += e.pctApurado * peso; a.peso += peso;
+    acc.set(e.regiao, a);
+  }
+  return ["nordeste", "sudeste", "sul", "norte", "centro-oeste"].filter((k) => acc.has(k))
+    .map((k) => {
+      const a = acc.get(k), v = a.pl + a.pt;
+      return [NOMES_REGIAO[k], +(a.peso ? a.apu / a.peso : 0).toFixed(1),
+        +(v ? 100 * a.pl / v : 50).toFixed(2)];
+    });
+}
+
+function fotoDoMomento(r, hora, vPl, vPt, tipo, k) {
+  return {
+    tipo, k, pct: +r.pctApurado.toFixed(2), hora: hora || "", t: Date.now(),
+    of: r.brutoPl == null ? null : +r.brutoPl.toFixed(2),
+    pr: +r.projecaoPl.toFixed(2),
+    lo: r.faixaPl ? +r.faixaPl[0].toFixed(2) : null,
+    hi: r.faixaPl ? +r.faixaPl[1].toFixed(2) : null,
+    ch: r.probPl == null ? null : +r.probPl.toFixed(3),
+    vPl: Math.round(vPl), vPt: Math.round(vPt),
+    reg: regioesDe(r),
+  };
+}
+
+/* Chamado a cada leitura do TSE: cria o card do marco que acabou de passar,
+ * e um card especial quando o líder do número oficial troca (a "virada"). */
+function criarCardsAutomaticos(r, hora, vPl, vPt) {
+  if (!(r.pctApurado >= 1) || r.brutoPl == null) return false;
+  let novo = false;
+  const k = r.pctApurado >= 99.95 ? 100
+    : MARCOS_CARD.filter((m) => m <= r.pctApurado).pop();
+  const marcos = cards.filter((c) => c.tipo === "marco");
+  const ultK = marcos.length ? marcos[marcos.length - 1].k : 0;
+  if (k && k > ultK) {
+    cards.push(fotoDoMomento(r, hora, vPl, vPt, "marco", k));
+    novo = true;
+  }
+  const ant = marcos.length ? marcos[marcos.length - 1] : null;
+  const ultimaFoto = cards.length ? cards[cards.length - 1] : null;
+  if (ant && ultimaFoto && ultimaFoto.of != null
+      && (ultimaFoto.of > 50) !== (r.brutoPl > 50)
+      && !cards.some((c) => c.tipo === "virada" && Date.now() - c.t < 10 * 60000)) {
+    cards.push(fotoDoMomento(r, hora, vPl, vPt, "virada", Math.floor(r.pctApurado)));
+    novo = true;
+  }
+  if (novo) { salvarCards(); pintaCards(); avisarCardNovo(); }
+  return novo;
+}
+
+/* ---- desenho --------------------------------------------------------- */
+const AZUL = "#4D8DFF", AZUL_F = "#1D4ED8", VERM = "#FF5A52", VERM_F = "#C81E1E";
+// A identidade do Oxe, era assim?: marfim de ficha, tinta azul-marinho,
+// vermelho de régua, ouro velho e cobre — e a letra Zilla Slab na marca.
+const OURO = "#F2B544", OURO_V = "#D49B35", MARFIM = "#FBF8F1", TINTA = "#1F2A44",
+  REGUA = "#C8433A", COBRE = "#A8521F";
+const SLAB = '"Zilla Slab", Georgia, serif';
+
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function tx(ctx, t, x, y, tam, peso, cor, alinha = "left", esp = 0, fam) {
+  ctx.font = `${peso} ${tam}px ${fam || "Nunito, ui-rounded, sans-serif"}`;
+  ctx.fillStyle = cor;
+  ctx.textAlign = alinha;
+  ctx.textBaseline = "alphabetic";
+  if ("letterSpacing" in ctx) ctx.letterSpacing = esp + "px";
+  ctx.fillText(t, x, y);
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+}
+
+function largura(ctx, t, tam, peso, fam) {
+  ctx.font = `${peso} ${tam}px ${fam || "Nunito, sans-serif"}`;
+  return ctx.measureText(t).width;
+}
+
+// Encolhe o corpo até o texto caber na largura.
+function txCabe(ctx, t, x, y, tam, peso, cor, larg, alinha = "left", fam) {
+  let s = tam;
+  while (s > 20 && largura(ctx, t, s, peso, fam) > larg) s -= 4;
+  tx(ctx, t, x, y, s, peso, cor, alinha, 0, fam);
+  return s;
+}
+
+function gradTexto(ctx, x0, x1, a, b) {
+  const g = ctx.createLinearGradient(x0, 0, x1, 0);
+  g.addColorStop(0, a); g.addColorStop(1, b);
+  return g;
+}
+
+function barraDupla(ctx, x, y, w, h, pPl, claro) {
+  rr(ctx, x, y, w, h, h / 2);
+  ctx.fillStyle = claro ? "rgba(31,42,68,.1)" : "rgba(255,255,255,.1)"; ctx.fill();
+  const wp = Math.max(0, Math.min(1, pPl / 100)) * w;
+  ctx.save(); rr(ctx, x, y, w, h, h / 2); ctx.clip();
+  ctx.fillStyle = gradTexto(ctx, x, x + wp, AZUL_F, AZUL); ctx.fillRect(x, y, wp - 3, h);
+  ctx.fillStyle = gradTexto(ctx, x + wp, x + w, VERM, VERM_F);
+  ctx.fillRect(x + wp + 3, y, w - wp - 3, h);
+  // brilho de cima, para a barra ter volume
+  const gl = ctx.createLinearGradient(0, y, 0, y + h);
+  gl.addColorStop(0, "rgba(255,255,255,.28)"); gl.addColorStop(.5, "rgba(255,255,255,0)");
+  ctx.fillStyle = gl; ctx.fillRect(x, y, w, h);
+  ctx.restore();
+  ctx.fillStyle = claro ? TINTA : "#fff";
+  rr(ctx, x + w / 2 - 3, y - 12, 6, h + 24, 3); ctx.fill();
+}
+
+/* Faixa de cordel: triângulos alternados, como as bordas das capas de
+ * folheto e das xilogravuras. */
+function faixaCordel(ctx, y, h, cor1, cor2) {
+  const passo = h * 1.4;
+  ctx.save();
+  ctx.fillStyle = cor2; ctx.fillRect(0, y, CW, h);
+  ctx.fillStyle = cor1;
+  for (let x = -passo; x < CW + passo; x += passo) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + h); ctx.lineTo(x + passo / 2, y); ctx.lineTo(x + passo, y + h);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* Sol do sertão: raios saindo de um ponto, em ouro bem baixinho. */
+function sol(ctx, cx, cy, raio, alfa) {
+  ctx.save();
+  ctx.globalAlpha = alfa;
+  ctx.fillStyle = OURO;
+  const n = 36;
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2, a1 = a0 + Math.PI / n;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a0) * raio, cy + Math.sin(a0) * raio);
+    ctx.lineTo(cx + Math.cos(a1) * raio, cy + Math.sin(a1) * raio);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, raio * 0.55);
+  rg.addColorStop(0, `rgba(242,181,68,${alfa * 2.2})`); rg.addColorStop(1, "rgba(242,181,68,0)");
+  ctx.fillStyle = rg; ctx.fillRect(0, 0, CW, CH);
+}
+
+function fundo(ctx, tom, yesSol = 360) {
+  let g = ctx.createLinearGradient(0, 0, 0, CH);
+  g.addColorStop(0, "#152447"); g.addColorStop(.55, "#0C1530"); g.addColorStop(1, "#060B19");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, CW, CH);
+  const brilho = (x, y, r, cor) => {
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, cor); rg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, CW, CH);
+  };
+  brilho(-120, 700, 820, "rgba(37,99,235,.42)");
+  brilho(CW + 120, 700, 820, "rgba(220,38,38,.38)");
+  if (tom) brilho(CW / 2, CH * 0.5, 900, tom);
+  if (yesSol) sol(ctx, CW / 2, yesSol, 1300, 0.045);
+  // grão de papel: pontinhos aleatórios, sempre os mesmos
+  ctx.save(); ctx.fillStyle = "#fff";
+  let s = 7;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 2600; i++) {
+    ctx.globalAlpha = rnd() * 0.05;
+    ctx.fillRect(rnd() * CW, rnd() * CH, 2, 2);
+  }
+  ctx.restore();
+  faixaCordel(ctx, 0, 26, OURO_V, REGUA);
+  faixaCordel(ctx, CH - 26, 26, OURO_V, REGUA);
+}
+
+function marca(ctx, sobre) {
+  // A marca: "Oxe, era assim?" em Zilla Slab, com o "assim?" em ouro.
+  tx(ctx, "Oxe, era ", 64, 132, 66, 700, MARFIM, "left", 0, SLAB);
+  const w = largura(ctx, "Oxe, era ", 66, 700, SLAB);
+  tx(ctx, "assim?", 64 + w, 132, 66, 700, OURO, "left", 0, SLAB);
+  // régua vermelha embaixo da marca, como nas fichas do portal
+  rr(ctx, 64, 152, 120, 8, 4); ctx.fillStyle = REGUA; ctx.fill();
+  // selo à direita
+  const tw = largura(ctx, sobre, 26, 900) + sobre.length * 3 + 56;
+  rr(ctx, CW - 64 - tw, 82, tw, 56, 28);
+  ctx.fillStyle = "rgba(251,248,241,.1)"; ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = "rgba(242,181,68,.6)"; ctx.stroke();
+  tx(ctx, sobre, CW - 64 - tw / 2, 120, 26, 900, OURO, "center", 3);
+}
+
+function rodape(ctx, chamada) {
+  const y = CH - 236;
+  // ficha marfim com régua vermelha: a cara do portal do Oxe
+  rr(ctx, 60, y, CW - 120, 168, 30);
+  ctx.fillStyle = MARFIM; ctx.fill();
+  ctx.save(); rr(ctx, 60, y, CW - 120, 168, 30); ctx.clip();
+  ctx.fillStyle = REGUA; ctx.fillRect(60, y, 14, 168);
+  ctx.restore();
+  tx(ctx, chamada || "Siga " + PERFIL, 104, y + 74, 52, 700, TINTA, "left", 0, SLAB);
+  tx(ctx, "ao vivo em " + SITE, 104, y + 126, 32, 800, COBRE);
+  // seta
+  ctx.beginPath(); ctx.arc(CW - 130, y + 84, 44, 0, 7);
+  ctx.fillStyle = TINTA; ctx.fill();
+  tx(ctx, "→", CW - 130, y + 102, 52, 900, OURO, "center");
+  tx(ctx, "Resultado oficial: TSE · esta é uma projeção estatística", CW / 2, CH - 44, 24, 750,
+    "rgba(251,248,241,.5)", "center");
+}
+
+function blocoDuelo(ctx, y, h, titulo, pPl, destaque, rodapeTxt) {
+  const nPl = nomes.pl.split(" ")[0].toUpperCase(), nPt = nomes.pt.split(" ")[0].toUpperCase();
+  if (destaque) {
+    // A projeção vai numa FICHA marfim — o elemento mais forte do card.
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.5)"; ctx.shadowBlur = 50; ctx.shadowOffsetY = 20;
+    rr(ctx, 60, y, CW - 120, h, 36); ctx.fillStyle = MARFIM; ctx.fill();
+    ctx.restore();
+    ctx.save(); rr(ctx, 60, y, CW - 120, h, 36); ctx.clip();
+    ctx.fillStyle = REGUA; ctx.fillRect(60, y, CW - 120, 12);
+    // linhas de pauta, bem leves
+    ctx.strokeStyle = "rgba(31,42,68,.06)"; ctx.lineWidth = 2;
+    for (let yy = y + 60; yy < y + h; yy += 44) {
+      ctx.beginPath(); ctx.moveTo(60, yy); ctx.lineTo(CW - 60, yy); ctx.stroke();
+    }
+    ctx.restore();
+    const tw = largura(ctx, titulo, 26, 900) + titulo.length * 4 + 60;
+    rr(ctx, CW / 2 - tw / 2, y - 26, tw, 54, 27); ctx.fillStyle = TINTA; ctx.fill();
+    tx(ctx, titulo, CW / 2, y + 10, 26, 900, OURO, "center", 4);
+    const yn = y + 222;
+    tx(ctx, nPl, 104, y + 92, 34, 900, AZUL_F, "left", 4);
+    tx(ctx, nPt, CW - 104, y + 92, 34, 900, VERM_F, "right", 4);
+    tx(ctx, pPl == null ? "—" : n1(pPl) + "%", 98, yn, 132, 900,
+      gradTexto(ctx, 98, 500, "#1E40AF", "#3B82F6"));
+    tx(ctx, pPl == null ? "—" : n1(100 - pPl) + "%", CW - 98, yn, 132, 900,
+      gradTexto(ctx, CW - 500, CW - 98, "#EF4444", "#991B1B"), "right");
+    if (pPl != null) barraDupla(ctx, 104, yn + 36, CW - 208, 34, pPl, true);
+    if (rodapeTxt) tx(ctx, rodapeTxt, CW / 2, y + h - 34, 29, 850, "rgba(31,42,68,.75)", "center");
+    return;
+  }
+  rr(ctx, 60, y, CW - 120, h, 36);
+  ctx.fillStyle = "rgba(251,248,241,.06)"; ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = "rgba(251,248,241,.16)"; ctx.stroke();
+  tx(ctx, titulo, CW / 2, y + 56, 26, 900, "rgba(251,248,241,.7)", "center", 4);
+  const yn = y + 206;
+  tx(ctx, nPl, 100, y + 104, 30, 900, AZUL, "left", 3);
+  tx(ctx, nPt, CW - 100, y + 104, 30, 900, VERM, "right", 3);
+  tx(ctx, pPl == null ? "—" : n1(pPl) + "%", 96, yn, 104, 900, "#A9CAFF");
+  tx(ctx, pPl == null ? "—" : n1(100 - pPl) + "%", CW - 96, yn, 104, 900, "#FFADA6", "right");
+  if (pPl != null) barraDupla(ctx, 100, yn + 30, CW - 200, 24, pPl, false);
+  if (rodapeTxt) tx(ctx, rodapeTxt, CW / 2, y + h - 26, 26, 800, "rgba(251,248,241,.7)", "center");
+}
+
+function cardMarco(ctx, c) {
+  const virada = c.tipo === "virada";
+  fundo(ctx, virada ? "rgba(242,181,68,.16)" : null, 380);
+  marca(ctx, virada ? "URGENTE" : "2º TURNO · 2026");
+  if (virada) {
+    tx(ctx, "VIRADA!", CW / 2, 420, 220, 900, gradTexto(ctx, 200, 880, "#FFE29A", OURO), "center", 2);
+    tx(ctx, "O LÍDER MUDOU NO PLACAR DO TSE", CW / 2, 490, 38, 900, MARFIM, "center", 4);
+    tx(ctx, `com ${n1(c.pct)}% apurado · ${hm(c)}`, CW / 2, 546, 34, 800,
+      "rgba(251,248,241,.7)", "center");
+  } else {
+    // o percentual apurado, gigante, em ouro sobre o sol
+    const t = (c.k >= 100 ? "100" : String(c.k)) + "%";
+    const tam = c.k >= 100 ? 250 : 300;
+    const w = largura(ctx, t, tam, 900);
+    const x0 = (CW - (w + 40 + 330)) / 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(242,181,68,.45)"; ctx.shadowBlur = 60;
+    tx(ctx, t, x0, 480, tam, 900, gradTexto(ctx, x0, x0 + w, "#FFF3D1", OURO));
+    ctx.restore();
+    const xl = x0 + w + 40;
+    tx(ctx, c.k >= 100 ? "APURAÇÃO" : "DAS URNAS", xl, 352, 44, 900, MARFIM, "left", 5);
+    tx(ctx, c.k >= 100 ? "ENCERRADA" : "APURADAS", xl, 404, 44, 900, MARFIM, "left", 5);
+    tx(ctx, "às " + hm(c) + " · TSE", xl, 458, 34, 800, OURO);
+    rr(ctx, 100, 520, CW - 200, 16, 8); ctx.fillStyle = "rgba(251,248,241,.12)"; ctx.fill();
+    rr(ctx, 100, 520, Math.max(16, (CW - 200) * Math.min(c.pct, 100) / 100), 16, 8);
+    ctx.fillStyle = gradTexto(ctx, 100, CW - 100, "#10B981", "#6EE7B7"); ctx.fill();
+  }
+  blocoDuelo(ctx, 572, 290, "OFICIAL DO TSE AGORA", c.of, false);
+  const ch = c.ch == null ? "" : c.ch > 0.995 ? " · chance >99%"
+    : c.ch < 0.005 ? " · chance >99%"
+    : " · chance " + Math.round(100 * Math.max(c.ch, 1 - c.ch)) + "%";
+  blocoDuelo(ctx, 916, 370, "PROJEÇÃO DO RESULTADO FINAL", c.pr, true,
+    c.lo != null ? `margem ${n1(c.lo)}–${n1(c.hi)}%${ch}` : "");
+  // regiões
+  let y = 1346;
+  tx(ctx, "POR REGIÃO", 100, y, 28, 900, OURO, "left", 5);
+  tx(ctx, "apurado", 570, y, 24, 800, "rgba(251,248,241,.55)", "center", 2);
+  tx(ctx, "projeção", CW - 100, y, 24, 800, "rgba(251,248,241,.55)", "right", 2);
+  y += 8;
+  for (const [nome, apu, p] of c.reg || []) {
+    y += 61;
+    tx(ctx, nome, 100, y, 36, 900, MARFIM);
+    rr(ctx, 440, y - 22, 200, 14, 7); ctx.fillStyle = "rgba(251,248,241,.12)"; ctx.fill();
+    rr(ctx, 440, y - 22, Math.max(14, 200 * Math.min(apu, 100) / 100), 14, 7);
+    ctx.fillStyle = "#34D399"; ctx.fill();
+    tx(ctx, Math.round(apu) + "%", 654, y - 9, 26, 850, "rgba(251,248,241,.7)");
+    const lider = p > 50;
+    tx(ctx, (lider ? nomes.pl : nomes.pt).split(" ")[0] + " " + n1(lider ? p : 100 - p),
+      CW - 100, y, 34, 900, lider ? "#A9CAFF" : "#FFADA6", "right");
+  }
+  rodape(ctx);
+}
+
+function cardPalpite(ctx, p) {
+  fundo(ctx, "rgba(255,201,77,.14)");
+  marca(ctx, "MEU PALPITE");
+  tx(ctx, "Meu palpite", CW / 2, 340, 150, 700, gradTexto(ctx, 200, 880, "#FFF3D1", OURO), "center", 0, SLAB);
+  tx(ctx, "para o 2º turno de 2026", CW / 2, 400, 44, 800, "rgba(255,255,255,.8)", "center");
+  blocoDuelo(ctx, 540, 400, "QUEM GANHA", p.pl, true, "% dos votos válidos");
+  const fim = registro.find((x) => x.k === 100);
+  if (fim && fim.of != null) {
+    const erro = Math.abs(p.pl - fim.of);
+    tx(ctx, "Resultado final: " + n1(fim.of) + "% × " + n1(100 - fim.of) + "%", CW / 2, 1080,
+      40, 850, "#fff", "center");
+    tx(ctx, erro < 0.05 ? "NA MOSCA!" : "Errei por " + n1(erro) + " ponto" + (erro >= 2 ? "s" : ""),
+      CW / 2, 1200, 90, 900, OURO, "center");
+  } else {
+    tx(ctx, "Duvido você chegar", CW / 2, 1130, 70, 700, MARFIM, "center", 0, SLAB);
+    tx(ctx, "mais perto que eu.", CW / 2, 1215, 70, 700, OURO, "center", 0, SLAB);
+    tx(ctx, "Faça o seu palpite e me marque", CW / 2, 1310, 42, 800, "rgba(251,248,241,.75)", "center");
+  }
+  tx(ctx, "Domingo, depois da apuração, o card mostra por quanto errei.", CW / 2, 1520, 32, 750,
+    "rgba(255,255,255,.6)", "center");
+  rodape(ctx, "Faça o seu palpite");
+}
+
+function cardLugar(ctx, d) {
+  fundo(ctx, null);
+  marca(ctx, d.uf ? "MINHA CIDADE" : "MEU ESTADO");
+  tx(ctx, d.uf ? "COMO ESTÁ VOTANDO" : "COMO ESTÁ VOTANDO O ESTADO", CW / 2, 400, 40, 900, OURO, "center", 6);
+  txCabe(ctx, d.nome, CW / 2, 560, 150, 700, MARFIM, CW - 140, "center", SLAB);
+  tx(ctx, d.sub, CW / 2, 630, 40, 800, "rgba(251,248,241,.7)", "center");
+  blocoDuelo(ctx, 740, 380, d.rotulo, d.pPl, true, d.nota || "");
+  if (d.br) {
+    blocoDuelo(ctx, 1200, 290, "BRASIL · PROJEÇÃO FINAL", d.br, false, "");
+  }
+  rodape(ctx);
+}
+
+function cardEspera(ctx, d) {
+  fundo(ctx, null);
+  marca(ctx, "2º TURNO · 2026");
+  tx(ctx, "FALTAM", CW / 2, 330, 60, 900, OURO, "center", 10);
+  ctx.save(); ctx.shadowColor = "rgba(242,181,68,.45)"; ctx.shadowBlur = 60;
+  tx(ctx, d.falta, CW / 2, 520, 190, 900, gradTexto(ctx, 150, 930, "#FFF3D1", OURO), "center");
+  ctx.restore();
+  tx(ctx, "para as urnas fecharem · domingo, 17h", CW / 2, 600, 38, 800,
+    "rgba(255,255,255,.7)", "center");
+  if (d.pl != null) blocoDuelo(ctx, 720, 380, "MÉDIA DAS PESQUISAS", d.pl, true,
+    "no 1º turno as pesquisas erraram o líder");
+  tx(ctx, "Às 17h a apuração começa aqui,", CW / 2, 1280, 48, 900, "#fff", "center");
+  tx(ctx, "com projeção ao vivo.", CW / 2, 1345, 48, 900, "#fff", "center");
+  rodape(ctx, "Ative o lembrete: siga " + PERFIL);
+}
+
+function cardPesquisas(ctx, d) {
+  fundo(ctx, null, 300);
+  marca(ctx, "PESQUISAS");
+  tx(ctx, "O que dizem", CW / 2, 300, 104, 700, MARFIM, "center", 0, SLAB);
+  tx(ctx, "as pesquisas", CW / 2, 400, 104, 700, gradTexto(ctx, 250, 830, "#FFF3D1", OURO), "center", 0, SLAB);
+  tx(ctx, "2º turno · votos válidos · " + d.data, CW / 2, 462, 34, 800, "rgba(251,248,241,.7)", "center");
+  blocoDuelo(ctx, 540, 360, "MÉDIA DAS PESQUISAS", d.media, true,
+    d.n + " pesquisas dos últimos 21 dias");
+  let y = 990;
+  tx(ctx, "AS MAIS RECENTES", 100, y, 28, 900, OURO, "left", 5);
+  const nPl = nomes.pl.split(" ")[0], nPt = nomes.pt.split(" ")[0];
+  tx(ctx, nPl + " × " + nPt, CW - 100, y, 26, 850, "rgba(251,248,241,.6)", "right", 1);
+  for (const p of d.lista) {
+    y += 82;
+    rr(ctx, 70, y - 54, CW - 140, 72, 20); ctx.fillStyle = "rgba(251,248,241,.06)"; ctx.fill();
+    txCabe(ctx, p.inst, 100, y - 16, 32, 900, MARFIM, 430);
+    tx(ctx, String(p.campo || ""), 100, y + 10, 22, 750, "rgba(251,248,241,.55)");
+    tx(ctx, n1(p.pl) + " × " + n1(100 - p.pl), CW - 100, y - 4, 38, 900,
+      p.pl > 50 ? "#A9CAFF" : p.pl < 50 ? "#FFADA6" : MARFIM, "right");
+    rr(ctx, 560, y - 30, 180, 12, 6); ctx.fillStyle = "rgba(251,248,241,.12)"; ctx.fill();
+    ctx.save(); rr(ctx, 560, y - 30, 180, 12, 6); ctx.clip();
+    ctx.fillStyle = AZUL; ctx.fillRect(560, y - 30, 180 * p.pl / 100 - 1, 12);
+    ctx.fillStyle = VERM; ctx.fillRect(560 + 180 * p.pl / 100 + 1, y - 30, 180, 12);
+    ctx.restore();
+  }
+  tx(ctx, "Atenção: no 1º turno as pesquisas erraram o líder.", CW / 2, CH - 280, 30, 850,
+    OURO, "center");
+  rodape(ctx, "Siga " + PERFIL);
+}
+
+function cardAuditoria(ctx) {
+  fundo(ctx, "rgba(52,211,153,.12)");
+  marca(ctx, "AUDITORIA");
+  const fim = registro.find((x) => x.k === 100);
+  tx(ctx, "O algoritmo", CW / 2, 300, 100, 700, MARFIM, "center", 0, SLAB);
+  tx(ctx, "acertou?", CW / 2, 410, 130, 700, gradTexto(ctx, 250, 830, "#FFF3D1", OURO), "center", 0, SLAB);
+  tx(ctx, "Resultado oficial: " + nomes.pl.split(" ")[0] + " " + n1(fim.of) + "% × "
+    + nomes.pt.split(" ")[0] + " " + n1(100 - fim.of) + "%", CW / 2, 480, 36, 850,
+    "rgba(255,255,255,.8)", "center");
+  let y = 600;
+  tx(ctx, "APURADO", 100, y, 26, 900, "rgba(255,255,255,.55)", "left", 3);
+  tx(ctx, "TSE NA HORA", 420, y, 26, 900, "rgba(255,255,255,.55)", "center", 3);
+  tx(ctx, "PROJEÇÃO", 700, y, 26, 900, "rgba(255,255,255,.55)", "center", 3);
+  tx(ctx, "ERRO", CW - 100, y, 26, 900, "rgba(255,255,255,.55)", "right", 3);
+  for (const m of [1, 5, 10, 20, 30, 50, 75, 90]) {
+    const p = registro.find((x) => x.k >= m && x.k < 100);
+    if (!p) continue;
+    y += 100;
+    rr(ctx, 70, y - 66, CW - 140, 88, 24); ctx.fillStyle = "rgba(255,255,255,.06)"; ctx.fill();
+    const erro = p.pr - fim.of, ok = Math.abs(erro) <= 1 && (p.pr > 50) === (fim.of > 50);
+    tx(ctx, p.k + "%", 100, y, 50, 900, "#fff");
+    tx(ctx, n1(p.of) + "%", 420, y, 44, 850, "rgba(255,255,255,.75)", "center");
+    tx(ctx, n1(p.pr) + "%", 700, y, 50, 900, p.pr > 50 ? "#9CC3FF" : "#FFA39D", "center");
+    tx(ctx, (erro >= 0 ? "+" : "−") + n1(Math.abs(erro)), CW - 100, y, 44, 900,
+      ok ? "#34D399" : OURO, "right");
+  }
+  tx(ctx, "% de " + nomes.pl.split(" ")[0] + " nos votos válidos · erro em pontos", CW / 2,
+    y + 80, 28, 750, "rgba(255,255,255,.55)", "center");
+  rodape(ctx);
+}
+
+async function desenharCard(def) {
+  try {
+    await Promise.all([document.fonts.load("900 100px Nunito"),
+      document.fonts.load("800 40px Nunito"), document.fonts.load('700 60px "Zilla Slab"')]);
+  } catch {}
+  const cv = document.createElement("canvas");
+  cv.width = CW; cv.height = CH;
+  const ctx = cv.getContext("2d");
+  if (def.tipo === "marco" || def.tipo === "virada") cardMarco(ctx, def);
+  else if (def.tipo === "palpite") cardPalpite(ctx, def);
+  else if (def.tipo === "lugar") cardLugar(ctx, def);
+  else if (def.tipo === "espera") cardEspera(ctx, def);
+  else if (def.tipo === "auditoria") cardAuditoria(ctx);
+  else if (def.tipo === "pesquisas") cardPesquisas(ctx, def);
+  return cv;
+}
+
+/* ---- a aba ----------------------------------------------------------- */
+const miniaturas = new Map();
+function nomeCard(c) {
+  if (c.tipo === "virada") return "Virada · " + c.k + "%";
+  return c.k >= 100 ? "Final · 100%" : c.k + "% apurado";
+}
+
+async function pintaCards() {
+  const caixa = $("cardsLista");
+  if (!caixa) return;
+  const lista = cards.slice().reverse();
+  $("cardsVazio").hidden = lista.length > 0;
+  $("cardsConta").textContent = lista.length + (lista.length === 1 ? " card" : " cards");
+  const temFim = registro.some((x) => x.k === 100 && x.of != null);
+  $("btCardAuditoria").hidden = !temFim;
+  caixa.innerHTML = lista.map((c, i) =>
+    `<button class="thumb" data-i="${cards.length - 1 - i}">`
+    + `<img alt="${esc(nomeCard(c))}" data-k="${c.tipo}-${c.k}-${c.t}">`
+    + `<span>${esc(nomeCard(c))}<small>${hm(c)}</small></span></button>`).join("");
+  for (const img of caixa.querySelectorAll("img")) {
+    const chave = img.dataset.k;
+    if (!miniaturas.has(chave)) {
+      const c = cards[+img.parentElement.dataset.i];
+      const cv = await desenharCard(c);
+      const p = document.createElement("canvas");
+      p.width = 270; p.height = 480;
+      p.getContext("2d").drawImage(cv, 0, 0, 270, 480);
+      miniaturas.set(chave, p.toDataURL("image/jpeg", 0.85));
+    }
+    img.src = miniaturas.get(chave);
+  }
+}
+
+$("cardsLista").addEventListener("click", (ev) => {
+  const b = ev.target.closest(".thumb");
+  if (b) abrirCard(cards[+b.dataset.i]);
+});
+
+let cardAberto = null;
+async function abrirCard(def) {
+  cardAberto = def;
+  const cv = await desenharCard(def);
+  $("cardImg").src = cv.toDataURL("image/png");
+  $("cardModal").hidden = false;
+  cardAberto.blob = await new Promise((res) => cv.toBlob(res, "image/png"));
+}
+
+function textoCard(def) {
+  const nPl = nomes.pl.split(" ")[0], nPt = nomes.pt.split(" ")[0];
+  if (def.tipo === "palpite") {
+    return `Meu palpite pro 2º turno: ${nPl} ${n1(def.pl)}% × ${nPt} ${n1(100 - def.pl)}%. `
+      + `Duvido você chegar mais perto! Faça o seu: https://${SITE}/ · ${PERFIL}`;
+  }
+  if (def.tipo === "marco" || def.tipo === "virada") {
+    return `${n1(def.pct)}% apurado · Oficial TSE: ${nPl} ${n1(def.of)}% × ${nPt} ${n1(100 - def.of)}%`
+      + ` · Projeção: ${nPl} ${n1(def.pr)}% × ${nPt} ${n1(100 - def.pr)}%. `
+      + `Ao vivo: https://${SITE}/ · ${PERFIL}`;
+  }
+  return `Apuração 2026 ao vivo, com projeção: https://${SITE}/ · ${PERFIL}`;
+}
+
+$("cardCompartilhar").addEventListener("click", async () => {
+  if (!cardAberto) return;
+  const blob = cardAberto.blob;
+  const arq = blob && new File([blob], "oxe-apuracao.png", { type: "image/png" });
+  if (arq && navigator.canShare && navigator.canShare({ files: [arq] })) {
+    try { await navigator.share({ files: [arq], text: textoCard(cardAberto) }); } catch {}
+    return;
+  }
+  baixarCard();
+});
+
+function baixarCard() {
+  if (!cardAberto || !cardAberto.blob) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(cardAberto.blob);
+  a.download = "oxe-apuracao-" + (cardAberto.k != null ? cardAberto.k + "pct" : cardAberto.tipo) + ".png";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$("cardBaixar").addEventListener("click", baixarCard);
+$("cardWhats").addEventListener("click", () => {
+  if (!cardAberto) return;
+  window.open("https://wa.me/?text=" + encodeURIComponent(textoCard(cardAberto)), "_blank", "noopener");
+});
+$("cardFechar").addEventListener("click", () => { $("cardModal").hidden = true; });
+$("cardModal").addEventListener("click", (ev) => {
+  if (ev.target === $("cardModal")) $("cardModal").hidden = true;
+});
+
+/* Card de agora: qualquer pessoa, a qualquer momento. Antes da apuração vira
+ * o card da contagem regressiva com a média das pesquisas. */
+$("btCardAgora").addEventListener("click", async () => {
+  const r = ultimoR;
+  if (r && r.pctApurado >= 0.05 && r.brutoPl != null) {
+    let vPl = 0, vPt = 0;
+    const ult = registro.length ? registro[registro.length - 1] : null;
+    if (ult) { vPl = ult.vPl; vPt = ult.vPt; }
+    const c = fotoDoMomento(r, "", vPl, vPt, "marco", Math.floor(r.pctApurado));
+    return abrirCard(c);
+  }
+  const falta = Math.max(0, FECHAMENTO_URNAS - Date.now());
+  const d = Math.floor(falta / 86400000), h = Math.floor((falta % 86400000) / 3600000),
+    m = Math.floor((falta % 3600000) / 60000);
+  const ag = pesquisas && pesquisas.length ? pq.agregar(pesquisas) : null;
+  abrirCard({ tipo: "espera",
+    falta: d > 0 ? `${d}d ${h}h` : `${h}h ${String(m).padStart(2, "0")}min`,
+    pl: ag ? ag.pl : null });
+});
+
+$("btCardAuditoria").addEventListener("click", () => abrirCard({ tipo: "auditoria" }));
+
+/* Palpite: a pessoa arrasta, gera o card e desafia os amigos. Fica guardado
+ * no aparelho; quando a apuração termina, o card mostra por quanto errou. */
+const CHAVE_PALPITE = "palpite-" + TURNO;
+function lerPalpite() {
+  try { const v = parseFloat(localStorage.getItem(CHAVE_PALPITE)); return isFinite(v) ? v : null; }
+  catch { return null; }
+}
+function pintaPalpite() {
+  const v = +$("palpite").value;
+  $("palpitePl").textContent = n1(v) + "%";
+  $("palpitePt").textContent = n1(100 - v) + "%";
+  $("palpiteBarraPl").style.width = v + "%";
+  $("palpiteBarraPt").style.width = (100 - v) + "%";
+}
+{
+  const salvo = lerPalpite();
+  if (salvo != null) $("palpite").value = salvo;
+  pintaPalpite();
+}
+$("palpite").addEventListener("input", pintaPalpite);
+$("btPalpite").addEventListener("click", () => {
+  const v = +$("palpite").value;
+  try { localStorage.setItem(CHAVE_PALPITE, String(v)); } catch {}
+  abrirCard({ tipo: "palpite", pl: v });
+});
+
+/* Sua cidade, seu estado: orgulho local é o que mais se compartilha. */
+$("cardLugarBusca").addEventListener("focus", () => {
+  montarListaMun();
+  if (!$("cardLugarBusca").getAttribute("list")) $("cardLugarBusca").setAttribute("list", "listaMun");
+});
+$("btCardLugar").addEventListener("click", async () => {
+  const v = $("cardLugarBusca").value.trim();
+  const r = ultimoR;
+  const br = r && r.pctApurado > 0.05 ? r.projecaoPl : null;
+  const bt = $("btCardLugar");
+  const m = v.match(/^(.*) · ([A-Z]{2})$/);
+  if (!m || !modelo) { $("cardLugarMsg").textContent = "Escolha um município da lista."; return; }
+  const nome = m[1].toUpperCase(), uf = m[2].toLowerCase();
+  let i = -1;
+  for (let j = 0; j < modelo.n; j++) {
+    if (modelo.uf[j] === uf && modelo.nm[j].toUpperCase() === nome) { i = j; break; }
+  }
+  if (i < 0) { $("cardLugarMsg").textContent = "Não achei esse município."; return; }
+  bt.disabled = true; $("cardLugarMsg").textContent = "Buscando o resultado oficial no TSE…";
+  let pPl = null, rot = "OFICIAL DO TSE", nota = "";
+  try {
+    const eleicao = DEMO !== null ? tse.ELEICAO_1T : TURNO;
+    const o = await tse.lerMunicipio(eleicao, uf, modelo.cd[i]);
+    if (o.pl + o.pt > 0) {
+      pPl = 100 * o.pl / (o.pl + o.pt);
+      nota = n1(o.pctSecoes) + "% das seções apuradas"
+        + (DEMO !== null ? " · ensaio com o 1º turno" : "");
+    }
+  } catch {}
+  if (pPl == null) {
+    const est = r && r.pctApurado > 0.05 ? modelo.estimarMunicipios()[i] : null;
+    if (est != null && isFinite(est)) { pPl = est; rot = "ESTIMATIVA"; nota = "o TSE ainda não publicou o município"; }
+  }
+  bt.disabled = false;
+  if (pPl == null) {
+    $("cardLugarMsg").textContent = "Ainda não há votos desse município. Tente quando a apuração começar.";
+    return;
+  }
+  $("cardLugarMsg").textContent = "";
+  abrirCard({ tipo: "lugar", uf, nome: titulo(modelo.nm[i]), sub: uf.toUpperCase() + " · 2º turno 2026",
+    rotulo: rot, pPl, nota, br });
+});
+
+$("btCardEstado").addEventListener("click", () => {
+  const uf = $("cardEstadoSel").value;
+  const r = ultimoR;
+  if (!r || !(r.pctApurado > 0.05)) {
+    $("cardLugarMsg").textContent = "O card do estado fica disponível quando a apuração começar.";
+    return;
+  }
+  const e = r.estados.find((x) => x.uf === uf);
+  if (!e) return;
+  abrirCard({ tipo: "lugar", uf: null, nome: NOMES_UF[uf] || uf,
+    sub: n1(e.pctApurado) + "% apurado · TSE " + (e.obsPl == null ? "—" : n1(e.obsPl) + "% " + nomes.pl.split(" ")[0]),
+    rotulo: "PROJEÇÃO FINAL", pPl: e.projPl, nota: "", br: r.projecaoPl });
+});
+
+const NOMES_UF = { AC: "Acre", AL: "Alagoas", AM: "Amazonas", AP: "Amapá", BA: "Bahia",
+  CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão",
+  MG: "Minas Gerais", MS: "Mato Grosso do Sul", MT: "Mato Grosso", PA: "Pará",
+  PB: "Paraíba", PE: "Pernambuco", PI: "Piauí", PR: "Paraná", RJ: "Rio de Janeiro",
+  RN: "Rio Grande do Norte", RO: "Rondônia", RR: "Roraima", RS: "Rio Grande do Sul",
+  SC: "Santa Catarina", SE: "Sergipe", SP: "São Paulo", TO: "Tocantins", ZZ: "Exterior" };
+$("cardEstadoSel").innerHTML = Object.entries(NOMES_UF)
+  .sort((a, b) => a[1].localeCompare(b[1]))
+  .map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+
+/* Pesquisas só podem ser compartilhadas ANTES da apuração começar. Com voto
+ * sendo contado, card de pesquisa circulando ao lado do resultado só
+ * confunde — então o botão trava e fica só o card da apuração. */
+const apuracaoComecou = () =>
+  (ultimoR && ultimoR.pctApurado > 0.05) || (DEMO === null && TURNO === tse.ELEICAO_2T
+    && Date.now() >= FECHAMENTO_URNAS);
+
+async function compartilharPesquisas(msgEl) {
+  if (apuracaoComecou()) {
+    msgEl.textContent = "Com a apuração em andamento, só os cards da apuração podem ser "
+      + "compartilhados.";
+    return;
+  }
+  if (pesquisas === null || !pesquisas.length) {
+    msgEl.textContent = "Carregando as pesquisas…";
+    try { await carregarPesquisas(); } catch {}
+  }
+  if (!pesquisas || !pesquisas.length) { msgEl.textContent = "Não consegui carregar as pesquisas agora."; return; }
+  const ag = pq.agregar(pesquisas);
+  if (!ag) { msgEl.textContent = "Ainda não há pesquisas suficientes."; return; }
+  msgEl.textContent = "";
+  const lista = pesquisas.filter((p) => p.validosPl > 0 && p.validosPl < 100).slice(0, 6)
+    .map((p) => ({ inst: p.instituto, campo: p.periodo, pl: p.validosPl }));
+  abrirCard({ tipo: "pesquisas", media: ag.pl, n: ag.nUsadas, lista,
+    data: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) });
+}
+$("btCardPesquisas").addEventListener("click", () => compartilharPesquisas($("cardPesqMsg")));
+$("btPesqCompartilhar").addEventListener("click", () => compartilharPesquisas($("pesqMsg")));
+function travarPesquisas() {
+  const trava = apuracaoComecou();
+  for (const id of ["btCardPesquisas", "btPesqCompartilhar"]) {
+    $(id).disabled = trava;
+    $(id).title = trava ? "Travado durante a apuração" : "";
+  }
+  $("cardPesqMsg").textContent = trava
+    ? "Travado: com a apuração em andamento, só os cards da apuração podem ser compartilhados." : "";
+}
+setInterval(travarPesquisas, 30000);
+
+/* Aviso na aba de apuração quando sai card novo. */
+function avisarCardNovo() {
+  const ult = cards[cards.length - 1];
+  if (!ult) return;
+  $("avisoCard").hidden = false;
+  $("avisoCardTxt").textContent = "Card de stories pronto: " + nomeCard(ult);
+}
+$("avisoCard").addEventListener("click", () => {
+  document.querySelector('.aba[data-aba="cards"]').click();
+});
+
+/* ---- procurar município ------------------------------------------------ */
+let listaMunMontada = false;
+function montarListaMun() {
+  if (listaMunMontada || !modelo) return;
+  listaMunMontada = true;
+  const opts = [];
+  for (let i = 0; i < modelo.n; i++) {
+    if (modelo.uf[i] === "zz") continue;
+    opts.push(`<option value="${esc(titulo(modelo.nm[i]))} · ${modelo.uf[i].toUpperCase()}">`);
+  }
+  $("listaMun").innerHTML = opts.join("");
+}
+$("buscaMun").addEventListener("focus", montarListaMun);
+$("buscaMun").addEventListener("change", () => {
+  const v = $("buscaMun").value.trim();
+  const m = v.match(/^(.*) · ([A-Z]{2})$/);
+  if (!m || !modelo) return;
+  const nome = m[1].toUpperCase(), uf = m[2].toLowerCase();
+  let alvo = -1;
+  for (let i = 0; i < modelo.n; i++) {
+    if (modelo.uf[i] === uf && modelo.nm[i].toUpperCase() === nome) { alvo = i; break; }
+  }
+  if (alvo < 0) return;
+  const abrir = () => {
+    if (!munEls) return;
+    const n = munIdx.indexOf(alvo);
+    if (n >= 0) munEls[n].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    else { munSel = alvo; mostrarFicha(alvo, false); }
+  };
+  if (modoMapa !== "mun") {
+    document.querySelector('.seletor button[data-modo="mun"]').click();
+    setTimeout(abrir, 300);
+  } else abrir();
+  $("buscaMun").blur();
+});
+
+/* ---- estados, regiões, saldo, quanto falta ------------------------------ */
+let ordemEstados = "apurado";
+let ultimoPintado = null;
+
+let estadosTodos = false;
+$("btEstadosTodos").addEventListener("click", () => {
+  estadosTodos = !estadosTodos;
+  if (ultimoPintado) renderEstados(ultimoPintado);
+});
+
+function ordenarEstados(lista) {
+  const l = lista.slice();
+  if (ordemEstados === "vantagem") {
+    l.sort((a, b) => Math.abs(b.projPl - 50) - Math.abs(a.projPl - 50));
+  } else if (ordemEstados === "az") {
+    l.sort((a, b) => a.uf.localeCompare(b.uf));
+  }
+  // No celular, 28 linhas viram uma parede: mostra 10 e um botão para o resto.
+  $("btEstadosTodos").hidden = l.length <= 10;
+  $("btEstadosTodos").textContent = estadosTodos ? "Mostrar menos"
+    : "Ver todos os " + l.length;
+  return estadosTodos ? l : l.slice(0, 10);   // "apurado": já vem em ordem de apuração
+}
+
+function renderEstados(r) {
+  ultimoPintado = r;
+  $("estados").innerHTML = ordenarEstados(r.estados).map((e) => {
     const temDado = e.obsPl != null;
     const pl = Math.max(0, Math.min(e.projPl, 100));
+    const lado = !temDado ? "sd" : pl > 50 ? "pl" : "pt";
     const cor = pl > 50 ? "var(--pl)" : "var(--pt)";
+    const sigla = e.uf === "ZZ" ? "EXT" : esc(e.uf);
     return "<div class='uf-linha'>"
-      + "<div><div class='uf-sigla'>"
-      + (e.uf === "ZZ" ? "EXT" : esc(e.uf)) + "</div>"
-      + "<div class='uf-reg'>"
-      + (e.uf === "ZZ" ? "exterior" : esc(e.regiao)) + "</div></div>"
+      + "<div class='uf-sigla " + lado + "'>" + sigla + "</div>"
       + "<div>"
       // Sem urna contada, a barra fica apagada: o número ali é estimativa
       // a partir do padrão da região, e não pode ter a mesma aparência de
@@ -1165,22 +2740,113 @@ function pinta(r, falhas, totais, horaTSE, observado, dispersao) {
       +   "<div class='uf-apur'><i style='width:"
       +     Math.min(e.pctApurado, 100).toFixed(1) + "%'></i></div>"
       +   "<div class='uf-meta'><span>" + n1(e.pctApurado) + "% apurado</span>"
-      +     "<span>" + (temDado ? "urna " + n1(e.obsPl) + "%" : "sem urna contada")
+      +     "<span>" + (temDado ? "TSE " + n1(e.obsPl) + "%" : "sem urna contada")
       +     "</span></div>"
       + "</div>"
       + "<div class='uf-proj' style='color:" + (temDado ? cor : "var(--fraco)")
-      +   "'>" + n1(e.projPl) + "%</div>"
+      +   "'>" + n1(e.projPl) + "%<small>projeção</small></div>"
       + "</div>";
   }).join("");
+}
 
-  if (!historico.length || r.pctApurado > historico[historico.length - 1].pct + 0.05) {
-    historico.push({ pct: r.pctApurado, proj: r.projecaoPl, bruto: r.brutoPl,
-                     t: Date.now() });
-    salvarHistorico();
+document.querySelectorAll("#ordemEstados button").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#ordemEstados button").forEach((x) =>
+      x.classList.toggle("ativo", x === b));
+    ordemEstados = b.dataset.o;
+    if (ultimoPintado) renderEstados(ultimoPintado);
+  });
+});
+
+const NOMES_REGIAO = { "norte": "Norte", "nordeste": "Nordeste",
+  "centro-oeste": "Centro-Oeste", "sudeste": "Sudeste", "sul": "Sul",
+  "exterior": "Exterior" };
+
+/* Por região: soma os votos projetados de cada estado. A barra cheia é a
+ * projeção; o fio verde, quanto da região já foi apurado. */
+function renderRegioes(r) {
+  const acc = new Map();
+  for (const e of r.estados) {
+    const k = e.regiao;
+    const a = acc.get(k) || { pl: 0, pt: 0, apu: 0, peso: 0 };
+    a.pl += e.vPl || 0; a.pt += e.vPt || 0;
+    const peso = (e.vPl || 0) + (e.vPt || 0);
+    a.apu += e.pctApurado * peso; a.peso += peso;
+    acc.set(k, a);
   }
-  desenha();
-  preverConclusao(r);
-  desenhaMapa(r).catch(() => {});
+  const ordem = ["nordeste", "sudeste", "sul", "norte", "centro-oeste", "exterior"];
+  const linhas = ordem.filter((k) => acc.has(k) && acc.get(k).pl + acc.get(k).pt > 0)
+    .map((k) => {
+      const a = acc.get(k), v = a.pl + a.pt, p = 100 * a.pl / v;
+      const apu = a.peso ? a.apu / a.peso : 0;
+      const lider = p > 50 ? nomes.pl.split(" ")[0] : nomes.pt.split(" ")[0];
+      return `<div class="reg"><div class="n">${NOMES_REGIAO[k]}`
+        + `<small>${n1(apu)}% apurado</small></div>`
+        + `<div><div class="mini"><i style="width:${p}%;background:var(--pl)"></i>`
+        + `<i style="width:${100 - p}%;background:var(--pt)"></i></div>`
+        + `<div class="uf-apur"><i style="width:${Math.min(apu, 100)}%"></i></div></div>`
+        + `<div class="v" style="color:${p > 50 ? "var(--pl)" : "var(--pt)"}">`
+        + `${n1(Math.max(p, 100 - p))}%<small>${esc(lider)}</small></div></div>`;
+    });
+  $("cartaoRegioes").style.display = linhas.length ? "block" : "none";
+  $("regioes").innerHTML = linhas.join("");
+}
+
+/* Saldo de votos por estado: quantos votos de diferença cada estado deve dar
+ * no fim. Em eleição apertada, é aqui que se vê de onde vem a vitória. */
+function renderSaldo(r) {
+  const lista = r.estados.filter((e) => e.vPl != null)
+    .map((e) => ({ uf: e.uf === "ZZ" ? "EXT" : e.uf, s: e.vPl - e.vPt }));
+  const pl = lista.filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 6);
+  const pt = lista.filter((x) => x.s < 0).sort((a, b) => a.s - b.s).slice(0, 6);
+  const max = Math.max(1, ...lista.map((x) => Math.abs(x.s)));
+  const fmt = (v) => {
+    v = Math.abs(v);
+    return v >= 1e6 ? n1(v / 1e6) + " mi" : Math.round(v / 1000).toLocaleString("pt-BR") + " mil";
+  };
+  const lin = (x, cor) => `<div class="sd"><span class="u">${esc(x.uf)}</span>`
+    + `<span class="b"><i style="width:${(100 * Math.abs(x.s) / max).toFixed(1)}%;background:${cor}"></i></span>`
+    + `<span class="q">+${fmt(x.s)}</span></div>`;
+  $("saldoTitPl").innerHTML = `<span style="color:var(--pl)">${esc(nomes.pl.split(" ")[0])}</span> ganha mais votos em`;
+  $("saldoTitPt").innerHTML = `<span style="color:var(--pt)">${esc(nomes.pt.split(" ")[0])}</span> ganha mais votos em`;
+  $("saldoPl").innerHTML = pl.map((x) => lin(x, "var(--pl)")).join("") || '<div class="faixa">—</div>';
+  $("saldoPt").innerHTML = pt.map((x) => lin(x, "var(--pt)")).join("") || '<div class="faixa">—</div>';
+  $("cartaoSaldo").style.display = lista.length ? "block" : "none";
+}
+
+/* Quanto falta: votos válidos que ainda não foram contados, e quanto deles
+ * quem está atrás no TSE precisaria para virar. É a conta que todo mundo faz
+ * de cabeça na frente da TV — aqui feita com o volume estimado pelo modelo. */
+function renderFalta(r, votosPl, votosPt) {
+  if (!(r.totalPl > 0) || r.pctApurado >= 99.95) {
+    $("cartaoFalta").style.display = "none"; return;
+  }
+  const total = r.totalPl + r.totalPt;
+  const falta = Math.max(0, total - votosPl - votosPt);
+  $("cartaoFalta").style.display = "block";
+  const mi = (v) => v >= 1e6 ? n1(v / 1e6).replace(",0", "") + " milhões"
+    : Math.round(v).toLocaleString("pt-BR");
+  $("faltaVotos").textContent = "≈ " + mi(falta);
+  const plFrente = votosPl >= votosPt;
+  const atras = plFrente ? nomes.pt.split(" ")[0] : nomes.pl.split(" ")[0];
+  const dif = Math.abs(votosPl - votosPt);
+  // Precisa de metade do que falta mais a metade da diferença.
+  const precisa = falta > 0 ? 100 * (falta + dif) / (2 * falta) : Infinity;
+  if (precisa > 100) {
+    $("faltaPrecisa").textContent = "impossível";
+    $("faltaPrecisaTxt").textContent = atras + " já não alcança só com o que falta "
+      + "(pela estimativa de votos restantes)";
+  } else {
+    $("faltaPrecisa").textContent = n1(precisa) + "%";
+    $("faltaPrecisaTxt").textContent = "dos votos que faltam é o que " + atras
+      + " precisa para virar no TSE";
+  }
+  const prevAtras = plFrente ? r.totalPt / total * 100 : r.totalPl / total * 100;
+  const restoAtras = falta > 0
+    ? 100 * ((plFrente ? r.totalPt - votosPt : r.totalPl - votosPl) / falta) : 0;
+  $("faltaNota").innerHTML = "Pela projeção, " + esc(atras) + " deve fazer "
+    + "<strong>" + n1(Math.max(0, Math.min(100, restoAtras))) + "%</strong> dos votos "
+    + "que faltam e terminar com <strong>" + n1(prevAtras) + "%</strong>.";
 }
 
 /* Previsão de quando a apuração termina.
@@ -1205,6 +2871,8 @@ function preverConclusao(r) {
   ritmos.sort((a, b) => a - b);
   const ritmo = ritmos[Math.floor(ritmos.length / 2)];   // pontos por minuto
   if (!(ritmo > 0)) { $("conclusao").textContent = "—"; return; }
+  $("ritmo").textContent = "ritmo: " + n1(ritmo * 10) + " pontos a cada 10 min";
+  $("ritmo").hidden = false;
 
   const faltam = (99 - r.pctApurado) / ritmo;           // minutos
   if (faltam > 600) { $("conclusao").textContent = "—"; return; }
@@ -1258,13 +2926,13 @@ const ROTULO_DEITADO = ["AC", "RR", "SC"];
 function corMapa(pctPl) {
   const pl = pctPl > 50;
   const margem = Math.min(Math.abs(pctPl - 50) / 20, 1);
-  const claro = pl ? [0xC4, 0xDA, 0xF0] : [0xF4, 0xCD, 0xC9];
-  const forte = pl ? [0x1F, 0x5F, 0xA8] : [0xB8, 0x2E, 0x24];
+  const claro = pl ? [0xB9, 0xD3, 0xFD] : [0xFC, 0xC6, 0xC6];
+  const forte = pl ? [0x1E, 0x40, 0xAF] : [0xA3, 0x16, 0x16];
   const c = claro.map((v, i) => Math.round(v + (forte[i] - v) * margem));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
-async function desenhaMapa(r) {
+async function desenhaMapaUF(r) {
   // Sem nenhum estado apurado o mapa continua sendo desenhado, todo cinza.
   // Um mapa vazio informa: mostra o tamanho real do país que falta contar, e
   // já deixa a pessoa situada antes do primeiro voto — melhor do que um
@@ -1368,6 +3036,8 @@ async function desenhaMapa(r) {
   const vb = geoMapa.viewBox.split(/\s+/);
   $("mapa").setAttribute("viewBox", `${vb[0]} ${vb[1]} ${LARGURA_COM_COLUNA} ${vb[3]}`);
   $("mapa").innerHTML = formas + textos;
+  munEls = null;   // o svg foi trocado: o mapa por município remonta da próxima vez
+  $("escalaMapa").innerHTML = "";
   if (!estados.length) {
     $("legendaMapa").innerHTML =
       "Os <strong>27 estados</strong> aguardando a primeira urna. Conforme a "
@@ -1390,28 +3060,283 @@ async function desenhaMapa(r) {
     + ' <span style="opacity:.75">Contornos: malha territorial do IBGE.</span>';
 }
 
+/* ---- mapa por município ------------------------------------------------
+ *
+ * 5,6 mil municípios, com a malha do IBGE simplificada (mapa-mun.json, gerado
+ * por programa/gerar_mapa_municipios.py). Os contornos vêm em "arcos"
+ * compartilhados — a divisa entre duas cidades é guardada uma vez só —, com
+ * coordenadas inteiras e em diferenças, o que deixa o arquivo pequeno.
+ *
+ * Cada município tem dois canais, um para cada informação:
+ *   intensidade = quanto dele já foi apurado (cinza: nada; cor cheia: tudo);
+ *   cor         = quem lidera ali, pela estimativa do modelo.
+ * Assim, conforme a noite avança, o mapa vai "acendendo" em azul e vermelho.
+ */
+let geoMun = null;
+let munEls = null;      // os <path> dos municípios
+let munIdx = null;      // índice na base de cada <path>
+let munCor = null;      // última cor pintada, para só mexer no que mudou
+let modoMapa = "mun";
+let ultimoR = null;
+let munSel = -1;
+
+async function carregarGeoMun() {
+  if (geoMun === null) {
+    try {
+      geoMun = await (await fetch("./mapa-mun.json", { cache: "force-cache" })).json();
+    } catch { geoMun = false; }
+  }
+  return geoMun;
+}
+
+function montarMun() {
+  const g = geoMun;
+  const arcos = g.arcs.map((f) => {
+    let x = f[0], y = f[1];
+    const p = [x + " " + y];
+    for (let i = 2; i < f.length; i += 2) { x += f[i]; y += f[i + 1]; p.push(x + " " + y); }
+    return p;
+  });
+  const anel = (r) => {
+    let pts = [];
+    for (const ai of r) {
+      let a = arcos[ai >= 0 ? ai : ~ai];
+      if (ai < 0) a = a.slice().reverse();
+      pts = pts.length ? pts.concat(a.slice(1)) : a.slice();
+    }
+    return "M" + pts[0] + "L" + pts.slice(1).join(" ") + "Z";
+  };
+  const linha = (j) => "M" + arcos[j][0] + "L" + arcos[j].slice(1).join(" ");
+  const Q = g.q, W = g.w * Q, H = Math.round(g.h * Q);
+  let html = `<g class="muns">`;
+  const idx = [];
+  for (const [chave, rs] of Object.entries(g.mun)) {
+    const i = modelo.porChave.get(chave);
+    if (i === undefined) continue;
+    idx.push(i);
+    html += `<path class="m" data-n="${idx.length - 1}" d="${rs.map(anel).join("")}"`
+      + ` fill="var(--mapa-vazio)" stroke="var(--superficie)" stroke-width=".5"`
+      + ` stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  }
+  html += `</g><path d="${g.ufBorda.concat(g.fora).map(linha).join("")}" fill="none"`
+    + ` stroke="var(--texto)" stroke-opacity=".55" stroke-width="1.1"`
+    + ` stroke-linejoin="round" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
+  // Siglas dos estados, com um halo da cor do fundo para ler por cima do mapa.
+  for (const [uf, [x, y]] of Object.entries(g.rotulos)) {
+    if (["DF", "SE", "AL", "RN", "PB", "ES", "RJ"].includes(uf)) continue;
+    html += `<text x="${Math.round(x * Q)}" y="${Math.round(y * Q)}" text-anchor="middle"`
+      + ` dominant-baseline="middle" font-size="110" font-weight="900"`
+      + ` fill="var(--texto)" fill-opacity=".8" stroke="var(--superficie)"`
+      + ` stroke-width="24" stroke-opacity=".8" paint-order="stroke"`
+      + ` pointer-events="none">${uf}</text>`;
+  }
+  const svg = $("mapa");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = html;
+  munEls = [...svg.querySelectorAll("path.m")];
+  munIdx = idx;
+  munCor = new Array(munEls.length).fill("");
+}
+
+/* Cor de um município: o lado define o matiz, a vantagem estimada define o
+ * quão forte. */
+function corMun(pctPl) {
+  const pl = pctPl > 50;
+  const m = Math.min(Math.abs(pctPl - 50) / 22, 1);
+  const claro = pl ? [0xB9, 0xD3, 0xFD] : [0xFC, 0xC6, 0xC6];
+  const forte = pl ? [0x1E, 0x40, 0xAF] : [0xA3, 0x16, 0x16];
+  const t = 0.18 + 0.82 * m;
+  const c = claro.map((v, k) => Math.round(v + (forte[k] - v) * t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+async function desenhaMapaMun(r) {
+  if (!(await carregarGeoMun()) || !modelo) return false;
+  $("cartaoMapa").style.display = "block";
+  if (!munEls) montarMun();
+  const temDado = r && r.pctApurado > 0.05;
+  const est = temDado ? modelo.estimarMunicipios() : null;
+  let acesos = 0, pl = 0, pt = 0;
+  for (let n = 0; n < munEls.length; n++) {
+    const i = munIdx[n];
+    const fr = temDado ? modelo.fracao[i] : 0;
+    let chave;
+    if (fr > 0 && est && isFinite(est[i])) {
+      acesos++;
+      if (est[i] > 50) pl++; else pt++;
+      const op = (0.3 + 0.7 * Math.min(fr, 1)).toFixed(2);
+      const cor = corMun(est[i]);
+      chave = cor + op;
+      if (munCor[n] !== chave) {
+        munEls[n].setAttribute("fill", cor);
+        munEls[n].setAttribute("fill-opacity", op);
+      }
+    } else {
+      chave = "vazio";
+      if (munCor[n] !== chave) {
+        munEls[n].setAttribute("fill", "var(--mapa-vazio)");
+        munEls[n].setAttribute("fill-opacity", "1");
+      }
+    }
+    munCor[n] = chave;
+  }
+  const curtoPl = esc(nomes.pl.split(" ")[0]), curtoPt = esc(nomes.pt.split(" ")[0]);
+  const gr = (lado) => [0, .25, .5, .75, 1].map((m) =>
+    `<i style="background:${corMun(lado ? 50 + m * 22 : 50 - m * 22)}"></i>`);
+  $("escalaMapa").innerHTML =
+    `<span style="color:var(--pt)">${curtoPt}</span>`
+    + `<span class="g">${gr(false).reverse().join("")}${gr(true).join("")}</span>`
+    + `<span style="color:var(--pl)">${curtoPl}</span>`
+    + `<span style="display:inline-flex;align-items:center;gap:6px">`
+    + `<i style="width:14px;height:14px;border-radius:4px;display:inline-block;`
+    + `background:var(--mapa-vazio)"></i>não apurado</span>`;
+  $("legendaMapa").innerHTML = !temDado
+    ? "Os <strong>5.570 municípios</strong> aguardando a primeira urna. "
+      + "Conforme a apuração avança, cada um <strong>acende</strong> na cor de "
+      + "quem lidera ali."
+    : "<strong>" + acesos.toLocaleString("pt-BR") + "</strong> municípios já com "
+      + "urna contada — " + pl.toLocaleString("pt-BR") + " pendendo para "
+      + curtoPl + ", " + pt.toLocaleString("pt-BR") + " para " + curtoPt
+      + ". Cor mais <strong>forte</strong> = mais apurado. "
+      + "<strong>Toque num município</strong> para ver o resultado oficial dele.";
+  if (munSel >= 0) mostrarFicha(munSel, false);
+  return true;
+}
+
+async function desenhaMapa(r) {
+  ultimoR = r;
+  if (modoMapa === "mun") {
+    $("tituloMapa").textContent = "Município a município";
+    if (await desenhaMapaMun(r)) return;
+  }
+  $("tituloMapa").textContent = "Estado por estado";
+  fecharFicha();
+  return desenhaMapaUF(r);
+}
+
+document.querySelectorAll(".seletor button").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".seletor button").forEach((x) =>
+      x.classList.toggle("ativo", x === b));
+    modoMapa = b.dataset.modo;
+    if (modoMapa === "mun") munEls = null;
+    desenhaMapa(ultimoR).catch(() => {});
+  });
+});
+
+function fecharFicha() {
+  $("ficha").hidden = true;
+  if (munSel >= 0 && munEls) {
+    const n = munIdx.indexOf(munSel);
+    if (n >= 0) munEls[n].classList.remove("sel");
+  }
+  munSel = -1;
+}
+
+/* A ficha do município tocado: o que o modelo estima e, num botão, o
+ * resultado oficial daquela cidade, buscado no TSE na hora. */
+function mostrarFicha(i, buscar) {
+  const f = $("ficha");
+  const uf = modelo.uf[i], cd = modelo.cd[i];
+  const fr = modelo.fracao[i] || 0;
+  const r = ultimoR;
+  const temDado = r && r.pctApurado > 0.05;
+  const est = temDado ? modelo.estimarMunicipios()[i] : null;
+  const curtoPl = esc(nomes.pl.split(" ")[0]), curtoPt = esc(nomes.pt.split(" ")[0]);
+  const mini = (v) => `<div class="mini"><i style="width:${v}%;background:var(--pl)"></i>`
+    + `<i style="width:${100 - v}%;background:var(--pt)"></i></div>`;
+  let html = `<button class="fx" aria-label="Fechar">&times;</button>`
+    + `<div class="tt">${esc(titulo(modelo.nm[i]))} · ${esc(uf.toUpperCase())}</div>`
+    + `<div class="ss">${fr > 0 ? n1(100 * Math.min(fr, 1)) + "% apurado" : "ainda sem urna contada"}</div>`;
+  if (est != null && isFinite(est) && fr > 0) {
+    html += `<div class="ln"><span style="color:var(--pl)">${curtoPl} ${n1(est)}%</span>`
+      + `<span style="color:var(--pt)">${n1(100 - est)}% ${curtoPt}</span></div>${mini(est)}`
+      + `<div class="nota">Estimativa do modelo para o resultado final do município.</div>`;
+  }
+  html += `<div id="fichaOficial"></div>`
+    + `<button class="bt-sec" id="btFichaOficial">Ver resultado oficial do TSE</button>`;
+  f.innerHTML = html;
+  f.hidden = false;
+  f.querySelector(".fx").onclick = fecharFicha;
+  const bt = $("btFichaOficial");
+  const buscarOficial = async () => {
+    bt.disabled = true; bt.textContent = "Buscando no TSE…";
+    try {
+      const eleicao = DEMO !== null ? tse.ELEICAO_1T : TURNO;
+      const o = await tse.lerMunicipio(eleicao, uf, cd);
+      if (munSel !== i) return;
+      const v = o.pl + o.pt;
+      if (!(v > 0)) throw new Error("sem votos");
+      const p = 100 * o.pl / v;
+      $("fichaOficial").innerHTML = `<div class="ln" style="margin-top:10px">`
+        + `<span style="color:var(--pl)">${curtoPl} ${n1(p)}%</span>`
+        + `<span style="color:var(--pt)">${n1(100 - p)}% ${curtoPt}</span></div>${mini(p)}`
+        + `<div class="nota"><b>Oficial TSE</b>${DEMO !== null ? " (1º turno, ensaio)" : ""}`
+        + ` · ${o.pl.toLocaleString("pt-BR")} × ${o.pt.toLocaleString("pt-BR")} votos`
+        + ` · ${n1(o.pctSecoes)}% das seções${o.hora ? " · " + esc(o.hora) : ""}</div>`;
+      bt.remove();
+    } catch {
+      if (munSel !== i) return;
+      bt.disabled = false;
+      bt.textContent = "O TSE ainda não publicou — tentar de novo";
+    }
+  };
+  bt.onclick = buscarOficial;
+  if (buscar) buscarOficial();
+}
+
+$("mapa").addEventListener("click", (ev) => {
+  const p = ev.target.closest && ev.target.closest("path.m");
+  if (!p || !munEls) return;
+  const n = +p.dataset.n;
+  if (munSel >= 0) {
+    const k = munIdx.indexOf(munSel);
+    if (k >= 0) munEls[k].classList.remove("sel");
+  }
+  munSel = munIdx[n];
+  p.classList.add("sel");
+  // Traz o município para cima dos vizinhos, senão o contorno de destaque
+  // fica escondido debaixo deles.
+  p.parentNode.appendChild(p);
+  munEls.splice(n, 1); munIdx.splice(n, 1); munCor.splice(n, 1);
+  munEls.push(p); munIdx.push(munSel); munCor.push("");
+  munEls.forEach((el, k) => { el.dataset.n = k; });
+  mostrarFicha(munSel, false);
+});
+
+/* Referência: no 2º turno de 2022, Bolsonaro (PL) fez 49,10% dos válidos
+ * contra 50,90% de Lula (TSE). A linha ajuda a ler se o PL está acima ou
+ * abaixo de onde ficou da última vez. */
+const PL_2022 = 49.10;
+
 function desenha() {
   if (historico.length < 3) return;
   $("cartaoGrafico").style.display = "block";
+  const W = 600, H = 150;
   const vals = historico.flatMap((p) => [p.proj, p.bruto]).filter((v) => v != null);
-  let lo = Math.min(...vals, 49), hi = Math.max(...vals, 51);
-  const pad = (hi - lo) * 0.12 || 1;
+  let lo = Math.min(...vals, 48.5), hi = Math.max(...vals, 51.5);
+  const pad = (hi - lo) * 0.1 || 1;
   lo -= pad; hi += pad;
-  const X = (p) => (p.pct / 100) * 600;
-  const Y = (v) => 130 - ((v - lo) / (hi - lo)) * 130;
-  const linha = (k, extra) => {
-    const pts = historico.filter((p) => p[k] != null)
-      .map((p) => X(p) + "," + Y(p[k])).join(" ");
-    return `<polyline points="${pts}" fill="none" stroke="var(--pl)"
-      stroke-width="2" vector-effect="non-scaling-stroke" ${extra}/>`;
-  };
-  const meio = (lo < 50 && hi > 50)
-    ? `<line x1="0" y1="${Y(50)}" x2="600" y2="${Y(50)}" stroke="var(--fraco)"
-       stroke-width="1" stroke-dasharray="3 3" opacity=".6"
-       vector-effect="non-scaling-stroke"/>` : "";
-  $("grafico").innerHTML = meio
-    + linha("bruto", 'stroke-dasharray="4 4" opacity=".45"')
-    + linha("proj", "");
+  const X = (p) => (p.pct / 100) * W;
+  const Y = (v) => H - ((v - lo) / (hi - lo)) * H;
+  const pts = (k) => historico.filter((p) => p[k] != null).map((p) => X(p).toFixed(1) + "," + Y(p[k]).toFixed(1));
+  const proj = pts("proj"), bruto = pts("bruto");
+  const linhaH = (v, cor, extra) => (v > lo && v < hi)
+    ? `<line x1="0" y1="${Y(v)}" x2="${W}" y2="${Y(v)}" stroke="${cor}" stroke-width="1.5"
+       vector-effect="non-scaling-stroke" ${extra}/>` : "";
+  // Área sob a projeção, puxada para a cor de quem está à frente.
+  const ultimo = historico[historico.length - 1];
+  const corArea = ultimo.proj > 50 ? "var(--pl)" : "var(--pt)";
+  const area = proj.length > 1
+    ? `<polygon points="${proj[0].split(",")[0]},${H} ${proj.join(" ")} ${proj[proj.length - 1].split(",")[0]},${H}"
+        fill="${corArea}" fill-opacity=".08"/>` : "";
+  $("grafico").innerHTML = area
+    + linhaH(50, "var(--linha-forte)", 'stroke-dasharray="5 4"')
+    + linhaH(PL_2022, "var(--alerta)", 'stroke-dasharray="2 4" opacity=".7"')
+    + `<polyline points="${bruto.join(" ")}" fill="none" stroke="var(--fraco)" stroke-width="2"
+        stroke-dasharray="5 5" opacity=".55" vector-effect="non-scaling-stroke"/>`
+    + `<polyline points="${proj.join(" ")}" fill="none" stroke="var(--pl)" stroke-width="3"
+        stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
 }
 
 iniciar();
@@ -1472,11 +3397,8 @@ function atualizarFaixa(r, comecou) {
     faixa.className = "status vivo";
     $("statusTitulo").textContent = "Conectado · aguardando o primeiro boletim";
     $("statusTexto").innerHTML =
-      "O site já está lendo o <strong>sistema oficial do TSE</strong>, que "
-      + "ainda não publicou voto nenhum. O número abaixo é a "
-      + "<strong>média das pesquisas</strong> — intenção de voto declarada, "
-      + "não resultado. Assim que a totalização começar, o painel troca "
-      + "sozinho para os dados oficiais.";
+      "O TSE ainda não publicou votos. Abaixo, a <strong>média das pesquisas</strong> "
+      + "— troca sozinho para a apuração quando ela começar.";
     mostrarPreviaPesquisas();
     ligarContagem();
     return;
@@ -1495,10 +3417,8 @@ function atualizarFaixa(r, comecou) {
   faixa.className = "status vivo";
   $("statusTitulo").textContent = "Ao vivo · apuração oficial do TSE";
   $("statusTexto").innerHTML =
-    "<strong>" + n1(r.pctApurado) + "% do eleitorado já totalizado.</strong> "
-    + "Os votos são oficiais, lidos direto do TSE. A projeção corrige o viés "
-    + "da ordem em que os estados apuram — as pesquisas não entram mais "
-    + "nesta conta.";
+    "<strong>" + n1(r.pctApurado) + "% apurado.</strong> Votos oficiais do TSE, "
+    + "com a projeção de onde a conta deve terminar.";
 }
 
 /* Enquanto não há voto contado, o painel principal mostra a média das
@@ -1514,20 +3434,25 @@ async function mostrarPreviaPesquisas() {
   const alvo = $("previaPesquisas");
   if (!alvo) return;
   alvo.innerHTML =
-    '<div class="faixa" style="margin-bottom:10px">MÉDIA DAS PESQUISAS '
-    + "· ainda não há votos apurados</div>"
-    + '<div class="placar"><div class="lado pl">'
-    + '<div class="nome">' + esc(nomes.pl) + "</div>"
+    '<span class="rotulo" style="text-align:left;color:rgba(255,255,255,.6)">'
+    + "Média das pesquisas · ainda não há votos apurados</span>"
+    + '<div class="placar" style="margin-top:10px;text-align:left"><div class="lado pl">'
+    + '<div class="quem"><span class="avatar">FB</span><div class="nome">'
+    + esc(nomes.pl) + "</div></div>"
     + '<div class="pct">' + n2(ag.pl) + "%</div>"
     + '<div class="faixa">entre ' + n2(ag.faixa[0]) + "% e "
     + n2(ag.faixa[1]) + "%</div></div>"
-    + '<div class="lado pt dir"><div class="nome">' + esc(nomes.pt) + "</div>"
+    + '<div class="lado pt dir"><div class="quem"><span class="avatar">L</span>'
+    + '<div class="nome">' + esc(nomes.pt) + "</div></div>"
     + '<div class="pct">' + n2(ag.pt) + "%</div>"
     + '<div class="faixa">entre ' + n2(100 - ag.faixa[1]) + "% e "
     + n2(100 - ag.faixa[0]) + "%</div></div></div>"
-    + '<div class="faixa" style="margin-top:12px;text-align:left">'
-    + ag.nUsadas + " pesquisas dos últimos 21 dias. No 1º turno de 2026 as "
-    + "pesquisas erraram o líder da eleição — veja a aba Pesquisas.</div>";
+    + '<div class="barra"><i style="width:' + ag.pl + '%;background:linear-gradient(90deg,#1D4ED8,#60A5FA)"></i>'
+    + '<i style="width:' + ag.pt + '%;background:linear-gradient(90deg,#F87171,#B91C1C)"></i></div>'
+    + '<div class="meio"><span>50%</span></div>'
+    + '<div class="faixa" style="margin-top:10px;text-align:left">'
+    + ag.nUsadas + " pesquisas dos últimos 21 dias. No 1º turno as pesquisas "
+    + "erraram o líder — veja a aba Pesquisas.</div>";
 }
 
 /* Antes da abertura: nenhuma chamada ao TSE. A tela mostra a contagem até o
@@ -1546,15 +3471,16 @@ function tickEspera() {
   $("faixaStatus").className = "status pesq";
   $("statusTitulo").textContent = "A apuração começa em " + quando;
   $("statusTexto").innerHTML =
-    "As urnas fecham às <strong>17h de Brasília</strong> de 25 de outubro. "
-    + "Até lá não há voto para contar, então esta página nem consulta o TSE — "
-    + "ela se conecta sozinha cinco minutos antes, para pegar os primeiros "
-    + "boletins assim que saírem. O número abaixo é a "
-    + "<strong>média das pesquisas</strong>, que é o que existe por enquanto.";
+    "Domingo, às <strong>17h de Brasília</strong>, esta página começa a mostrar "
+    + "os votos do TSE sozinha. Até lá, o número é a <strong>média das pesquisas</strong>.";
 
   $("vazio").style.display = "block";
   $("placar").style.display = "none";
   $("apurado").textContent = "0%";
+  if (!cards.length) {
+    $("avisoCard").hidden = false;
+    $("avisoCardTxt").textContent = "Qual é o seu palpite? Crie seu card e desafie os amigos";
+  }
   mostrarPreviaPesquisas();
   ligarContagem();
   desenhaMapa(null).catch(() => {});
@@ -1578,6 +3504,42 @@ async function tickDemo() {
     }
     const { ordem, base, idx } = baseDemo;
     const total = base.ele.reduce((a, b) => a + b, 0);
+
+    // O registro a cada 1% também é ensaiado: refaz a noite de 1% em 1% até
+    // o ponto pedido, para mostrar como a linha do tempo fica. Não é gravado.
+    if (!baseDemo.registro) {
+      const pts = [], cardsDemo = [];
+      const fr = new Map(), ob = {};
+      let ac = 0, k = 1, vp = 0, vt = 0;
+      const alvoK = Math.floor(DEMO);
+      for (const chave of ordem) {
+        if (k > alvoK) break;
+        const i = idx.get(chave);
+        if (i === undefined) continue;
+        fr.set(chave, 1);
+        const uf = base.ufs[i];
+        if (!ob[uf]) ob[uf] = { pl: 0, pt: 0 };
+        ob[uf].pl += base.pl[i]; ob[uf].pt += base.pt[i];
+        vp += base.pl[i]; vt += base.pt[i];
+        ac += base.ele[i];
+        while (k <= alvoK && ac >= (k / 100) * total) {
+          const r = modelo.projetar(fr, ob, 60);
+          const p = pontoRegistro(r, "", vp, vt, k >= 100 ? 100 : k);
+          p.t = Date.UTC(2026, 9, 25, 20, 5) + k * 90000;   // horário de faz de conta
+          pts.push(p);
+          if (MARCOS_CARD.includes(k)) {
+            const c = fotoDoMomento(r, "", vp, vt, "marco", k);
+            c.t = p.t;
+            cardsDemo.push(c);
+          }
+          k++;
+        }
+      }
+      baseDemo.registro = pts;
+      baseDemo.cards = cardsDemo;
+    }
+    registro = baseDemo.registro;
+    cards = baseDemo.cards;
     const limite = (DEMO / 100) * total;
 
     const fracoes = new Map();
@@ -1602,6 +3564,7 @@ async function tickDemo() {
       nulos: Math.round(validos * 0.029), validos,
       secoes: 499248, secoesApuradas: Math.round(499248 * acc / total),
     }, "ensaio", observado);
+    pintaRegistro();
 
     $("faixaStatus").className = "status pesq";
     $("statusTitulo").textContent = "Ensaio — não é a apuração real";
@@ -1634,6 +3597,9 @@ document.querySelectorAll(".aba").forEach((b) => {
     const qual = b.dataset.aba;
     $("painelApuracao").hidden = qual !== "apuracao";
     $("painelPesquisas").hidden = qual !== "pesquisas";
+    $("painelCards").hidden = qual !== "cards";
+    if (qual === "cards") { pintaCards(); travarPesquisas(); $("avisoCard").hidden = true; }
+    if (qual === "pesquisas") travarPesquisas();
     if (qual === "pesquisas") {
       // Ao abrir a aba: carrega se nunca carregou, ou recarrega se o que
       // está na tela já passou dos 10 minutos.
@@ -1679,8 +3645,10 @@ function pintaPesquisas() {
     $("pFaixaPL").textContent = "entre " + n2(ag.faixa[0]) + "% e " + n2(ag.faixa[1]) + "%";
     $("pFaixaPT").textContent = "entre " + n2(100 - ag.faixa[1]) + "% e "
                               + n2(100 - ag.faixa[0]) + "%";
-    $("pBarraPL").style.cssText = "width:" + ag.pl + "%;background:var(--pl)";
-    $("pBarraPT").style.cssText = "width:" + ag.pt + "%;background:var(--pt)";
+    $("pBarraPL").style.cssText = "width:" + ag.pl
+      + "%;background:linear-gradient(90deg,#1D4ED8,#60A5FA)";
+    $("pBarraPT").style.cssText = "width:" + ag.pt
+      + "%;background:linear-gradient(90deg,#F87171,#B91C1C)";
     const dist = Math.abs(ag.pl - 50);
     const hCarga = new Date(ultimaCargaPesquisas).toLocaleTimeString("pt-BR",
       { hour: "2-digit", minute: "2-digit" });
@@ -1695,16 +3663,19 @@ function pintaPesquisas() {
   }
 
   const corpo = pesquisas.slice(0, mostrando).map((p) => {
-    const tse = p.tse
-      ? '<span style="color:var(--ok)" title="Protocolo '
-        + esc(p.tse.protocolo) + '">✓</span>'
-      : '<span style="color:var(--fraco)" title="não localizada no registro">–</span>';
-    return "<tr><td class='uf'>" + esc(p.instituto) + "</td>"
-      + "<td>" + esc(p.periodo) + "</td>"
-      + "<td>" + (p.amostra ? p.amostra.toLocaleString("pt-BR") : "—") + "</td>"
-      + "<td>" + nFonte(p.pt) + "%</td>"
-      + "<td><strong>" + nFonte(p.pl) + "%</strong></td>"
-      + "<td>" + tse + "</td></tr>";
+    const selo = p.tse
+      ? '<span class="selo ok" title="Protocolo ' + esc(p.tse.protocolo) + '">TSE ✓</span>'
+      : '<span class="selo nao" title="não localizada no registro">sem registro</span>';
+    const vPl = p.validosPl;
+    const barra = (vPl > 0 && vPl < 100)
+      ? "<div class='mini'><i style='width:" + vPl + "%;background:var(--pl)'></i>"
+        + "<i style='width:" + (100 - vPl) + "%;background:var(--pt)'></i></div>" : "";
+    return "<div class='pesq'><div><div class='inst'>" + esc(p.instituto) + selo + "</div>"
+      + "<div class='det'>" + esc(p.periodo)
+      + (p.amostra ? " · " + p.amostra.toLocaleString("pt-BR") + " entrevistas" : "")
+      + "</div></div>"
+      + "<div class='nums'><span class='a'>" + nFonte(p.pl) + "%</span> × "
+      + "<span class='b'>" + nFonte(p.pt) + "%</span></div>" + barra + "</div>";
   }).join("");
   $("listaPesquisas").innerHTML = corpo;
   $("btMais").style.display = mostrando < pesquisas.length ? "inline-block" : "none";
@@ -1724,7 +3695,7 @@ function desenhaPesquisas(ag) {
   let lo = Math.min(...vals, 48), hi = Math.max(...vals, 52);
   const pad = (hi - lo) * 0.15 || 1; lo -= pad; hi += pad;
   const X = (d) => t1 === t0 ? 300 : ((+d - t0) / (t1 - t0)) * 600;
-  const Y = (v) => 130 - ((v - lo) / (hi - lo)) * 130;
+  const Y = (v) => 150 - ((v - lo) / (hi - lo)) * 150;
 
   const bolinhas = pts.map((p) =>
     `<circle cx="${X(p.fim).toFixed(1)}" cy="${Y(p.validosPl).toFixed(1)}" r="3"
@@ -1762,7 +3733,6 @@ async function calcularAcerto() {
       "Não consegui cruzar os institutos atuais com os do 1º turno."; return; }
 
     $("acertoVazio").style.display = "none";
-    $("tabAcerto").style.display = "table";
     const curtoPL = esc(nomes.pl.split(" ")[0]);
     const curtoPT = esc(nomes.pt.split(" ")[0]);
     $("corpoAcerto").innerHTML = linhas.map((l) => {
@@ -1778,15 +3748,13 @@ async function calcularAcerto() {
       const lado = acertouLider
         ? "left:50%;width:" + larg.toFixed(1) + "%"
         : "right:50%;width:" + larg.toFixed(1) + "%";
-      return "<tr><td class='uf'>" + esc(l.nome)
-        + "<span class='reg'>dava " + liderava + "</span></td>"
-        + "<td>" + (p ? n2(p.validosPl) + "% " + curtoPL : "—") + "</td>"
-        + "<td style='width:44%'>"
-        + "<div class='erro-barra'><span style='" + lado
+      return "<div class='ac'><div><div class='n'>" + esc(l.nome) + "</div>"
+        + "<div class='d'>no 1º turno dava " + liderava
+        + (p ? " · agora: " + n2(p.validosPl) + "% " + curtoPL : "") + "</div></div>"
+        + "<div><div class='erro-barra'><span style='" + lado
         + ";background:" + cor + "'></span></div>"
         + "<div class='erro-num' style='color:" + cor + "'>"
-        + (l.erro >= 0 ? "+" : "−") + n2(Math.abs(l.erro)) + " pp</div>"
-        + "</td></tr>";
+        + (l.erro >= 0 ? "+" : "−") + n2(Math.abs(l.erro)) + " pp</div></div></div>";
     }).join("");
   } catch {
     $("acertoVazio").textContent = "Não consegui calcular o erro do 1º turno.";
@@ -1799,7 +3767,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=5edca06d4a").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=f96f0c80dd").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

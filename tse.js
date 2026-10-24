@@ -159,6 +159,24 @@ export async function lerResultados(eleicao) {
            horaTSE: horaMaisVelha || horaMaisNova, dispersao };
 }
 
+/* Resultado oficial de UM município, buscado quando a pessoa toca nele no
+ * mapa. É um arquivo pequeno (poucos KB), lido uma vez por toque — nunca em
+ * laço —, então não pesa nem para quem olha nem para o TSE. */
+export async function lerMunicipio(eleicao, uf, cd) {
+  const url = `${BASE}/${CICLO}/${eleicao}/dados/${uf}/${uf}${cd}-c0001-${cod(eleicao)}-u.json`;
+  const doc = await buscar(url);
+  let pl = 0, pt = 0;
+  for (const cargo of doc.carg || [])
+    for (const agr of cargo.agr || [])
+      for (const par of agr.par || [])
+        for (const c of par.cand || []) {
+          if (c.n === NUM_PL) pl += num(c.vap);
+          else if (c.n === NUM_PT) pt += num(c.vap);
+        }
+  const s = doc.s || {};
+  return { pl, pt, pctSecoes: num(s.pst), hora: doc.ht || "" };
+}
+
 export async function lerAndamento(eleicao) {
   const fracoes = new Map();
   const falhas = [];

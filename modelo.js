@@ -206,6 +206,9 @@ export class Modelo {
     }
 
     const bPerfil = this._coefPerfil(swingUf, pesoUf);
+    // Guardado para o mapa por município (estimarMunicipios), que repete a
+    // mesma conta do _somar sem mudar nada na projeção.
+    this._ultimo = { swingFinal, bPerfil };
 
     /* --- passo 4: projeção e margem -------------------------------------- */
     const central = this._somar(swingFinal, observado, null, bPerfil, escalaFinal);
@@ -230,6 +233,10 @@ export class Modelo {
         pctApurado: elei ? (100 * apu) / elei : 0,
         obsPl: o ? (100 * d.obsPl) / o : null,
         projPl: central.porUf.get(uf).pctPl,
+        // Votos válidos projetados no fim (apurados + estimados), para somar
+        // por região e calcular saldo de votos por estado.
+        vPl: central.porUf.get(uf).pl,
+        vPt: central.porUf.get(uf).pt,
         swing: swingFinal.get(uf),
       });
     }
@@ -241,11 +248,49 @@ export class Modelo {
       brutoPl: votosApurados ? (100 * somaObsPl) / votosApurados : null,
       projecaoPl: central.pctPl,
       projecaoPt: 100 - central.pctPl,
+      // Total de votos válidos projetado para o fim da apuração.
+      totalPl: central.pl,
+      totalPt: central.pt,
       faixaPl: faixa.faixa,
       probPl: faixa.probPl,
       swingNacional,
       estados,
     };
+  }
+
+  /* Estimativa por município, para colorir o mapa.
+   *
+   * É a mesma conta que o _somar faz para o que falta apurar: o resultado do
+   * município no 1º turno mais a mudança medida no seu estado. O TSE só
+   * publica o voto por município num arquivo para cada um dos 5,6 mil — ler
+   * todos a cada 25 segundos seria pesado demais para quem acompanha pelo
+   * celular —, então o mapa mostra a estimativa, e o resultado oficial de
+   * cada município é buscado quando a pessoa toca nele.
+   *
+   * Devolve o percentual de válidos do PL em cada município, na ordem da
+   * base. Precisa de um projetar() antes. */
+  estimarMunicipios() {
+    const saida = new Float64Array(this.n);
+    const u = this._ultimo;
+    if (!u) { saida.fill(NaN); return saida; }
+    for (const [uf, idx] of this.indicesPorUf) {
+      const sw = u.swingFinal.get(uf) || 0;
+      let perfilApurado = null;
+      if (u.bPerfil) {
+        let peso = 0, soma = 0;
+        for (const i of idx) {
+          const w = this.fracao[i] * this.validosBase[i];
+          peso += w; soma += this.perfil[i] * w;
+        }
+        if (peso > 0) perfilApurado = soma / peso;
+      }
+      for (const i of idx) {
+        let swM = sw;
+        if (perfilApurado !== null) swM += u.bPerfil * (this.perfil[i] - perfilApurado);
+        saida[i] = 100 * share(this.baseLogit[i] + swM);
+      }
+    }
+    return saida;
   }
 
   /* Quanto o swing varia com o perfil do município, estimado a partir da

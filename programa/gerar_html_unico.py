@@ -39,7 +39,8 @@ def tirar_exports(js: str) -> str:
 
 def main() -> int:
     for nome in ("index.html", "modelo.js", "tse.js", "pesquisas.js",
-                 "base.json", "mapa.json", "ordem.json"):
+                 "base.json", "mapa.json", "ordem.json", "mapa-mun.json",
+                 "fonte.css"):
         if not os.path.exists(os.path.join(RAIZ, nome)):
             print("Falta %s — rode antes gerar_base_site.py" % nome)
             return 1
@@ -52,6 +53,7 @@ def main() -> int:
     base = json.loads(ler("base.json"))
     mapa = json.loads(ler("mapa.json"))
     ordem = json.loads(ler("ordem.json"))
+    mapa_mun = json.loads(ler("mapa-mun.json"))
 
     # Os módulos expõem suas funções com nomes curtos; dentro do arquivo único
     # elas viram globais, então o código da página passa a chamá-las por
@@ -61,12 +63,14 @@ def main() -> int:
     # abriu o arquivo, com "pq is not defined" e a aba de pesquisas vazia. Por
     # isso a conferência no fim desta função é obrigatória.
     ponte = """
-const tse = { lerTudo, lerResultados, lerAndamento, ELEICAO_1T, ELEICAO_2T, UFS };
+const tse = { lerTudo, lerResultados, lerAndamento, lerMunicipio, ELEICAO_1T,
+              ELEICAO_2T, UFS };
 const pq = { buscarSegundoTurno, buscarPrimeiroTurno, agregar, cruzarComTSE,
              REAL_1T };
 const BASE_EMBUTIDA = __BASE__;
 const MAPA_EMBUTIDO = __MAPA__;
 const ORDEM_EMBUTIDA = __ORDEM__;
+const MAPA_MUN_EMBUTIDO = __MAPAMUN__;
 """
 
     script_pagina = re.search(
@@ -84,6 +88,8 @@ const ORDEM_EMBUTIDA = __ORDEM__;
          "const base = await Promise.resolve(BASE_EMBUTIDA);"),
         ('geoMapa = await (await fetch("./mapa.json", { cache: "force-cache" })).json();',
          "geoMapa = await Promise.resolve(MAPA_EMBUTIDO);"),
+        ('geoMun = await (await fetch("./mapa-mun.json", { cache: "force-cache" })).json();',
+         "geoMun = await Promise.resolve(MAPA_MUN_EMBUTIDO);"),
         ('const [ordem, base] = await Promise.all([\n'
          '        fetch("./ordem.json", { cache: "force-cache" }).then((r) => r.json()),\n'
          '        fetch("./base.json", { cache: "force-cache" }).then((r) => r.json()),\n'
@@ -110,6 +116,8 @@ const ORDEM_EMBUTIDA = __ORDEM__;
         "__MAPA__", json.dumps(mapa, ensure_ascii=False, separators=(",", ":"))
     ).replace(
         "__ORDEM__", json.dumps(ordem, ensure_ascii=False, separators=(",", ":"))
+    ).replace(
+        "__MAPAMUN__", json.dumps(mapa_mun, ensure_ascii=False, separators=(",", ":"))
     )
     novo_script = (
         "<script>\n"
@@ -120,6 +128,13 @@ const ORDEM_EMBUTIDA = __ORDEM__;
         + "\n" + corpo + "\n</script>"
     )
     html = html[:script_pagina.start()] + novo_script + html[script_pagina.end():]
+
+    # A fonte vai embutida no próprio arquivo.
+    alvo_fonte = '<link rel="stylesheet" href="./fonte.css">'
+    if alvo_fonte not in html:
+        print("Não achei o link da fonte no index.html")
+        return 1
+    html = html.replace(alvo_fonte, "<style>\n" + ler("fonte.css") + "</style>")
 
     # Referências a arquivos que não acompanham o HTML solto.
     html = re.sub(r'<link rel="manifest"[^>]*>\n?', "", html)

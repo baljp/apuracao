@@ -31,7 +31,8 @@ RAIZ = os.path.dirname(AQUI)
 MODULOS = ["modelo.js", "tse.js", "pesquisas.js"]
 # O que entra no cálculo da versão do service worker: se qualquer um mudar,
 # o cache inteiro do aparelho é trocado.
-DO_CASCO = MODULOS + ["index.html", "base.json", "mapa.json", "sw.js"]
+DO_CASCO = MODULOS + ["index.html", "base.json", "mapa.json", "mapa-mun.json",
+                      "fonte.css", "sw.js"]
 
 
 def hash_de(nome: str) -> str:

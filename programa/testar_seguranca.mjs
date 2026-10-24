@@ -81,7 +81,12 @@ const hospedeiros = new Set();
 const bloqueadosPelaCSP = [];
 
 p.on("request", (r) => {
-  try { hospedeiros.add(new URL(r.url()).hostname); } catch {}
+  // data: e blob: não saem do aparelho (a fonte embutida e as imagens dos
+  // cards são data:), então não contam como destino.
+  try {
+    const u = new URL(r.url());
+    if (u.protocol !== "data:" && u.protocol !== "blob:") hospedeiros.add(u.hostname);
+  } catch {}
 });
 p.on("console", (m) => {
   const t = m.text();
