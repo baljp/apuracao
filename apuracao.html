@@ -3257,6 +3257,12 @@ function fundo(ctx, tom, yesSol = 360) {
   ctx.restore();
   faixaCordel(ctx, 0, 26, OURO_V, REGUA);
   faixaCordel(ctx, CH - 26, 26, OURO_V, REGUA);
+  // Área segura do stories: o Instagram põe o nome do perfil no alto e a
+  // caixa "Enviar mensagem" embaixo, por cima da imagem. O fundo ocupa a
+  // tela toda, mas o conteúdo é desenhado um pouco menor e centralizado,
+  // longe dessas faixas — marca, números e selo ficam sempre à vista.
+  const S = 0.82;
+  ctx.setTransform(S, 0, 0, S, (CW - CW * S) / 2, 190);
 }
 
 function marca(ctx, sobre) {
