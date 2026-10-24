@@ -769,6 +769,16 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 .ti-topo{color:#fff;font-size:13.5px;font-weight:700;text-align:center;line-height:1.4;max-width:420px}
 .ti-topo b{color:#FFC94D}
 .telaImagem .bt-sec{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.25)}
+.avisoNav{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:11px 12px 11px 14px;
+  border-radius:14px;background:#FFF4D6;color:#5A3B00;border:1px solid #F2B544;font-size:13.5px;
+  font-weight:700;line-height:1.4}
+.avisoNav[hidden]{display:none}
+.avisoNav b{color:#3D2800;font-weight:900}
+.an-txt{flex:1;min-width:0}
+.an-bts{display:flex;align-items:center;gap:4px}
+.an-bt{background:#1F2A44;color:#fff;text-decoration:none;font-weight:900;font-size:13px;
+  border-radius:10px;padding:8px 11px;white-space:nowrap}
+.an-x{background:none;border:0;font-size:22px;line-height:1;color:#5A3B00;cursor:pointer;padding:2px 6px}
 </style>
 </head>
 <body>
@@ -785,6 +795,12 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
     <div class="t"><b>Resultado oficial: TSE</b>
       <span>Aqui é projeção. O que vale é a totalização do TSE.</span></div>
     <a href="https://resultados.tse.jus.br" target="_blank" rel="noopener noreferrer">Ver no TSE ↗</a>
+  </div>
+
+  <div class="avisoNav" id="avisoNav" hidden>
+    <div class="an-txt" id="avisoNavTxt"></div>
+    <div class="an-bts"><a class="an-bt" id="avisoNavBt" hidden>Abrir no Chrome</a>
+      <button class="an-x" id="avisoNavX" aria-label="Fechar">&times;</button></div>
   </div>
 
   <header class="topo">
@@ -2515,6 +2531,12 @@ let cardAberto = null;
  * O texto com o link vai para a área de transferência depois. */
 const navInterno = /Instagram|FBAN|FBAV|FB_IAB|Line\/|MicroMessenger|TikTok|Snapchat/i
   .test(navigator.userAgent);
+const ehAndroidCedo = /android/i.test(navigator.userAgent);
+// Abre esta mesma página no Chrome (Android), já na aba pedida.
+const abrirNoChrome = (aba) => {
+  location.href = "intent://" + location.host + location.pathname + (aba ? "?aba=" + aba : "")
+    + "#Intent;scheme=https;package=com.android.chrome;end";
+};
 
 async function abrirCard(def) {
   cardAberto = def;
@@ -2537,7 +2559,8 @@ async function abrirCard(def) {
     { type: "image/jpeg", lastModified: Date.now() });
   const podeArquivo = !!(navigator.canShare && navigator.canShare({ files: [def.arquivo] }));
   bt.disabled = false;
-  bt.textContent = podeArquivo ? "Compartilhar no Instagram / WhatsApp" : "Salvar imagem";
+  bt.textContent = navInterno && ehAndroidCedo ? "Abrir no Chrome para salvar e compartilhar"
+    : podeArquivo ? "Compartilhar no Instagram / WhatsApp" : "Salvar imagem";
   $("cardDica").innerHTML = navInterno
     ? "Você abriu pelo navegador do Instagram, que não deixa compartilhar imagem. "
       + "Toque em <b>⋯</b> e escolha <b>Abrir no navegador</b> — ou toque e segure "
@@ -2566,6 +2589,9 @@ function textoCard(def) {
 $("cardCompartilhar").addEventListener("click", () => {
   const def = cardAberto;
   if (!def || !def.arquivo) return;
+  // Dentro do Instagram não dá para salvar nem compartilhar imagem: no
+  // Android, leva para o Chrome já na aba de cards.
+  if (navInterno && ehAndroidCedo) { abrirNoChrome("cards"); return; }
   const dados = { files: [def.arquivo] };
   let pode = false;
   try { pode = !!(navigator.canShare && navigator.canShare(dados)); } catch {}
@@ -3671,6 +3697,7 @@ async function tickDemo() {
     }
     registro = baseDemo.registro;
     cards = baseDemo.cards;
+    if (!$("painelCards").hidden && !$("cardsLista").children.length) pintaCards();
     const limite = (DEMO / 100) * total;
 
     const fracoes = new Map();
@@ -3898,7 +3925,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=b74c8155f5").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=88561076b0").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
@@ -4039,6 +4066,48 @@ if (!jaInstalado && !jaPerguntou && !ehSamsung) {
     pedirInstalacao();
   };
   document.addEventListener("pointerup", primeiroToque, true);
+}
+
+/* Navegadores que atrapalham, avisados no alto da página:
+ *  - o navegador de dentro do Instagram (link da bio) não salva nem
+ *    compartilha imagem — os cards só funcionam fora dele;
+ *  - o navegador da Samsung, com o modo escuro ligado, repinta as cores do
+ *    site por conta própria (escurece imagens, deixa o mapa em tons pastel) —
+ *    o site não consegue impedir isso. */
+(() => {
+  const chave = "aviso-nav-fechado";
+  let fechado = false;
+  try { fechado = sessionStorage.getItem(chave) === "1"; } catch {}
+  if (fechado) return;
+  let txt = "";
+  if (navInterno) {
+    txt = ehAndroidCedo
+      ? "Você está no navegador do Instagram, que <b>não salva nem compartilha</b> os cards. "
+        + "Abra no Chrome."
+      : "Você está no navegador do Instagram, que <b>não salva nem compartilha</b> os cards. "
+        + "Toque em <b>⋯</b> e escolha <b>Abrir no navegador externo</b>.";
+  } else if (ehSamsung) {
+    txt = "No navegador da Samsung, o <b>modo escuro</b> muda as cores do site e dos mapas. "
+      + "Para ver como foi feito, abra no Chrome — ou desligue o modo escuro no menu ☰.";
+  }
+  if (!txt) return;
+  $("avisoNavTxt").innerHTML = txt;
+  if (ehAndroidCedo) {
+    $("avisoNavBt").hidden = false;
+    $("avisoNavBt").href = "intent://" + location.host + location.pathname
+      + "#Intent;scheme=https;package=com.android.chrome;end";
+  }
+  $("avisoNav").hidden = false;
+  $("avisoNavX").addEventListener("click", () => {
+    $("avisoNav").hidden = true;
+    try { sessionStorage.setItem(chave, "1"); } catch {}
+  });
+})();
+
+// Chegou pelo "Abrir no Chrome" de um card: já abre a aba de cards.
+if (new URLSearchParams(location.search).get("aba") === "cards") {
+  const b = document.querySelector('.aba[data-aba="cards"]');
+  if (b) b.click();
 }
 </script>
 </body>
