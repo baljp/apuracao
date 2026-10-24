@@ -761,6 +761,14 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 .instalarCaixa ol{margin:0;padding-left:20px;font-size:14.5px;font-weight:650;line-height:1.55}
 .instalarCaixa li{margin-bottom:6px}
 .instalarCaixa .bt-sec{background:var(--superficie-2);color:var(--texto)}
+.telaImagem{position:fixed;inset:0;z-index:140;background:#000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;padding:12px}
+.telaImagem[hidden]{display:none}
+.telaImagem img{max-width:100%;max-height:calc(100vh - 150px);border-radius:10px;
+  -webkit-touch-callout:default;user-select:auto;pointer-events:auto}
+.ti-topo{color:#fff;font-size:13.5px;font-weight:700;text-align:center;line-height:1.4;max-width:420px}
+.ti-topo b{color:#FFC94D}
+.telaImagem .bt-sec{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.25)}
 </style>
 </head>
 <body>
@@ -1161,6 +1169,13 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
         <button class="bt-sec" id="instalarFechar" style="width:100%;margin-top:14px">Entendi</button>
       </div>
     </div>
+  </div>
+
+  <div class="telaImagem" id="telaImagem" hidden>
+    <div class="ti-topo">Se baixou, a imagem está na sua galeria. Se não: <b>toque e segure a
+      imagem</b> e escolha <b>Salvar imagem</b> / <b>Baixar imagem</b>.</div>
+    <img alt="Card para salvar">
+    <button class="bt-sec" id="telaImagemFechar">Voltar</button>
   </div>
 
   <div class="cardModal" id="cardModal" hidden>
@@ -2514,6 +2529,10 @@ async function abrirCard(def) {
   const blob = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.93));
   if (cardAberto !== def) return;
   def.blob = blob;
+  // Também como endereço data:, que todo navegador de celular sabe salvar
+  // (o blob: falha em alguns, como o da Samsung).
+  def.dataUrl = cv.toDataURL("image/jpeg", 0.93);
+  $("cardImg").src = def.dataUrl;
   def.arquivo = new File([blob], "oxe-apuracao-" + (def.k != null ? def.k + "pct" : def.tipo) + ".jpg",
     { type: "image/jpeg", lastModified: Date.now() });
   const podeArquivo = !!(navigator.canShare && navigator.canShare({ files: [def.arquivo] }));
@@ -2548,12 +2567,20 @@ $("cardCompartilhar").addEventListener("click", () => {
   const def = cardAberto;
   if (!def || !def.arquivo) return;
   const dados = { files: [def.arquivo] };
-  if (navigator.canShare && navigator.canShare(dados)) {
+  let pode = false;
+  try { pode = !!(navigator.canShare && navigator.canShare(dados)); } catch {}
+  if (pode) {
     // Nada de await antes desta linha.
     navigator.share(dados).then(() => {
       if (navigator.clipboard) navigator.clipboard.writeText(textoCard(def)).catch(() => {});
     }).catch((e) => {
-      if (e && e.name === "AbortError") return;   // a pessoa fechou a janela
+      if (e && e.name === "AbortError") {
+        $("cardDica").innerHTML = "Se o Instagram ou o WhatsApp não apareceram na lista, "
+          + "toque em <b>Baixar imagem</b> e poste da galeria.";
+        return;
+      }
+      $("cardDica").innerHTML = "O celular recusou o compartilhamento direto ("
+        + esc((e && e.name) || "erro") + "). Use <b>Baixar imagem</b> e poste da galeria.";
       baixarCard();
     });
     return;
@@ -2561,17 +2588,33 @@ $("cardCompartilhar").addEventListener("click", () => {
   baixarCard();
 });
 
+/* Salvar a imagem, em três tentativas, da mais direta à mais garantida:
+ *   1. download pelo endereço data: (funciona no Chrome, Samsung e Safari);
+ *   2. a imagem sozinha em tela cheia, para tocar e segurar e "Salvar imagem"
+ *      — o caminho que nunca falha, inclusive dentro do Instagram. */
 function baixarCard() {
-  if (!cardAberto || !cardAberto.blob) return;
-  const url = URL.createObjectURL(cardAberto.blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = cardAberto.arquivo ? cardAberto.arquivo.name : "oxe-apuracao.jpg";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-  $("cardDica").innerHTML = "Imagem salva. Agora é só postar da galeria no "
-    + "<b>stories</b> ou no <b>status</b>. Se não salvou, toque e segure a imagem.";
+  const def = cardAberto;
+  if (!def || !def.dataUrl) return;
+  try {
+    const a = document.createElement("a");
+    a.href = def.dataUrl;
+    a.download = def.arquivo ? def.arquivo.name : "oxe-apuracao.jpg";
+    a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch {}
+  verImagemSozinha();
 }
+
+function verImagemSozinha() {
+  const def = cardAberto;
+  if (!def || !def.dataUrl) return;
+  $("telaImagem").querySelector("img").src = def.dataUrl;
+  $("telaImagem").hidden = false;
+}
+$("telaImagemFechar").addEventListener("click", () => { $("telaImagem").hidden = true; });
+$("telaImagem").addEventListener("click", (ev) => {
+  if (ev.target.tagName !== "IMG") $("telaImagem").hidden = true;
+});
 $("cardBaixar").addEventListener("click", baixarCard);
 $("cardWhats").addEventListener("click", () => {
   if (!cardAberto) return;
@@ -3855,7 +3898,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=742ecdd56b").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=b74c8155f5").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
