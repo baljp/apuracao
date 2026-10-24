@@ -3855,7 +3855,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=5283e050f0").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=742ecdd56b").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});
@@ -3891,6 +3891,14 @@ const dispensar = () => {
 const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
   || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const ehAndroid = /android/i.test(navigator.userAgent);
+/* Samsung Internet: ao instalar, ele monta o app com uma versão antiga do
+ * Android, e o Google Play Protect bloqueia ("App de risco bloqueado"). Não
+ * é o site — o mesmo acontece com qualquer site instalado por ele. No Chrome
+ * o app é montado pelo Google e instala sem aviso. Então, no Samsung
+ * Internet, o site não abre a janela de instalação: oferece abrir no Chrome. */
+const ehSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+const URL_CHROME = "intent://" + location.host + location.pathname
+  + "#Intent;scheme=https;package=com.android.chrome;end";
 
 // O botão discreto do topo fica sempre lá — só some quando o app já está
 // instalado e aberto como app.
@@ -3901,7 +3909,7 @@ let promptInstalar = null;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   promptInstalar = e;
-  if (!jaInstalado && !dispensado) $("cartaoInstalar").style.display = "flex";
+  if (!jaInstalado && !dispensado && !ehSamsung) $("cartaoInstalar").style.display = "flex";
 });
 window.addEventListener("appinstalled", () => {
   $("cartaoInstalar").style.display = "none";
@@ -3910,6 +3918,7 @@ window.addEventListener("appinstalled", () => {
 });
 
 async function pedirInstalacao() {
+  if (ehSamsung) return false;     // vai para o caminho do Chrome
   if (promptInstalar) {
     const p = promptInstalar;
     promptInstalar = null;
@@ -3925,7 +3934,12 @@ async function pedirInstalacao() {
  * Instagram, Android sem o aviso), explica o caminho em três passos. */
 function mostrarComoInstalar() {
   let passos;
-  if (navInterno) {
+  if (ehSamsung) {
+    passos = ["No navegador da Samsung o Android bloqueia a instalação "
+      + "(\"App de risco bloqueado\") — com qualquer site. <b>Não instale por aqui.</b>",
+      "Toque no botão abaixo para abrir a apuração no <b>Chrome</b>.",
+      "No Chrome, toque em <b>Instalar app</b> no alto da página — instala sem aviso nenhum."];
+  } else if (navInterno) {
     passos = ["Toque em <b>⋯</b> (canto da tela).",
       "Escolha <b>Abrir no navegador</b> (Chrome ou Safari).",
       "Lá, toque em <b>Instalar app</b> no alto da página."];
@@ -3941,7 +3955,9 @@ function mostrarComoInstalar() {
     passos = ["No Chrome ou Edge, clique no ícone de instalar na barra de endereço "
       + "(ou no menu ⋮ → <b>Instalar</b>).", "Confirme em <b>Instalar</b>."];
   }
-  $("instalarPassos").innerHTML = "<ol>" + passos.map((p) => "<li>" + p + "</li>").join("") + "</ol>";
+  $("instalarPassos").innerHTML = "<ol>" + passos.map((p) => "<li>" + p + "</li>").join("") + "</ol>"
+    + (ehSamsung ? '<a class="bt-ouro" style="display:block;text-align:center;text-decoration:none;'
+      + 'margin-top:12px" href="' + URL_CHROME + '">Abrir no Chrome</a>' : "");
   $("instalarModal").hidden = false;
 }
 $("instalarFechar").addEventListener("click", () => { $("instalarModal").hidden = true; });
@@ -3971,7 +3987,7 @@ $("btFecharIOS").addEventListener("click", () => {
  * aparelho — insistir a cada visita viraria incômodo. (O navegador não deixa
  * abrir essa janela sem um toque; o primeiro toque é o mais cedo possível.) */
 const jaPerguntou = (() => { try { return localStorage.getItem("instalar-perguntado") === "1"; } catch { return true; } })();
-if (!jaInstalado && !jaPerguntou) {
+if (!jaInstalado && !jaPerguntou && !ehSamsung) {
   const primeiroToque = async (ev) => {
     if (!promptInstalar) return;          // ainda não dá para instalar: espera o próximo
     if (ev.target.closest && ev.target.closest("a,button,input,select,summary,.thumb,path.m")) return;
