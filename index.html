@@ -1307,7 +1307,7 @@ button:focus-visible{outline:2px solid var(--pl);outline-offset:2px}
 <script type="module">
 import { Modelo } from "./modelo.js?v=f6c81420d6";
 import * as tse from "./tse.js?v=391c24cf0d";
-import * as pq from "./pesquisas.js?v=e2aab83783";
+import * as pq from "./pesquisas.js?v=e13eced4df";
 
 /* Ritmo de atualização.
  *
@@ -2425,7 +2425,10 @@ function cardPesquisas(ctx, d) {
     rr(ctx, 70, y - 54, CW - 140, 72, 20); ctx.fillStyle = "rgba(251,248,241,.06)"; ctx.fill();
     txCabe(ctx, p.inst, 100, y - 16, 32, 900, MARFIM, 430);
     tx(ctx, String(p.campo || ""), 100, y + 10, 22, 750, "rgba(251,248,241,.55)");
-    tx(ctx, n1(p.pl) + " × " + n1(100 - p.pl), CW - 100, y - 4, 38, 900,
+    // Número divulgado pelo instituto vai com a precisão dele (50 × 50);
+    // o calculado a partir dos totais, com uma casa.
+    const f = (v) => p.div ? nFonte(v) : n1(v);
+    tx(ctx, f(p.pl) + " × " + f(+(100 - p.pl).toFixed(2)), CW - 100, y - 4, 38, 900,
       p.pl > 50 ? "#A9CAFF" : p.pl < 50 ? "#FFADA6" : MARFIM, "right");
     rr(ctx, 560, y - 30, 180, 12, 6); ctx.fillStyle = "rgba(251,248,241,.12)"; ctx.fill();
     ctx.save(); rr(ctx, 560, y - 30, 180, 12, 6); ctx.clip();
@@ -2794,7 +2797,7 @@ async function compartilharPesquisas(msgEl) {
   if (!ag) { msgEl.textContent = "Ainda não há pesquisas suficientes."; return; }
   msgEl.textContent = "";
   const lista = pesquisas.filter((p) => p.validosPl > 0 && p.validosPl < 100).slice(0, 6)
-    .map((p) => ({ inst: p.instituto, campo: p.periodo, pl: p.validosPl }));
+    .map((p) => ({ inst: p.instituto, campo: p.periodo, pl: p.validosPl, div: p.validosDivulgado }));
   abrirCard({ tipo: "pesquisas", media: ag.pl, n: ag.nUsadas, lista,
     data: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) });
 }
@@ -3931,7 +3934,7 @@ async function calcularAcerto() {
 // TSE) e é o que torna a instalação possível.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=9b38894bc5").then((reg) => {
+    navigator.serviceWorker.register("./sw.js?v=984fa35ea3").then((reg) => {
       // Procura versão nova ao abrir e de hora em hora. Uma aba deixada
       // aberta a noite toda recebe as correções sozinha.
       reg.update().catch(() => {});

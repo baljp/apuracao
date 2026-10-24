@@ -93,6 +93,27 @@ function linhasDe(tabela) {
 
 /* Pesquisas do 2º turno. Colunas da tabela:
    instituto | datas | amostra | margem | Lula | Flávio | indecisos | vantagem */
+/* Votos válidos como o PRÓPRIO instituto divulgou.
+ *
+ * A Wikipédia traz só os votos totais. Calculando os válidos a partir deles,
+ * o arredondamento dos totais pode deixar o número 0,1 a 0,5 ponto longe do
+ * que o instituto anunciou: a Veritá de 18–22/10 publicou 51,3% para Flávio
+ * (os totais arredondados, 50,2 × 47,5, dão 51,4); o Datafolha de 20–22/10
+ * publicou 50% × 50% (46 × 47 dariam 50,5). Quando o número divulgado é
+ * conhecido, ele vale — é o que saiu na imprensa e o que as pessoas vão
+ * comparar. Chave: instituto sem acento e em minúsculas | data final.
+ * Valor: % de Flávio nos válidos, com a precisão que o instituto usou. */
+const VALIDOS_DIVULGADOS = {
+  "verita|2026-10-22": 51.3,          // BR-06070/2026 — 51,3 × 48,7
+  "datafolha|2026-10-22": 50,         // 50 × 50
+  "real time big data|2026-10-22": 52, // 52 × 48
+  "vetor arrow|2026-10-23": 52.7,     // 52,7 × 47,3
+  "ipespe|2026-10-22": 50.5,          // 50,5 × 49,5
+  "vox|2026-10-22": 49.4,             // Lula 50,6 × 49,4
+};
+const chaveValidos = (inst, fim) => inst.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase().replace(/\s+/g, " ").trim() + "|" + new Date(fim).toISOString().slice(0, 10);
+
 export async function buscarSegundoTurno() {
   const html = await htmlDaSecao(/Lula e Fl.vio/i);
   const tabs = tabelas(html);
@@ -127,8 +148,10 @@ export async function buscarSegundoTurno() {
     if (+fim > Date.now() + 86400000) continue;
     if (+fim < Date.UTC(2026, 9, 1)) continue;       // velha demais para o 2º turno
 
+    const instituto = l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60);
+    const divulgado = VALIDOS_DIVULGADOS[chaveValidos(instituto, fim)];
     saida.push({
-      instituto: l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60),
+      instituto,
       periodo: String(l[1]).slice(0, 40),
       fim,
       amostra,
@@ -136,7 +159,10 @@ export async function buscarSegundoTurno() {
       pt, pl,
       // Percentuais sobre votos válidos, para comparar maçã com maçã: cada
       // pesquisa trata brancos, nulos e indecisos de um jeito.
-      validosPl: (100 * pl) / (pl + pt),
+      validosPl: divulgado != null ? divulgado : (100 * pl) / (pl + pt),
+      // true quando o número é o anunciado pelo instituto (mostrado com a
+      // precisão dele); false quando foi calculado a partir dos totais.
+      validosDivulgado: divulgado != null,
     });
   }
   saida.sort((a, b) => b.fim - a.fim);
@@ -186,8 +212,10 @@ export async function buscarPrimeiroTurno() {
     const pl = numero(l[DESLOCAMENTO + iPl]);
     if (pt == null || pl == null) continue;
     if (pt > 100 || pl > 100 || pt + pl < 20) continue;
+    const instituto = l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60);
+    const divulgado = VALIDOS_DIVULGADOS[chaveValidos(instituto, fim)];
     saida.push({
-      instituto: l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60),
+      instituto,
       fim,
       pt, pl,
       // Vantagem COM sinal: positiva quando o instituto punha o candidato do

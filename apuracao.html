@@ -2051,6 +2051,27 @@ function linhasDe(tabela) {
 
 /* Pesquisas do 2º turno. Colunas da tabela:
    instituto | datas | amostra | margem | Lula | Flávio | indecisos | vantagem */
+/* Votos válidos como o PRÓPRIO instituto divulgou.
+ *
+ * A Wikipédia traz só os votos totais. Calculando os válidos a partir deles,
+ * o arredondamento dos totais pode deixar o número 0,1 a 0,5 ponto longe do
+ * que o instituto anunciou: a Veritá de 18–22/10 publicou 51,3% para Flávio
+ * (os totais arredondados, 50,2 × 47,5, dão 51,4); o Datafolha de 20–22/10
+ * publicou 50% × 50% (46 × 47 dariam 50,5). Quando o número divulgado é
+ * conhecido, ele vale — é o que saiu na imprensa e o que as pessoas vão
+ * comparar. Chave: instituto sem acento e em minúsculas | data final.
+ * Valor: % de Flávio nos válidos, com a precisão que o instituto usou. */
+const VALIDOS_DIVULGADOS = {
+  "verita|2026-10-22": 51.3,          // BR-06070/2026 — 51,3 × 48,7
+  "datafolha|2026-10-22": 50,         // 50 × 50
+  "real time big data|2026-10-22": 52, // 52 × 48
+  "vetor arrow|2026-10-23": 52.7,     // 52,7 × 47,3
+  "ipespe|2026-10-22": 50.5,          // 50,5 × 49,5
+  "vox|2026-10-22": 49.4,             // Lula 50,6 × 49,4
+};
+const chaveValidos = (inst, fim) => inst.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase().replace(/\s+/g, " ").trim() + "|" + new Date(fim).toISOString().slice(0, 10);
+
 async function buscarSegundoTurno() {
   const html = await htmlDaSecao(/Lula e Fl.vio/i);
   const tabs = tabelas(html);
@@ -2085,8 +2106,10 @@ async function buscarSegundoTurno() {
     if (+fim > Date.now() + 86400000) continue;
     if (+fim < Date.UTC(2026, 9, 1)) continue;       // velha demais para o 2º turno
 
+    const instituto = l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60);
+    const divulgado = VALIDOS_DIVULGADOS[chaveValidos(instituto, fim)];
     saida.push({
-      instituto: l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60),
+      instituto,
       periodo: String(l[1]).slice(0, 40),
       fim,
       amostra,
@@ -2094,7 +2117,10 @@ async function buscarSegundoTurno() {
       pt, pl,
       // Percentuais sobre votos válidos, para comparar maçã com maçã: cada
       // pesquisa trata brancos, nulos e indecisos de um jeito.
-      validosPl: (100 * pl) / (pl + pt),
+      validosPl: divulgado != null ? divulgado : (100 * pl) / (pl + pt),
+      // true quando o número é o anunciado pelo instituto (mostrado com a
+      // precisão dele); false quando foi calculado a partir dos totais.
+      validosDivulgado: divulgado != null,
     });
   }
   saida.sort((a, b) => b.fim - a.fim);
@@ -2144,8 +2170,10 @@ async function buscarPrimeiroTurno() {
     const pl = numero(l[DESLOCAMENTO + iPl]);
     if (pt == null || pl == null) continue;
     if (pt > 100 || pl > 100 || pt + pl < 20) continue;
+    const instituto = l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60);
+    const divulgado = VALIDOS_DIVULGADOS[chaveValidos(instituto, fim)];
     saida.push({
-      instituto: l[0].replace(/\[\d+\]/g, "").trim().slice(0, 60),
+      instituto,
       fim,
       pt, pl,
       // Vantagem COM sinal: positiva quando o instituto punha o candidato do
@@ -3471,7 +3499,10 @@ function cardPesquisas(ctx, d) {
     rr(ctx, 70, y - 54, CW - 140, 72, 20); ctx.fillStyle = "rgba(251,248,241,.06)"; ctx.fill();
     txCabe(ctx, p.inst, 100, y - 16, 32, 900, MARFIM, 430);
     tx(ctx, String(p.campo || ""), 100, y + 10, 22, 750, "rgba(251,248,241,.55)");
-    tx(ctx, n1(p.pl) + " × " + n1(100 - p.pl), CW - 100, y - 4, 38, 900,
+    // Número divulgado pelo instituto vai com a precisão dele (50 × 50);
+    // o calculado a partir dos totais, com uma casa.
+    const f = (v) => p.div ? nFonte(v) : n1(v);
+    tx(ctx, f(p.pl) + " × " + f(+(100 - p.pl).toFixed(2)), CW - 100, y - 4, 38, 900,
       p.pl > 50 ? "#A9CAFF" : p.pl < 50 ? "#FFADA6" : MARFIM, "right");
     rr(ctx, 560, y - 30, 180, 12, 6); ctx.fillStyle = "rgba(251,248,241,.12)"; ctx.fill();
     ctx.save(); rr(ctx, 560, y - 30, 180, 12, 6); ctx.clip();
@@ -3840,7 +3871,7 @@ async function compartilharPesquisas(msgEl) {
   if (!ag) { msgEl.textContent = "Ainda não há pesquisas suficientes."; return; }
   msgEl.textContent = "";
   const lista = pesquisas.filter((p) => p.validosPl > 0 && p.validosPl < 100).slice(0, 6)
-    .map((p) => ({ inst: p.instituto, campo: p.periodo, pl: p.validosPl }));
+    .map((p) => ({ inst: p.instituto, campo: p.periodo, pl: p.validosPl, div: p.validosDivulgado }));
   abrirCard({ tipo: "pesquisas", media: ag.pl, n: ag.nUsadas, lista,
     data: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) });
 }
