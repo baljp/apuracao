@@ -3206,7 +3206,7 @@ function marca(ctx, sobre) {
   tx(ctx, sobre, CW - 64 - tw / 2, 120, 26, 900, OURO, "center", 3);
 }
 
-function rodape(ctx, chamada) {
+function rodape(ctx, chamada, nota) {
   const y = CH - 236;
   // ficha marfim com régua vermelha: a cara do portal do Oxe
   rr(ctx, 60, y, CW - 120, 168, 30);
@@ -3220,7 +3220,7 @@ function rodape(ctx, chamada) {
   ctx.beginPath(); ctx.arc(CW - 130, y + 84, 44, 0, 7);
   ctx.fillStyle = TINTA; ctx.fill();
   tx(ctx, "→", CW - 130, y + 102, 52, 900, OURO, "center");
-  tx(ctx, "Resultado oficial: TSE · esta é uma projeção estatística", CW / 2, CH - 44, 24, 750,
+  tx(ctx, nota || "Resultado oficial: TSE · esta é uma projeção estatística", CW / 2, CH - 44, 24, 750,
     "rgba(251,248,241,.5)", "center");
 }
 
@@ -3340,7 +3340,7 @@ function cardPalpite(ctx, p) {
   }
   tx(ctx, "Domingo, depois da apuração, o card mostra por quanto errei.", CW / 2, 1520, 32, 750,
     "rgba(255,255,255,.6)", "center");
-  rodape(ctx, "Faça o seu palpite");
+  rodape(ctx, "Faça o seu palpite", "Palpite pessoal · o resultado oficial é o do TSE");
 }
 
 function cardLugar(ctx, d) {
@@ -3369,7 +3369,7 @@ function cardEspera(ctx, d) {
     "no 1º turno as pesquisas erraram o líder");
   tx(ctx, "Às 17h a apuração começa aqui,", CW / 2, 1280, 48, 900, "#fff", "center");
   tx(ctx, "com projeção ao vivo.", CW / 2, 1345, 48, 900, "#fff", "center");
-  rodape(ctx, "Ative o lembrete: siga " + PERFIL);
+  rodape(ctx, "Siga " + PERFIL, "Média de pesquisas, não resultado · apuração oficial: TSE");
 }
 
 function cardPesquisas(ctx, d) {
@@ -3399,7 +3399,7 @@ function cardPesquisas(ctx, d) {
   }
   tx(ctx, "Atenção: no 1º turno as pesquisas erraram o líder.", CW / 2, CH - 280, 30, 850,
     OURO, "center");
-  rodape(ctx, "Siga " + PERFIL);
+  rodape(ctx, "Siga " + PERFIL, "Pesquisas de intenção de voto, não resultado · registradas no TSE");
 }
 
 function cardAuditoria(ctx) {
